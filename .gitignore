@@ -426,3 +426,8 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+*.sql
+*.bak
+*.db
+*.yml
