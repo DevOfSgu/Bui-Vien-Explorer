@@ -430,4 +430,7 @@ FodyWeavers.xsd
 *.sql
 *.bak
 *.db
-*.yml
+
+# Docker configuration (contains sensitive data)
+docker-compose.yml
+docker-compose.*.yml
