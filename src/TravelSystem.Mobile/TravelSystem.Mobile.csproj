@@ -36,6 +36,10 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
+	
+		<JavaSdkDirectory>D:\Android\jbr</JavaSdkDirectory>
+		<AndroidSdkDirectory>C:\Users\USER\AppData\Local\Android\Sdk</AndroidSdkDirectory>
+		<AcceptAndroidSDKLicenses>true</AcceptAndroidSDKLicenses>
 	</PropertyGroup>
 
 	<ItemGroup>

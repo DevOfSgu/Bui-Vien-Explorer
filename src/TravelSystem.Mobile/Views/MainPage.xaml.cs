@@ -20,4 +20,19 @@ public partial class MainPage : ContentPage
 
 		SemanticScreenReader.Announce(CounterBtn.Text);
 	}
+
+	private async void OnTestApiClicked(object? sender, EventArgs e)
+	{
+		try
+		{
+			ApiResultLabel.Text = "Testing...";
+			var apiService = new Services.ApiService();
+			var result = await apiService.TestConnectionAsync();
+			ApiResultLabel.Text = $"✅ Success: {result}";
+		}
+		catch (Exception ex)
+		{
+			ApiResultLabel.Text = $"❌ Error: {ex.Message}";
+		}
+	}
 }
