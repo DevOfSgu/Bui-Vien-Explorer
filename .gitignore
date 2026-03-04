@@ -426,3 +426,11 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+*.sql
+*.bak
+*.db
+
+# Docker configuration (contains sensitive data)
+docker-compose.yml
+docker-compose.*.yml

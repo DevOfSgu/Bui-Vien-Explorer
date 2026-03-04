@@ -30,6 +30,20 @@
                 SemanticProperties.Hint="Counts the number of times you click"
                 Clicked="OnCounterClicked"
                 HorizontalOptions="Fill" />
+
+            <Button
+                x:Name="TestApiBtn"
+                Text="Test API Connection" 
+                Clicked="OnTestApiClicked"
+                BackgroundColor="Green"
+                TextColor="White"
+                HorizontalOptions="Fill" />
+
+            <Label
+                x:Name="ApiResultLabel"
+                Text=""
+                FontSize="12"
+                TextColor="Gray" />
         </VerticalStackLayout>
     </ScrollView>
 
