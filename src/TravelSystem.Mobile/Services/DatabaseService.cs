@@ -1,36 +1,49 @@
-using SQLite;
+﻿using SQLite;
 using TravelSystem.Shared.Models;
+using TravelSystem.Shared.Factories;
 
 namespace TravelSystem.Mobile.Services;
 
 public class DatabaseService
 {
-    private const string DB_NAME = "travelsystem_offline.db3";
     private readonly SQLiteAsyncConnection _connection;
+    private readonly string _dbPath;
 
-    public DatabaseService()
+    // ⚠️ CHỈ DÙNG KHI DEV: đặt true để xóa db cũ & tạo lại schema mới
+    // Đổi lại false sau khi chạy 1 lần để tránh mất data
+    private const bool DEV_RESET_DATABASE = false;
+
+    public DatabaseService(SqliteConnectionFactory factory)
     {
-        _connection = new SQLiteAsyncConnection(Path.Combine(FileSystem.AppDataDirectory, DB_NAME));
-        _connection.CreateTableAsync<Tour>().Wait();
+        _dbPath = Path.Combine(FileSystem.AppDataDirectory, "travelsystem_offline.db3");
+        _connection = factory.CreateConnection(_dbPath);
     }
 
-    public async Task<List<Tour>> GetToursAsync()
+    public async Task InitializeAsync()
     {
-        return await _connection.Table<Tour>().ToListAsync();
-    }
+        try
+        {
+#if DEBUG
+            // Xóa file db cũ nếu đang dev và cần reset schema
+            if (DEV_RESET_DATABASE && File.Exists(_dbPath))
+            {
+                await _connection.CloseAsync();
+                File.Delete(_dbPath);
+                Console.WriteLine("🗑️ Database cũ đã bị xóa — tạo lại schema mới...");
+            }
+#endif
+            await _connection.CreateTablesAsync<
+                LocalRoute,
+                LocalZone,
+                LocalNarration,
+                VisitLog,
+                AppSetting>();
 
-    public async Task<int> SaveTourAsync(Tour tour)
-    {
-        return await _connection.InsertAsync(tour);
-    }
-    
-    public async Task<int> SaveToursAsync(IEnumerable<Tour> tours)
-    {
-        return await _connection.InsertAllAsync(tours);
-    }
-    
-    public async Task<int> DeleteAllToursAsync()
-    {
-        return await _connection.DeleteAllAsync<Tour>();
+            Console.WriteLine("✅ Bùi Viện Database Initialized!");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Database init failed: {ex.Message}");
+        }
     }
 }

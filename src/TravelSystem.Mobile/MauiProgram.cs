@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using TravelSystem.Mobile.Views;
 
 namespace TravelSystem.Mobile;
 
@@ -15,11 +16,14 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
 
-
 #if DEBUG
 		builder.Logging.AddDebug();
 #endif
-		builder.Services.AddSingleton<Services.DatabaseService>();
+		// Register services
+		builder.Services.AddSingleton<TravelSystem.Shared.Factories.SqliteConnectionFactory>();
+        builder.Services.AddSingleton<Services.DatabaseService>();
+		builder.Services.AddSingleton<MainPage>();
+		builder.Services.AddSingleton<AppShell>();
 
 		return builder.Build();
 	}

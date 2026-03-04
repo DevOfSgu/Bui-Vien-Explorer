@@ -1,13 +1,17 @@
-﻿namespace TravelSystem.Mobile.Views;
+﻿using TravelSystem.Mobile.Services;
+
+namespace TravelSystem.Mobile.Views;
 
 public partial class MainPage : ContentPage
 {
-	int count = 0;
+    private readonly DatabaseService _dbService;
+    int count = 0;
 
-	public MainPage()
+	public MainPage(DatabaseService dbService)
 	{
 		InitializeComponent();
-	}
+        _dbService = dbService;
+    }
 
 	private void OnCounterClicked(object? sender, EventArgs e)
 	{
