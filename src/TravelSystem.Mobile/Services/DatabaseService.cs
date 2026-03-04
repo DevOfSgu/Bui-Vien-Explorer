@@ -36,7 +36,7 @@ public class DatabaseService
                 LocalRoute,
                 LocalZone,
                 LocalNarration,
-                VisitLog,
+                LocalAnalytics,
                 AppSetting>();
 
             Console.WriteLine("✅ Bùi Viện Database Initialized!");
