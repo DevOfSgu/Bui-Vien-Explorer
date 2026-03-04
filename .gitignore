@@ -427,7 +427,6 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
-*.sql
 *.bak
 *.db
 

@@ -1,0 +1,131 @@
+-- ============================================================
+-- RESET: Xóa b?ng cu (n?u có) tru?c khi t?o l?i
+-- Th? t? xóa: b?ng con tru?c, b?ng cha sau (tránh l?i FK)
+-- ============================================================
+IF OBJECT_ID('Analytics', 'U') IS NOT NULL DROP TABLE Analytics;
+IF OBJECT_ID('Narrations', 'U') IS NOT NULL DROP TABLE Narrations;
+IF OBJECT_ID('AudioFiles', 'U') IS NOT NULL DROP TABLE AudioFiles;
+IF OBJECT_ID('Zones', 'U') IS NOT NULL DROP TABLE Zones;
+IF OBJECT_ID('Users', 'U') IS NOT NULL DROP TABLE Users;
+IF OBJECT_ID('Routes', 'U') IS NOT NULL DROP TABLE Routes;
+IF OBJECT_ID('Shops', 'U') IS NOT NULL DROP TABLE Shops;
+-- ============================================================
+-- 1. Shops (C?n t?o tru?c vì Users và Zones tham chi?u d?n nó)
+-- ============================================================
+CREATE TABLE Shops (
+    Id INT IDENTITY(1, 1) PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL,
+    Address NVARCHAR(255),
+    PhoneNumber NVARCHAR(20),
+    ImageUrl NVARCHAR(500),
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
+GO
+-- ============================================================
+-- 2. Routes (Tuy?n du?ng tour)
+-- ============================================================
+CREATE TABLE Routes (
+    Id INT IDENTITY(1, 1) PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL,
+    Description NVARCHAR(500),
+    StartLatitude DECIMAL(10, 8),
+    StartLongitude DECIMAL(11, 8),
+    QRCode NVARCHAR(255),
+    IsActive BIT DEFAULT 1,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE()
+);
+GO
+-- ============================================================
+-- 3. Users (Qu?n tr? viên & Vendor)
+-- ============================================================
+CREATE TABLE Users (
+    Id INT IDENTITY(1, 1) PRIMARY KEY,
+    Username NVARCHAR(50) NOT NULL UNIQUE,
+    PasswordHash NVARCHAR(255) NOT NULL,
+    Role INT DEFAULT 0,
+    -- 0: Admin, 1: Vendor
+    ShopId INT NULL,
+    IsActive BIT DEFAULT 1,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    CONSTRAINT FK_Users_Shops FOREIGN KEY (ShopId) REFERENCES Shops(Id)
+);
+GO
+-- ============================================================
+-- 4. Zones (Các di?m d?ng / POI)
+-- ============================================================
+CREATE TABLE Zones (
+    Id INT IDENTITY(1, 1) PRIMARY KEY,
+    RouteId INT NOT NULL,
+    ShopId INT NULL,
+    Name NVARCHAR(100) NOT NULL,
+    Description NVARCHAR(1000),
+    ImageUrl NVARCHAR(500),
+    Latitude DECIMAL(10, 8) NOT NULL,
+    Longitude DECIMAL(11, 8) NOT NULL,
+    Radius INT DEFAULT 15,
+    -- Bán kính kích ho?t (mét)
+    OrderIndex INT DEFAULT 0,
+    -- Th? t? hi?n th? trên l? trình
+    ZoneType INT DEFAULT 0,
+    -- 0:Bar, 1:Restaurant, 2:Landmark...
+    IsActive BIT DEFAULT 1,
+    ActiveTime INT DEFAULT 0,
+    -- 0:All, 1:Day, 2:Night
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE(),
+    CONSTRAINT FK_Zones_Routes FOREIGN KEY (RouteId) REFERENCES Routes(Id) ON DELETE CASCADE,
+    CONSTRAINT FK_Zones_Shops FOREIGN KEY (ShopId) REFERENCES Shops(Id)
+);
+GO
+-- ============================================================
+-- 5. Narrations (K?ch b?n TTS da ngôn ng?)
+-- ============================================================
+CREATE TABLE Narrations (
+    Id INT IDENTITY(1, 1) PRIMARY KEY,
+    ZoneId INT NOT NULL,
+    Language NVARCHAR(5) NOT NULL,
+    -- "vi", "en", "ja", "ko"...
+    Text NVARCHAR(MAX),
+    -- N?i dung k?ch b?n thuy?t minh
+    VoiceId NVARCHAR(50),
+    -- "vi-VN-Standard-A", "en-US-Wavenet-D"
+    UpdatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedBy INT NULL,
+    -- Admin/Vendor nào c?p nh?t
+    CONSTRAINT FK_Narrations_Zones FOREIGN KEY (ZoneId) REFERENCES Zones(Id) ON DELETE CASCADE,
+    CONSTRAINT FK_Narrations_Users FOREIGN KEY (UpdatedBy) REFERENCES Users(Id)
+);
+GO
+-- ============================================================
+-- 6. Analytics (Th?ng kê ?n danh t? Mobile App)
+-- ============================================================
+CREATE TABLE Analytics (
+    Id INT IDENTITY(1, 1) PRIMARY KEY,
+    ZoneId INT NULL,
+    -- Null khi ActionType = 'LocationPing'
+    RouteId INT NULL,
+    SessionId UNIQUEIDENTIFIER NOT NULL,
+    -- UUID ?n danh t?o t? Mobile
+    Latitude DECIMAL(10, 8),
+    -- C?n cho Heatmap
+    Longitude DECIMAL(11, 8),
+    -- C?n cho Heatmap
+    ActionType NVARCHAR(50) NOT NULL,
+    -- "EnterZone", "PlayNarration", "LocationPing"
+    DwellTimeSeconds INT DEFAULT 0,
+    -- Th?i gian ? l?i POI (giây)
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    CONSTRAINT FK_Analytics_Zones FOREIGN KEY (ZoneId) REFERENCES Zones(Id),
+    CONSTRAINT FK_Analytics_Routes FOREIGN KEY (RouteId) REFERENCES Routes(Id)
+);
+GO
+-- ============================================================
+-- 7. Indexes (T?i uu truy v?n báo cáo)
+-- ============================================================
+CREATE INDEX IDX_Analytics_Zone ON Analytics(ZoneId, ActionType);
+GO
+CREATE INDEX IDX_Analytics_Location ON Analytics(Latitude, Longitude);
+GO
+CREATE INDEX IDX_Analytics_Session ON Analytics(SessionId, CreatedAt);
+GO
