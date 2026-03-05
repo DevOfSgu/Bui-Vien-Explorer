@@ -19,22 +19,31 @@ DBCC CHECKIDENT ('Narrations', RESEED, 0);
 INSERT INTO Shops (Name, Address, PhoneNumber, ImageUrl)
 VALUES (
         N'The Hideout Bar',
-        N'N11 Bùi Viện, Quận 1, TP.HCM',
+        N 'N11 Bùi Viện, Quận 1, TP.HCM',
         N'028-3838-3838',
         NULL
     ),
     (
         N'Crazy Buffalo Bar',
-        N'N9 Bùi Viện, Quận 1, TP.HCM',
+        N 'N9 Bùi Viện, Quận 1, TP.HCM',
         NULL,
         NULL
     ),
     (
         N'Spotted By Locals',
-        N'N5 Bùi Viện, Quận 1, TP.HCM',
+        N 'N5 Bùi Viện, Quận 1, TP.HCM',
         NULL,
         NULL
     );
+-- 1.5. Insert Users (Admin & Vendor)
+-- Mật khẩu mặc định đều là "123456" (Trong thực tế cần băm MD5/SHA256, ở đây dùng plain text để test tạm thời)
+INSERT INTO Users (Username, PasswordHash, Role, ShopId, IsActive)
+VALUES (N'admin', N'123456', 0, NULL, 1),
+    -- Role 0 = Admin
+    (N'vendor1', N'123456', 1, 1, 1),
+    -- Role 1 = Vendor (Quản lý The Hideout Bar)
+    (N'vendor2', N'123456', 1, 3, 1);
+-- Role 1 = Vendor (Quản lý Spotted By Locals)
 -- 2. Insert Route
 INSERT INTO Routes (
         Name,
@@ -83,7 +92,7 @@ VALUES (
         1,
         1,
         N'The Hideout Bar',
-        N'Một trong những quán bar lâu đời và nổi tiếng nhất phố Bùi Viện. Nổi tiếng với cocktail đặc sắc và nhạc live.',
+        N 'Một trong những quán bar lâu đời và nổi tiếng nhất phố Bùi Viện. Nổi tiếng với cocktail đặc sắc và nhạc live.',
         10.76945,
         106.69170,
         15,
@@ -122,7 +131,7 @@ VALUES (
         1,
         3,
         N'Spotted By Locals',
-        N'Nhà hàng được khách Tây yêu thích với menu phong phú, kết hợp ẩm thực Việt Nam và quốc tế.',
+        N 'Nhà hàng được khách Tây yêu thích với menu phong phú, kết hợp ẩm thực Việt Nam và quốc tế.',
         10.76890,
         106.69215,
         15,
@@ -136,32 +145,32 @@ INSERT INTO Narrations (ZoneId, Language, Text, VoiceId)
 VALUES (
         1,
         N'vi',
-        N'Chào mừng bạn đến với Phố Bùi Viện — con phố đi bộ sôi động và nổi tiếng nhất Sài Gòn! Nằm tại Quận 1, phố Bùi Viện là điểm hẹn lý tưởng của du khách trong và ngoài nước, đặc biệt về đêm khi toàn bộ tuyến phố bừng sáng với ánh đèn và âm nhạc. Hãy cùng khám phá những điểm thú vị trên tuyến phố này nhé!',
-        N'vi-VN-Standard-A'
+        N 'Chào mừng bạn đến với Phố Bùi Viện — con phố đi bộ sôi động và nổi tiếng nhất Sài Gòn! Nằm tại Quận 1, phố Bùi Viện là điểm hẹn lý tưởng của du khách trong và ngoài nước, đặc biệt về đêm khi toàn bộ tuyến phố bừng sáng với ánh đèn và âm nhạc. Hãy cùng khám phá những điểm thú vị trên tuyến phố này nhé!',
+        N 'vi-VN-Standard-A'
     ),
     (
         2,
         N'vi',
         N'Bạn đang đứng trước The Hideout Bar — một trong những quán bar lâu đời và được yêu thích nhất trên phố Bùi Viện. Quán nổi tiếng với thực đơn cocktail phong phú và không khí ấm cúng. Mở cửa từ 5 giờ chiều đến 2 giờ sáng mỗi ngày, đây là điểm đến không thể bỏ qua cho những ai yêu thích văn hóa bar Sài Gòn.',
-        N'vi-VN-Standard-A'
+        N 'vi-VN-Standard-A'
     ),
     (
         3,
         N'vi',
         N'Chào mừng đến với Crazy Buffalo Bar! Đây là điểm đến sôi động với phong cách miền Tây hoang dã, phục vụ bia tươi chất lượng và các loại cocktail đặc sắc. Mỗi tối quán đều có biểu diễn nhạc live với các ban nhạc địa phương và quốc tế, tạo nên một không khí cực kỳ năng động và vui vẻ.',
-        N'vi-VN-Standard-A'
+        N 'vi-VN-Standard-A'
     ),
     (
         4,
         N'vi',
         N'Đây là trái tim của Phố Bùi Viện — khu vực quảng trường trung tâm nơi mọi cuộc vui hội tụ. Vào mỗi cuối tuần, không gian này trở thành sân khấu lớn với các buổi biểu diễn âm nhạc đường phố, nghệ sĩ xiếc và các màn trình diễn nghệ thuật đặc sắc.',
-        N'vi-VN-Standard-A'
+        N 'vi-VN-Standard-A'
     ),
     (
         5,
         N'vi',
-        N'Spotted By Locals là nhà hàng được lòng cả khách nội địa lẫn du khách nước ngoài. Với thực đơn đa dạng kết hợp hương vị Việt Nam và quốc tế, không gian thoáng mát và nhân viên phục vụ thân thiện. Đây là lựa chọn hoàn hảo nếu bạn muốn thưởng thức một bữa ăn ngon sau khi khám phá phố Bùi Viện.',
-        N'vi-VN-Standard-A'
+        N 'Spotted By Locals là nhà hàng được lòng cả khách nội địa lẫn du khách nước ngoài. Với thực đơn đa dạng kết hợp hương vị Việt Nam và quốc tế, không gian thoáng mát và nhân viên phục vụ thân thiện. Đây là lựa chọn hoàn hảo nếu bạn muốn thưởng thức một bữa ăn ngon sau khi khám phá phố Bùi Viện.',
+        N 'vi-VN-Standard-A'
     );
 -- 5. Insert Narrations - Tiếng Anh
 INSERT INTO Narrations (ZoneId, Language, Text, VoiceId)
@@ -204,7 +213,7 @@ SELECT N'Zones',
     COUNT(*)
 FROM Zones
 UNION ALL
-SELECT N'Narrations',
+SELECT N 'Narrations',
     COUNT(*)
 FROM Narrations
 UNION ALL

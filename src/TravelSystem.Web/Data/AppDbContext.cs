@@ -8,6 +8,8 @@ public class AppDbContext : DbContext
     public DbSet<Routes> Routes { get; set; }
     public DbSet<Zone> Zones { get; set; }
     public DbSet<Narration> Narrations { get; set; }
+    public DbSet<Shop> Shops { get; set; }
+    public DbSet<User> Users { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options) { }

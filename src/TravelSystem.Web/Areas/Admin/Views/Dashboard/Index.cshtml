@@ -1,0 +1,46 @@
+@{
+    Layout = null; // Tạm thời chưa dùng layout
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">Admin Portal</span>
+            <div class="d-flex text-white align-items-center">
+                <span class="me-3">Xin chào, @User.Identity?.Name!</span>
+                <a asp-area="Admin" asp-controller="Auth" asp-action="Logout" class="btn btn-outline-light btn-sm">Đăng xuất</a>
+            </div>
+        </div>
+    </nav>
+    <div class="container mt-4">
+        <h2>Dashboard Quản Trị Viên</h2>
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card bg-primary text-white mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Quản lý Tuyến Đường</h5>
+                        <p class="card-text">Xem và chỉnh sửa các Routes.</p>
+                        <a href="#" class="btn btn-light">Go</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-success text-white mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Quản lý Cửa Hàng</h5>
+                        <p class="card-text">Quản lý các Shops và Vendor.</p>
+                        <a href="#" class="btn btn-light">Go</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
