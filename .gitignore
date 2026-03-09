@@ -430,6 +430,8 @@ FodyWeavers.xsd
 *.bak
 *.db
 
+appsettings.json‎
+
 *.bat
 
 # Docker configuration (contains sensitive data)
