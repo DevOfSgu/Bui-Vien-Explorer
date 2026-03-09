@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Admin Portal</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fc;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styling */
+        #sidebar {
+            width: 260px;
+            background-color: #ffffff;
+            border-right: 1px solid #edf2f9;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 100;
+            padding-top: 20px;
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            padding: 0 20px 30px;
+            text-decoration: none;
+            color: #333;
+        }
+
+        .sidebar-brand-icon {
+            background-color: #fee2e2;
+            color: #ef4444;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-right: 15px;
+        }
+
+        .sidebar-brand-text h5 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .sidebar-brand-text span {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .nav-item .nav-link {
+            color: #64748b;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            font-size: 14px;
+            border-radius: 8px;
+            margin: 0 15px 5px;
+            transition: all 0.2s;
+        }
+
+        .nav-item .nav-link i {
+            width: 24px;
+            font-size: 16px;
+            margin-right: 10px;
+            text-align: center;
+        }
+
+        /* Active State matches the image */
+        .nav-item .nav-link.active {
+            background-color: #fef2f2;
+            color: #ef4444;
+        }
+        
+        .nav-item .nav-link:hover:not(.active) {
+            background-color: #f8fafc;
+            color: #333;
+        }
+
+        /* Topbar & Main Content */
+        #content-wrapper {
+            margin-left: 260px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            height: 70px;
+            background-color: #fff;
+            border-bottom: 1px solid #edf2f9;
+            padding: 0 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .search-bar {
+            background-color: #f1f5f9;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 15px 8px 40px;
+            width: 300px;
+            font-size: 14px;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-container i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+
+        .topbar-icons {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .notification-btn {
+            color: #64748b;
+            position: relative;
+            background: none;
+            border: none;
+            font-size: 18px;
+        }
+
+        .notification-badge {
+            background-color: #ef4444;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .user-profile img {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: #fcd34d;
+        }
+
+        .main-content {
+            padding: 30px;
+            flex-grow: 1;
+        }
+
+        .page-title {
+            font-weight: 700;
+            font-size: 24px;
+            margin-bottom: 0;
+        }
+        
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .btn-primary-custom {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .btn-primary-custom:hover {
+            background-color: #dc2626;
+            color: white;
+        }
+
+        /* Card stylings */
+        .stat-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #edf2f9;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            height: 100%;
+        }
+
+        .stat-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background-color: #fee2e2;
+            color: #ef4444;
+        }
+
+        .stat-content p {
+            margin: 0;
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .stat-content h4 {
+            margin: 5px 0 0;
+            font-weight: 700;
+            font-size: 22px;
+        }
+        
+        .card-custom {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #edf2f9;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            padding: 20px;
+        }
+        
+        /* Table Styling */
+        .table-custom {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        .table-custom th {
+            color: #94a3b8;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            padding: 15px;
+            border-bottom: 1px solid #edf2f9;
+        }
+        
+        .table-custom td {
+            padding: 15px;
+            border-bottom: 1px solid #edf2f9;
+            vertical-align: middle;
+            font-size: 14px;
+        }
+        
+        .badge-soft {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .badge-red {
+            background-color: #fee2e2;
+            color: #ef4444;
+        }
+        
+        .badge-gray {
+            background-color: #f1f5f9;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <nav id="sidebar">
+        <a class="sidebar-brand" href="/Admin/Dashboard">
+            <div class="sidebar-brand-icon">
+                <i class="fa-brands fa-diaspora"></i> <!-- Similar to the logo in image -->
+            </div>
+            <div class="sidebar-brand-text">
+                <h5>Bui Vien Explorer</h5>
+                <span>Admin Dashboard</span>
+            </div>
+        </a>
+
+        @{
+            var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+        }
+
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link @(currentController == "Dashboard" ? "active" : "")" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                    <i class="fa-solid fa-border-all"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(currentController == "Routes" || currentController == "Zones" ? "active" : "")" asp-area="Admin" asp-controller="Routes" asp-action="Index">
+                    <i class="fa-solid fa-map"></i> Routes & Zones
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(currentController == "Narrations" ? "active" : "")" asp-area="Admin" asp-controller="Narrations" asp-action="Index">
+                    <i class="fa-solid fa-headphones"></i> Audio & Narrations
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(currentController == "VisitLogs" ? "active" : "")" asp-area="Admin" asp-controller="VisitLogs" asp-action="Index">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Visit Logs
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(currentController == "Heatmap" ? "active" : "")" asp-area="Admin" asp-controller="Heatmap" asp-action="Index">
+                    <i class="fa-solid fa-fire text-danger"></i> Visitor Heatmap
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(currentController == "Settings" ? "active" : "")" asp-area="Admin" asp-controller="Settings" asp-action="Index">
+                    <i class="fa-solid fa-gear"></i> Settings
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Content Wrapper -->
+    <div id="content-wrapper">
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="search-container">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" class="search-bar" placeholder="Search..." />
+            </div>
+            
+            <div class="topbar-icons">
+                <button class="notification-btn">
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="notification-badge"></span>
+                </button>
+                
+                <div class="dropdown">
+                    <div class="user-profile" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="https://ui-avatars.com/api/?name=Admin&background=fcd34d&color=fff" alt="User">
+                        <i class="fa-solid fa-chevron-down text-muted" style="font-size: 12px;"></i>
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm mt-2">
+                        <li><a class="dropdown-item" href="#"><i class="fa-solid fa-user me-2"></i> Profile</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" asp-area="Admin" asp-controller="Auth" asp-action="Logout"><i class="fa-solid fa-right-from-bracket me-2"></i> Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            @RenderBody()
+        </div>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

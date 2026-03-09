@@ -1,0 +1,68 @@
+@using TravelSystem.Shared.Models
+@model IEnumerable<Routes>
+@{
+    ViewData["Title"] = "Routes Management";
+    var counts = ViewBag.ZoneCounts as Dictionary<int, int> ?? new Dictionary<int, int>();
+}
+
+<div class="header-actions">
+    <div class="page-title">Routes Management</div>
+    <button class="btn btn-primary-custom"><i class="fa-solid fa-plus me-2"></i> Add New Route</button>
+</div>
+
+<div class="card-custom">
+    <!-- Filter Row -->
+    <div class="d-flex justify-content-between mb-4 pb-3 border-bottom border-light">
+        <div class="search-container">
+            <i class="fa-solid fa-search"></i>
+            <input type="text" class="search-bar" style="width: 400px; background-color: #fff; border: 1px solid #edf2f9;" placeholder="Search routes...">
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-responsive">
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>ROUTE NAME</th>
+                    <th>QR CODE</th>
+                    <th>TOTAL ZONES</th>
+                    <th>STATUS</th>
+                    <th>ACTIONS</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="text-muted">R-@item.Id.ToString("000")</td>
+                        <td>
+                            <div class="fw-bold text-dark">@item.Name</div>
+                            <small class="text-muted text-truncate d-inline-block" style="max-width:300px;">@item.Description</small>
+                        </td>
+                        <td><span class="badge-soft badge-gray" style="font-family: monospace;">@item.QRCode</span></td>
+                        <td>
+                            @{
+                                int c = counts.ContainsKey(item.Id) ? counts[item.Id] : 0;
+                            }
+                            <span class="badge-soft badge-red">@c Zones</span>
+                        </td>
+                        <td>
+                            @if(item.IsActive){
+                                <span class="badge-soft" style="background-color: #dcfce7; color: #16a34a;">Active</span>
+                            } else {
+                                <span class="badge-soft badge-gray">Draft</span>
+                            }
+                        </td>
+                        <td>
+                           <a asp-controller="Zones" asp-action="Index" asp-route-routeId="@item.Id" class="btn btn-sm btn-outline-danger" style="border-radius: 6px;">
+                               <i class="fa-solid fa-map-location-dot me-1"></i> View Zones
+                           </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

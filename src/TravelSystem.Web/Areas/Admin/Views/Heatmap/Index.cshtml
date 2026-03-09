@@ -1,0 +1,54 @@
+@model IEnumerable<dynamic>
+@{
+    ViewData["Title"] = "Visitor Heatmap";
+}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<div class="header-actions">
+    <div class="page-title">Visitor Heatmap (Live)</div>
+</div>
+
+<div class="card-custom">
+    <div id="map" style="height: 600px; width: 100%; border-radius: 8px;"></div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    <script>
+        var map = L.map('map').setView([10.7688, 106.6924], 17); // Bui Vien center
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+        }).addTo(map);
+
+        var points = [
+            @foreach(var item in Model) {
+                double intensity = 0.5;
+                if(item.ActionType == "PlayNarration") intensity = 1.0;
+                <text>[@item.Latitude, @item.Longitude, @intensity],</text>
+            }
+        ];
+
+        if(points.length === 0) {
+            // Mock data for UI presentation if DB is empty
+            points = [
+                // Highlight crowded areas in Bui Vien
+                [10.76945, 106.69170, 0.8], [10.76950, 106.69175, 0.9],
+                [10.76930, 106.69185, 1.0], [10.76935, 106.69190, 0.9],
+                [10.76910, 106.69200, 0.5], [10.76915, 106.69205, 0.6],
+                [10.76890, 106.69215, 0.7], [10.76895, 106.69225, 1.0],
+                [10.76880, 106.69240, 0.8], [10.76885, 106.69245, 0.9],
+                [10.76860, 106.69260, 0.8], [10.76850, 106.69270, 0.4]
+            ];
+        }
+
+        var heat = L.heatLayer(points, {
+            radius: 25,
+            blur: 15,
+            maxZoom: 17,
+            gradient: {0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1.0: 'red'}
+        }).addTo(map);
+    </script>
+}

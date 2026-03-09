@@ -1,46 +1,144 @@
 @{
-    Layout = null; // Tạm thời chưa dùng layout
+    ViewData["Title"] = "Dashboard";
 }
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Dashboard</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-</head>
-<body class="bg-light">
-    <nav class="navbar navbar-dark bg-dark">
-        <div class="container-fluid">
-            <span class="navbar-brand mb-0 h1">Admin Portal</span>
-            <div class="d-flex text-white align-items-center">
-                <span class="me-3">Xin chào, @User.Identity?.Name!</span>
-                <a asp-area="Admin" asp-controller="Auth" asp-action="Logout" class="btn btn-outline-light btn-sm">Đăng xuất</a>
+
+<div class="page-title mb-4">Dashboard</div>
+
+<!-- Stat Cards Row -->
+<div class="row mb-4 g-4">
+    <!-- Total Zones -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fa-solid fa-map-location-dot"></i>
+            </div>
+            <div class="stat-content">
+                <p>Total Zones</p>
+                <h4>12</h4>
             </div>
         </div>
-    </nav>
-    <div class="container mt-4">
-        <h2>Dashboard Quản Trị Viên</h2>
-        <div class="row mt-4">
-            <div class="col-md-4">
-                <div class="card bg-primary text-white mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title">Quản lý Tuyến Đường</h5>
-                        <p class="card-text">Xem và chỉnh sửa các Routes.</p>
-                        <a href="#" class="btn btn-light">Go</a>
+    </div>
+
+    <!-- Total Narrations -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background-color: #fce7f3; color: #db2777;">
+                <i class="fa-solid fa-wave-square"></i>
+            </div>
+            <div class="stat-content">
+                <p>Total Narrations</p>
+                <h4>45</h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Users -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background-color: #fee2e2; color: #ef4444;">
+                <i class="fa-solid fa-user-group"></i>
+            </div>
+            <div class="stat-content">
+                <p>Active Users Today</p>
+                <h4>120</h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total App Opens -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background-color: #fee2e2; color: #ef4444;">
+                <i class="fa-solid fa-mobile-screen"></i>
+            </div>
+            <div class="stat-content">
+                <p>Total App Opens</p>
+                <h4>3,400</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Chart Column -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="card-custom h-100">
+            <h6 class="fw-bold mb-4">Visits this week</h6>
+            <!-- Placeholder for Chart.js -->
+            <div style="height: 300px; display: flex; align-items: flex-end; justify-content: space-around; padding-top: 20px;">
+                <!-- CSS Mockup of Bar Chart -->
+                <div style="width: 10%; height: 30%; background-color: #fecaca; border-radius: 4px 4px 0 0;"></div>
+                <div style="width: 10%; height: 50%; background-color: #fca5a5; border-radius: 4px 4px 0 0;"></div>
+                <div style="width: 10%; height: 80%; background-color: #f87171; border-radius: 4px 4px 0 0;"></div>
+                <div style="width: 10%; height: 60%; background-color: #fca5a5; border-radius: 4px 4px 0 0;"></div>
+                <div style="width: 10%; height: 100%; background-color: #ef4444; border-radius: 4px 4px 0 0;"></div>
+                <div style="width: 10%; height: 75%; background-color: #f87171; border-radius: 4px 4px 0 0;"></div>
+                <div style="width: 10%; height: 40%; background-color: #fecaca; border-radius: 4px 4px 0 0;"></div>
+            </div>
+            <div class="d-flex justify-content-space-around mt-3 text-muted" style="font-size: 12px; padding: 0 10px;">
+                <span style="flex:1; text-align:center;">Mon</span>
+                <span style="flex:1; text-align:center;">Tue</span>
+                <span style="flex:1; text-align:center;">Wed</span>
+                <span style="flex:1; text-align:center;">Thu</span>
+                <span style="flex:1; text-align:center;">Fri</span>
+                <span style="flex:1; text-align:center;">Sat</span>
+                <span style="flex:1; text-align:center;">Sun</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Column -->
+    <div class="col-xl-4 col-lg-5">
+        <div class="card-custom h-100">
+            <h6 class="fw-bold mb-4">Recent Activity</h6>
+            
+            <div class="position-relative ms-3">
+                <div class="position-absolute h-100" style="left: 15px; top: 10px; border-left: 2px solid #edf2f9;"></div>
+                
+                <!-- Activity 1 -->
+                <div class="d-flex position-relative mb-4">
+                    <div class="d-flex align-items-center justify-content-center bg-white rounded-circle z-1" style="width: 32px; height: 32px; border: 2px solid #fecaca;">
+                        <i class="fa-solid fa-music text-danger" style="font-size:12px;"></i>
+                    </div>
+                    <div class="ms-3">
+                        <p class="mb-1 text-dark" style="font-size: 13px;">New audio added to <span class="fw-bold text-danger">Sahara Beer Club</span></p>
+                        <small class="text-muted" style="font-size: 11px;">2 hours ago</small>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card bg-success text-white mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title">Quản lý Cửa Hàng</h5>
-                        <p class="card-text">Quản lý các Shops và Vendor.</p>
-                        <a href="#" class="btn btn-light">Go</a>
+
+                <!-- Activity 2 -->
+                <div class="d-flex position-relative mb-4">
+                    <div class="d-flex align-items-center justify-content-center bg-white rounded-circle z-1" style="width: 32px; height: 32px; border: 2px solid #bfdbfe;">
+                        <i class="fa-solid fa-location-dot text-primary" style="font-size:12px;"></i>
+                    </div>
+                    <div class="ms-3">
+                        <p class="mb-1 text-dark" style="font-size: 13px;">New zone <span class="fw-bold text-danger">Bui Vien Arch</span> created</p>
+                        <small class="text-muted" style="font-size: 11px;">5 hours ago</small>
+                    </div>
+                </div>
+                
+                <!-- Activity 3 -->
+                <div class="d-flex position-relative mb-4">
+                    <div class="d-flex align-items-center justify-content-center bg-white rounded-circle z-1" style="width: 32px; height: 32px; border: 2px solid #bbf7d0;">
+                        <i class="fa-solid fa-user text-success" style="font-size:12px;"></i>
+                    </div>
+                    <div class="ms-3">
+                        <p class="mb-1 text-dark" style="font-size: 13px;">New admin user Nguyen Van A joined</p>
+                        <small class="text-muted" style="font-size: 11px;">Yesterday at 3:45 PM</small>
+                    </div>
+                </div>
+
+                <!-- Activity 4 -->
+                <div class="d-flex position-relative">
+                    <div class="d-flex align-items-center justify-content-center bg-white rounded-circle z-1" style="width: 32px; height: 32px; border: 2px solid #fef08a;">
+                        <i class="fa-solid fa-pen text-warning" style="font-size:12px;"></i>
+                    </div>
+                    <div class="ms-3">
+                        <p class="mb-1 text-dark" style="font-size: 13px;">Audio narration updated for <span class="fw-bold text-danger">Cong Coffee</span></p>
+                        <small class="text-muted" style="font-size: 11px;">Sep 12, 10:20 AM</small>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</body>
-</html>
+</div>

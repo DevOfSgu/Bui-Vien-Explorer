@@ -1,0 +1,115 @@
+@using TravelSystem.Shared.Models
+@model IEnumerable<Narration>
+@{
+    ViewData["Title"] = "Audio & Narrations";
+}
+
+<div class="header-actions">
+    <div class="page-title">Audio & Narrations</div>
+    <button class="btn btn-primary-custom"><i class="fa-solid fa-arrow-up-from-bracket me-2"></i> Upload Audio</button>
+</div>
+
+<div class="card-custom">
+    <!-- Filter Row -->
+    <div class="d-flex justify-content-between mb-4 pb-3 border-bottom border-light">
+        <div class="search-container">
+            <i class="fa-solid fa-search"></i>
+            <input type="text" class="search-bar" style="width: 400px; background-color: #fff; border: 1px solid #edf2f9;" placeholder="Search audio files...">
+        </div>
+        
+        <div class="d-flex gap-2">
+            <select class="form-select text-muted" style="width: 200px; border-color: #edf2f9; font-size: 14px;">
+                <option>All Languages</option>
+                <option>English</option>
+                <option>Vietnamese</option>
+                <option>Korean</option>
+            </select>
+            <button class="btn btn-outline-secondary" style="border-color:#edf2f9;"><i class="fa-solid fa-filter text-muted"></i></button>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-responsive">
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>ASSIGNED ZONE</th>
+                    <th>LANGUAGE</th>
+                    <th>AUDIO LENGTH</th>
+                    <th>ACTIONS</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Row 1 Mocked specifically to match image -->
+                <tr>
+                    <td class="text-muted">A-001</td>
+                    <td>
+                        <div class="text-dark">Sahara Beer Club</div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <img src="https://flagcdn.com/w20/gb.png" width="20" alt="UK Flag">
+                            <span class="text-dark" style="font-size:14px;">English</span>
+                        </div>
+                    </td>
+                    <td class="text-muted" style="font-family: monospace;">02:45</td>
+                    <td>
+                        <!-- Empty actions -->
+                    </td>
+                </tr>
+                
+                <!-- Row 2 Mocked specifically to match image -->
+                <tr>
+                    <td class="text-muted">A-002</td>
+                    <td>
+                        <div class="text-dark">Cong Coffee</div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <img src="https://flagcdn.com/w20/vn.png" width="20" alt="VN Flag">
+                            <span class="text-dark" style="font-size:14px;">Vietnamese</span>
+                        </div>
+                    </td>
+                    <td class="text-muted" style="font-family: monospace;">01:30</td>
+                    <td>
+                        <!-- Empty actions -->
+                    </td>
+                </tr>
+
+                <!-- Row 3 Mocked specifically to match image -->
+                <tr>
+                    <td class="text-muted">A-003</td>
+                    <td>
+                        <div class="text-dark">Bui Vien Walking Street Entrance</div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <img src="https://flagcdn.com/w20/kr.png" width="20" alt="KR Flag">
+                            <span class="text-dark" style="font-size:14px;">Korean</span>
+                        </div>
+                    </td>
+                    <td class="text-muted" style="font-family: monospace;">03:15</td>
+                    <td>
+                        <!-- Empty actions -->
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <span class="text-muted" style="font-size: 13px;">Showing <span class="fw-bold text-dark">1</span> to <span class="fw-bold text-dark">3</span> of <span class="fw-bold text-dark">12</span> results</span>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item disabled"><a class="page-link" href="#" style="border-color: #edf2f9; color: #94a3b8;"><i class="fa-solid fa-chevron-left"></i></a></li>
+                <li class="page-item active" style="--bs-pagination-active-bg: #ef4444; --bs-pagination-active-border-color: #ef4444;"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#" style="border-color: #edf2f9; color: #64748b;">2</a></li>
+                <li class="page-item"><a class="page-link" href="#" style="border-color: #edf2f9; color: #64748b;">3</a></li>
+                <li class="page-item disabled"><a class="page-link" href="#" style="border-color: #edf2f9; color: #64748b;">...</a></li>
+                <li class="page-item"><a class="page-link" href="#" style="border-color: #edf2f9; color: #64748b;"><i class="fa-solid fa-chevron-right"></i></a></li>
+            </ul>
+        </nav>
+    </div>
+</div>

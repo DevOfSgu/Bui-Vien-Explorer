@@ -1,0 +1,115 @@
+@using TravelSystem.Shared.Models
+@model IEnumerable<Zone>
+@{
+    ViewData["Title"] = "Zones Management";
+    var counts = ViewBag.NarrationCounts as Dictionary<int, int> ?? new Dictionary<int, int>();
+}
+
+<div class="header-actions">
+    <div class="d-flex align-items-center gap-3">
+        @if (ViewBag.SelectedRouteId != null)
+        {
+            <a asp-action="Index" asp-controller="Routes" class="btn btn-outline-secondary" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+        }
+        <div class="page-title">Zones Management</div>
+    </div>
+    <button class="btn btn-primary-custom"><i class="fa-solid fa-plus me-2"></i> Add New Zone</button>
+</div>
+
+<div class="card-custom">
+    <!-- Filter Row -->
+    <div class="d-flex justify-content-between mb-4 pb-3 border-bottom border-light">
+        <div class="search-container">
+            <i class="fa-solid fa-search"></i>
+            <input type="text" class="search-bar" style="width: 400px; background-color: #fff; border: 1px solid #edf2f9;" placeholder="Search zones...">
+        </div>
+        
+        <div class="d-flex gap-2">
+            <select class="form-select text-muted" style="width: 200px; border-color: #edf2f9; font-size: 14px;">
+                <option>All Categories</option>
+                <option>Bars & Clubs</option>
+                <option>Cafes</option>
+                <option>Restaurants</option>
+                <option>Landmarks</option>
+            </select>
+            <button class="btn btn-outline-secondary" style="border-color:#edf2f9;"><i class="fa-solid fa-filter text-muted"></i></button>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-responsive">
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>THUMBNAIL</th>
+                    <th>ZONE NAME</th>
+                    <th>GPS COORDINATES</th>
+                    <th>TOTAL AUDIO GUIDES</th>
+                    <th>ACTIONS</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="text-muted">Z-@item.Id.ToString("000")</td>
+                        <td>
+                            @if(item.ZoneType == 0) {
+                                <img src="https://ui-avatars.com/api/?name=@item.Name&background=333&color=fff&rounded=true" width="40" height="40" class="rounded" />
+                            }
+                            else if(item.ZoneType == 1) {
+                                <img src="https://ui-avatars.com/api/?name=@item.Name&background=fcd34d&color=333&rounded=true" width="40" height="40" class="rounded" />
+                            }
+                            else {
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
+                                    <i class="fa-regular fa-image text-muted"></i>
+                                </div>
+                            }
+                        </td>
+                        <td>
+                            <div class="fw-bold text-dark">@item.Name</div>
+                            <small class="text-muted">
+                                @(item.ZoneType == 0 ? "Bars & Clubs" : item.ZoneType == 1 ? "Restaurants/Cafes" : "Landmarks")
+                            </small>
+                        </td>
+                        <td><small class="text-muted" style="font-family: monospace;">@item.Latitude.ToString("0.0000")° N, @item.Longitude.ToString("0.0000")° E</small></td>
+                        <td>
+                            @{
+                                int c = counts.ContainsKey(item.Id) ? counts[item.Id] : 0;
+                            }
+                            @if(c > 0)
+                            {
+                                <span class="badge-soft badge-red">@c Guides</span>
+                            }
+                            else
+                            {
+                                <span class="badge-soft badge-gray">0 Guides</span>
+                            }
+                        </td>
+                        <td>
+                           <!-- Empty for now as per design --> 
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <span class="text-muted" style="font-size: 13px;">Showing <span class="fw-bold text-dark">1</span> to <span class="fw-bold text-dark">3</span> of <span class="fw-bold text-dark">12</span> results</span>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item disabled"><a class="page-link" href="#" style="border-color: #edf2f9; color: #94a3b8;"><i class="fa-solid fa-chevron-left"></i></a></li>
+                <li class="page-item active" style="--bs-pagination-active-bg: #ef4444; --bs-pagination-active-border-color: #ef4444;"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#" style="border-color: #edf2f9; color: #64748b;">2</a></li>
+                <li class="page-item"><a class="page-link" href="#" style="border-color: #edf2f9; color: #64748b;">3</a></li>
+                <li class="page-item disabled"><a class="page-link" href="#" style="border-color: #edf2f9; color: #64748b;">...</a></li>
+                <li class="page-item"><a class="page-link" href="#" style="border-color: #edf2f9; color: #64748b;"><i class="fa-solid fa-chevron-right"></i></a></li>
+            </ul>
+        </nav>
+    </div>
+</div>

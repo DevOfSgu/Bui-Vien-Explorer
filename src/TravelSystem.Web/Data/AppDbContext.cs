@@ -10,6 +10,7 @@ public class AppDbContext : DbContext
     public DbSet<Narration> Narrations { get; set; }
     public DbSet<Shop> Shops { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<Analytics> Analytics { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options) { }
