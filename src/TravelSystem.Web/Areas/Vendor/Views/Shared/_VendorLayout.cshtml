@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Admin Portal</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f6f8; /* background of main content */
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styling */
+        #sidebar {
+            width: 260px;
+            background-color: #ffffff; /* pure white sidebar */
+            border-right: 1px solid #edf2f9;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 100;
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            padding: 0 20px 30px;
+            text-decoration: none;
+            color: #333;
+        }
+
+        .sidebar-brand-icon {
+            background-color: #ef4444;
+            color: #ffffff;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-right: 15px;
+        }
+
+        .sidebar-brand-text h5 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 15px;
+            color: #111827;
+        }
+
+        .sidebar-brand-text span {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .nav-item .nav-link {
+            color: #4b5563;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            font-size: 14px;
+            border-radius: 8px;
+            margin: 0 15px 5px;
+            transition: all 0.2s;
+        }
+
+        .nav-item .nav-link i {
+            width: 24px;
+            font-size: 16px;
+            margin-right: 10px;
+            text-align: center;
+        }
+
+        /* Active State matches the image */
+        .nav-item .nav-link.active {
+            background-color: #fef2f2;
+            color: #ef4444;
+            font-weight: 600;
+        }
+        
+        .nav-item .nav-link:hover:not(.active) {
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+
+        /* Bottom User Profile in Sidebar */
+        .sidebar-user {
+            margin-top: auto;
+            border-top: 1px solid #edf2f9;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .sidebar-user img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #fed7aa;
+            margin-right: 12px;
+        }
+        
+        .sidebar-user-info {
+            flex-grow: 1;
+        }
+        
+        .sidebar-user-info p {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: #111827;
+        }
+        
+        .sidebar-user-info small {
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        /* Topbar & Main Content */
+        #content-wrapper {
+            margin-left: 260px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            height: 70px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #edf2f9;
+            padding: 0 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .search-bar {
+            background-color: #f1f5f9;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 15px 8px 40px;
+            width: 300px;
+            font-size: 14px;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-container i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+
+        .topbar-icons {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .notification-btn {
+            color: #64748b;
+            position: relative;
+            background: none;
+            border: none;
+            font-size: 18px;
+        }
+
+        .notification-badge {
+            background-color: #ef4444;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .user-profile img {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: #fcd34d;
+        }
+
+        .main-content {
+            padding: 30px;
+            flex-grow: 1;
+        }
+
+        .page-title {
+            font-weight: 700;
+            font-size: 24px;
+            margin-bottom: 0;
+        }
+        
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .btn-primary-custom {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .btn-primary-custom:hover {
+            background-color: #dc2626;
+            color: white;
+        }
+
+        /* Card stylings */
+        .stat-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #edf2f9;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            height: 100%;
+        }
+
+        .stat-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background-color: #fef2f2;
+            color: #ef4444;
+        }
+
+        .stat-content p {
+            margin: 0;
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .stat-content h4 {
+            margin: 5px 0 0;
+            font-weight: 700;
+            font-size: 22px;
+        }
+        
+        .card-custom {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #edf2f9;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            padding: 20px;
+        }
+        
+        /* Table Styling */
+        .table-custom {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        .table-custom th {
+            color: #94a3b8;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            padding: 15px;
+            border-bottom: 1px solid #edf2f9;
+        }
+        
+        .table-custom td {
+            padding: 15px;
+            border-bottom: 1px solid #edf2f9;
+            vertical-align: middle;
+            font-size: 14px;
+        }
+        
+        .badge-soft {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .badge-red {
+            background-color: #fee2e2;
+            color: #ef4444;
+        }
+        
+        .badge-gray {
+            background-color: #f1f5f9;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div id="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-icon">
+                <i class="fa-solid fa-beer-mug-empty"></i>
+            </div>
+            <div class="sidebar-brand-text">
+                <h5>Sahara Beer Club</h5>
+                <span>Merchant Partner</span>
+            </div>
+        </div>
+
+        <ul class="nav flex-column mt-2">
+            <li class="nav-item">
+                <a class="nav-link @Html.IsActive("Dashboard", "Index")" asp-area="Vendor" asp-controller="Dashboard" asp-action="Index">
+                    <i class="fa-solid fa-border-all"></i>
+                    Dashboard
+                </a>
+            </li>
+            <li class="nav-item mt-1">
+                <a class="nav-link @Html.IsActive("Menu", "Index")" asp-area="Vendor" asp-controller="Menu" asp-action="Index">
+                    <i class="fa-solid fa-utensils"></i>
+                    Menu Management
+                </a>
+            </li>
+            <li class="nav-item mt-1">
+                <a class="nav-link @Html.IsActive("Narrations", "Index")" asp-area="Vendor" asp-controller="Narrations" asp-action="Index">
+                    <i class="fa-solid fa-microphone"></i>
+                    Audio Scripts
+                </a>
+            </li>
+            <li class="nav-item mt-1">
+                <a class="nav-link @Html.IsActive("Settings", "Index")" asp-area="Vendor" asp-controller="Settings" asp-action="Index">
+                    <i class="fa-solid fa-gear"></i>
+                    Store Settings
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-user">
+            <img src="https://ui-avatars.com/api/?name=Alex+Sahara&background=fed7aa&color=c2410c&rounded=true&bold=true" alt="Profile">
+            <div class="sidebar-user-info">
+                <p>Alex Sahara</p>
+                <small>Store Manager</small>
+            </div>
+            <a asp-area="Admin" asp-controller="Auth" asp-action="Logout" class="text-muted" style="font-size: 16px;">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Content Wrapper -->
+    <div id="content-wrapper">
+        <!-- Topbar -->
+        <div class="topbar">
+            <!-- Using Page Title from View, or search bar depending on context -->
+            <div id="topbar-left-content" class="d-flex align-items-center w-100">
+                <h4 class="fw-bold mb-0 text-dark" style="font-size: 20px;">@ViewData["Title"]</h4>
+            </div>
+            
+            <div class="topbar-icons ms-auto">
+                <div class="d-flex bg-light rounded-pill p-1 me-2" style="border: 1px solid #edf2f9;">
+                    <button class="btn btn-sm btn-danger rounded-pill px-3 py-1 fw-bold" style="font-size: 12px;">Open</button>
+                    <button class="btn btn-sm text-secondary rounded-pill px-3 py-1 fw-bold" style="font-size: 12px; background: transparent;">Closed</button>
+                </div>
+
+                <button class="notification-btn me-3">
+                    <i class="fa-solid fa-bell text-secondary"></i>
+                    <span class="notification-badge border border-white border-2"></span>
+                </button>
+                
+                <img src="https://ui-avatars.com/api/?name=Alex+Sahara&background=e5e7eb&color=9ca3af&rounded=true&bold=true" alt="Profile" class="rounded-circle" width="40" height="40">
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            @RenderBody()
+        </div>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

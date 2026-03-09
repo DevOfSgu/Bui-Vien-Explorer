@@ -1,46 +1,334 @@
 @{
-    Layout = null;
+    ViewData["Title"] = "Dashboard Home";
 }
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vendor Dashboard</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-</head>
-<body class="bg-light">
-    <nav class="navbar navbar-dark bg-primary">
-        <div class="container-fluid">
-            <span class="navbar-brand mb-0 h1">Vendor Portal</span>
-            <div class="d-flex text-white align-items-center">
-                <span class="me-3">Xin chào, @User.Identity?.Name!</span>
-                <a asp-area="Vendor" asp-controller="Auth" asp-action="Logout" class="btn btn-outline-light btn-sm">Đăng xuất</a>
+
+<style>
+    /* Dashboard specific customizations to match the new mockup */
+    .stat-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        background-color: #dcfce7;
+        color: #16a34a;
+    }
+    
+    .dashboard-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 24px;
+        border: 1px solid #edf2f9;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+    }
+    
+    .card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .card-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background-color: #fee2e2;
+        color: #ef4444;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+    
+    .card-label {
+        color: #64748b;
+        font-size: 13px;
+        font-weight: 500;
+        margin-bottom: 5px;
+    }
+    
+    .card-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #111827;
+        margin: 0;
+    }
+
+    /* Live Feed */
+    .live-feed-item {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 20px;
+    }
+    
+    .live-feed-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .feed-avatar {
+        width: 40px;
+        height: 40px;
+        background-color: #f1f5f9;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        margin-right: 15px;
+    }
+
+    .feed-content h6 {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 2px;
+    }
+    
+    .feed-content span {
+        color: #94a3b8;
+        font-weight: 400;
+    }
+
+    .feed-action {
+        font-size: 13px;
+        font-weight: 500;
+        color: #ef4444;
+        margin-bottom: 2px;
+    }
+
+    .feed-time {
+        font-size: 11px;
+        color: #94a3b8;
+    }
+    
+    .btn-outline-custom {
+        border: 1px solid #e2e8f0;
+        color: #475569;
+        font-weight: 500;
+        font-size: 13px;
+        padding: 5px 12px;
+        border-radius: 6px;
+        background: transparent;
+    }
+
+    .table-detail th {
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 600;
+        border-bottom: 1px solid #edf2f9;
+        padding: 15px 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .table-detail td {
+        padding: 15px 20px;
+        vertical-align: middle;
+        font-size: 14px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .customer-td {
+        display: flex;
+        align-items: center;
+    }
+
+    .customer-avatar {
+        width: 32px;
+        height: 32px;
+        background-color: #f1f5f9;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        color: #94a3b8;
+        font-size: 14px;
+    }
+</style>
+
+<div class="row g-4 mb-4">
+    <!-- Total Scans Today -->
+    <div class="col-xl-3 col-md-6">
+        <div class="dashboard-card">
+            <div class="card-top">
+                <div class="card-icon"><i class="fa-solid fa-qrcode"></i></div>
+                <div class="stat-badge">+12%</div>
+            </div>
+            <div>
+                <div class="card-label">Total Scans Today</div>
+                <h3 class="card-value">142</h3>
             </div>
         </div>
-    </nav>
-    <div class="container mt-4">
-        <h2>Dashboard Quản Trản Cửa Hàng</h2>
-        <div class="row mt-4">
-            <div class="col-md-4">
-                <div class="card bg-info text-white mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title">Kịch bản TTS</h5>
-                        <p class="card-text">Quản lý và cập nhật lời thoại cho cửa hàng của bạn.</p>
-                        <a href="#" class="btn btn-light">Go</a>
-                    </div>
+    </div>
+
+    <!-- Vouchers Redeemed -->
+    <div class="col-xl-3 col-md-6">
+        <div class="dashboard-card">
+            <div class="card-top">
+                <div class="card-icon"><i class="fa-solid fa-gift"></i></div>
+                <div class="stat-badge">+5%</div>
+            </div>
+            <div>
+                <div class="card-label">Vouchers Redeemed</div>
+                <h3 class="card-value">48</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Est. Revenue -->
+    <div class="col-xl-3 col-md-6">
+        <div class="dashboard-card">
+            <div class="card-top">
+                <div class="card-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
+                <div class="stat-badge">+8%</div>
+            </div>
+            <div>
+                <div class="card-label">Est. Revenue from App</div>
+                <h3 class="card-value">$1,240.00</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Average Rating -->
+    <div class="col-xl-3 col-md-6">
+        <div class="dashboard-card">
+            <div class="card-top">
+                <div class="card-icon"><i class="fa-solid fa-star"></i></div>
+                <div class="stat-badge">+0.2%</div>
+            </div>
+            <div>
+                <div class="card-label">Average Rating</div>
+                <h3 class="card-value">4.8</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Chart Section -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="card-custom h-100 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h5 class="fw-bold mb-1 text-dark">Customer Traffic Trends</h5>
+                    <small class="text-muted">Weekly scan volume analysis</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn-outline-custom">Last 7 Days</button>
+                    <button class="btn-outline-custom">Export</button>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card bg-warning text-dark mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title">Thống Kê</h5>
-                        <p class="card-text">Xem lượt ghé thăm và lượt nghe tại cửa hàng.</p>
-                        <a href="#" class="btn btn-light">Go</a>
-                    </div>
+            
+            <!-- Mockup Chart Area representing the red curve -->
+            <div class="text-center position-relative w-100" style="height: 250px; background: linear-gradient(0deg, #fff 0%, #fef2f2 100%); border-bottom: 1px solid #f1f5f9;">
+                <!-- A simple SVG curve to mock the design -->
+                <svg width="100%" height="100%" viewBox="0 0 800 250" preserveAspectRatio="none">
+                    <path d="M0 200 Q 200 150 400 100 T 600 180 T 800 60" fill="none" stroke="#ef4444" stroke-width="6" stroke-linecap="round"/>
+                </svg>
+                <div class="d-flex justify-content-between position-absolute w-100" style="bottom: -25px; color: #a1a1aa; font-size: 11px; font-weight: 600; padding: 0 10px;">
+                    <span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span>
                 </div>
             </div>
         </div>
     </div>
-</body>
-</html>
+
+    <!-- Live Feed Section -->
+    <div class="col-xl-4 col-lg-5">
+        <div class="card-custom h-100 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0 text-dark">Live Feed</h5>
+                <div style="width: 8px; height: 8px; background-color: #10b981; border-radius: 50%;"></div>
+            </div>
+            
+            <div class="live-feed-list">
+                <div class="live-feed-item">
+                    <div class="feed-avatar"><i class="fa-solid fa-user"></i></div>
+                    <div class="feed-content">
+                        <h6>John D. <span>scanned</span></h6>
+                        <div class="feed-action">BOGOF Draft Beer</div>
+                        <div class="feed-time">2 mins ago</div>
+                    </div>
+                </div>
+                
+                <div class="live-feed-item mt-4">
+                    <div class="feed-avatar"><i class="fa-solid fa-user"></i></div>
+                    <div class="feed-content">
+                        <h6>Sarah M. <span>scanned</span></h6>
+                        <div class="feed-action">Happy Hour Voucher</div>
+                        <div class="feed-time">15 mins ago</div>
+                    </div>
+                </div>
+                
+                <div class="live-feed-item mt-4">
+                    <div class="feed-avatar"><i class="fa-solid fa-user"></i></div>
+                    <div class="feed-content">
+                        <h6>Mike R. <span>scanned</span></h6>
+                        <div class="feed-action">Loyalty Reward</div>
+                        <div class="feed-time">24 mins ago</div>
+                    </div>
+                </div>
+                
+                <div class="live-feed-item mt-4">
+                    <div class="feed-avatar"><i class="fa-solid fa-user"></i></div>
+                    <div class="feed-content">
+                        <h6>Emma W. <span style="color:#ef4444;opacity:0.6;">scanned</span></h6>
+                        <div class="feed-action" style="color:#f87171;">Draft Pint 50% Off</div>
+                        <div class="feed-time">45 mins ago</div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn w-100 mt-4 text-danger fw-bold" style="border: 1px solid #fee2e2; background-color: transparent; border-radius: 8px; font-size: 14px;">View All Activity</button>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Details Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card-custom p-0 overflow-hidden">
+            <div class="p-4 border-bottom border-light">
+                <h5 class="fw-bold mb-0 text-dark">Recent QR Scans Detail</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-custom table-detail mb-0">
+                    <thead>
+                        <tr>
+                            <th>Customer</th>
+                            <th>Voucher Type</th>
+                            <th>Status</th>
+                            <th>Time</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="customer-td">
+                                <div class="customer-avatar"><i class="fa-solid fa-user"></i></div>
+                                <span class="fw-bold text-dark">John Doe</span>
+                            </td>
+                            <td class="text-dark">BOGOF Draft Beer</td>
+                            <td><span class="stat-badge border">REDEEMED</span></td>
+                            <td class="text-muted">14:24 PM</td>
+                            <td class="fw-bold text-dark">$8.50</td>
+                        </tr>
+                        <tr>
+                            <td class="customer-td">
+                                <div class="customer-avatar"><i class="fa-solid fa-user"></i></div>
+                                <span class="fw-bold text-dark">Sarah Miller</span>
+                            </td>
+                            <td class="text-dark">Happy Hour Discount</td>
+                            <td><span class="stat-badge border">REDEEMED</span></td>
+                            <td class="text-muted">14:15 PM</td>
+                            <td class="fw-bold text-dark">$12.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
