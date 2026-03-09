@@ -1,0 +1,454 @@
+@{
+    ViewData["Title"] = "Store Settings";
+}
+
+<style>
+    .settings-header {
+        margin-bottom: 25px;
+    }
+    
+    .settings-header p {
+        color: #64748b;
+        margin-bottom: 0;
+        font-size: 14px;
+        margin-top: 5px;
+    }
+
+    .settings-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 24px;
+        border: 1px solid #edf2f9;
+        box-shadow: 0 2px 4px -1px rgba(0,0,0,0.02);
+        margin-bottom: 24px;
+    }
+
+    .card-title-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+    
+    .card-title-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: #ef4444;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+    }
+
+    .card-title-text {
+        font-weight: 700;
+        font-size: 16px;
+        color: #111827;
+        margin: 0;
+    }
+
+    .form-group label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 8px;
+    }
+
+    .form-control-custom {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-size: 14px;
+        color: #1f2937;
+        width: 100%;
+        background-color: #fafaf9;
+    }
+
+    .form-control-custom:focus {
+        outline: none;
+        border-color: #ef4444;
+        background-color: #fff;
+    }
+
+    /* Media Upload Area */
+    .upload-box {
+        background-color: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    .upload-logo {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        margin-bottom: 10px;
+    }
+
+    .upload-icon-overlay {
+        position: absolute;
+        bottom: 5px;
+        right: 15px;
+        background-color: #ef4444;
+        color: white;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        border: 2px solid white;
+        cursor: pointer;
+    }
+
+    .upload-helper-text {
+        font-size: 10px;
+        color: #94a3b8;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        margin-top: 15px;
+    }
+
+    .upload-gallery-add {
+        width: 140px;
+        height: 140px;
+        border-radius: 12px;
+    }
+
+    .upload-gallery-add i {
+        color: #94a3b8;
+        font-size: 24px;
+        margin-bottom: 8px;
+    }
+
+    .upload-gallery-add span {
+        font-size: 11px;
+        color: #94a3b8;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .gallery-preview {
+        width: 140px;
+        height: 140px;
+        border-radius: 12px;
+        object-fit: cover;
+    }
+
+    /* Location & Hours */
+    .geo-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 16px;
+        background-color: #f8fafc;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        font-size: 13px;
+    }
+
+    .geo-label {
+        color: #64748b;
+    }
+
+    .geo-value {
+        color: #1e293b;
+        font-family: monospace;
+        letter-spacing: 1px;
+    }
+
+    .map-placeholder {
+        background-color: #e2e8f0;
+        border-radius: 12px;
+        height: 180px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+        font-size: 24px;
+        margin-top: 15px;
+    }
+
+    /* Table Hours */
+    .hours-table {
+        width: 100%;
+        font-size: 13px;
+    }
+    
+    .hours-table th {
+        color: #64748b;
+        font-weight: 500;
+        padding-bottom: 12px;
+    }
+    
+    .hours-table td {
+        padding: 10px 0;
+        color: #111827;
+        font-weight: 500;
+    }
+
+    .time-input-group {
+        position: relative;
+        display: inline-block;
+        width: 120px;
+    }
+    
+    .time-input-group input {
+        width: 100%;
+        border: none;
+        background-color: #f8fafc;
+        padding: 8px 12px;
+        border-radius: 6px;
+        color: #334155;
+    }
+    
+    .time-input-group i {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #64748b;
+    }
+
+    .status-badge {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-open {
+        background-color: #dcfce7;
+        color: #16a34a;
+    }
+
+    /* Floating Save Button */
+    .floating-save-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background-color: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 24px;
+        font-weight: 600;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4);
+        transition: 0.2s;
+        z-index: 1000;
+    }
+    
+    .floating-save-btn:hover {
+        background-color: #dc2626;
+        transform: translateY(-2px);
+    }
+</style>
+
+<div class="settings-header">
+    <h3 class="fw-bold mb-0 text-dark">Store Settings</h3>
+    <p>Manage your club profile, media, and operating hours.</p>
+</div>
+
+<!-- Basic Info -->
+<div class="settings-card">
+    <div class="card-title-row">
+        <div class="card-title-icon"><i class="fa-solid fa-info"></i></div>
+        <h4 class="card-title-text">Basic Info</h4>
+    </div>
+    
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label>Store Name</label>
+                <input type="text" class="form-control-custom" value="Sahara Beer Club" />
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label>Category</label>
+                <select class="form-control-custom" style="appearance: auto;">
+                    <option selected>Bar</option>
+                    <option>Restaurant</option>
+                    <option>Club</option>
+                    <option>Café</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label>Description</label>
+        <textarea class="form-control-custom" rows="4">The ultimate craft beer destination in the heart of the city. We serve over 50 types of local and international brews with a desert-themed atmosphere.</textarea>
+    </div>
+</div>
+
+<!-- Media -->
+<div class="settings-card">
+    <div class="card-title-row">
+        <div class="card-title-icon"><i class="fa-regular fa-image"></i></div>
+        <h4 class="card-title-text">Media</h4>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="form-group">
+                <label>Store Logo</label>
+                <div class="d-flex flex-column align-items-center mt-2">
+                    <div class="position-relative">
+                        <div class="upload-box upload-logo">
+                            <i class="fa-solid fa-store" style="font-size: 30px; color: #94a3b8;"></i>
+                        </div>
+                        <div class="upload-icon-overlay">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                        </div>
+                    </div>
+                    <span class="upload-helper-text">PNG, JPG UP TO 2MB</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="form-group">
+                <label>Store Gallery</label>
+                <div class="d-flex gap-3 flex-wrap mt-2">
+                    <div class="upload-box upload-gallery-add flex-column">
+                        <i class="fa-regular fa-image"></i>
+                        <span class="text-uppercase">Add Photo</span>
+                    </div>
+                    <!-- Sample Gallery Images -->
+                    <img src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=400&fit=crop" class="gallery-preview" alt="Gallery 1" />
+                    <img src="https://images.unsplash.com/photo-1548651877-c91703e7280d?q=80&w=400&fit=crop" class="gallery-preview" alt="Gallery 2" />
+                    <img src="https://images.unsplash.com/photo-1572116469696-31de0f17cc34?q=80&w=400&fit=crop" class="gallery-preview" alt="Gallery 3" />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Location & Hours -->
+<div class="settings-card">
+    <div class="card-title-row">
+        <div class="card-title-icon"><i class="fa-regular fa-clock"></i></div>
+        <h4 class="card-title-text">Location & Hours</h4>
+    </div>
+    
+    <div class="row g-5">
+        <div class="col-md-5 border-end border-light pe-5">
+            <div class="form-group mb-3">
+                <label class="mb-3">Geographic Location</label>
+                <div class="geo-row">
+                    <span class="geo-label">Latitude</span>
+                    <span class="geo-value fw-bold">24.7136° N</span>
+                </div>
+                <div class="geo-row">
+                    <span class="geo-label">Longitude</span>
+                    <span class="geo-value fw-bold">46.6753° E</span>
+                </div>
+                <div class="map-placeholder">
+                    <i class="fa-regular fa-map"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-7 ps-4">
+            <div class="form-group">
+                <label class="mb-3">Operating Hours</label>
+                <table class="hours-table">
+                    <thead>
+                        <tr>
+                            <th>Day</th>
+                            <th>Opening Time</th>
+                            <th>Closing Time</th>
+                            <th class="text-end">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Monday</td>
+                            <td>
+                                <div class="time-input-group">
+                                    <input type="text" value="04:00 PM" readonly />
+                                    <i class="fa-regular fa-clock"></i>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="time-input-group">
+                                    <input type="text" value="02:00 AM" readonly />
+                                    <i class="fa-regular fa-clock"></i>
+                                </div>
+                            </td>
+                            <td class="text-end"><span class="status-badge status-open">OPEN</span></td>
+                        </tr>
+                        <tr>
+                            <td>Tue - Thu</td>
+                            <td>
+                                <div class="time-input-group">
+                                    <input type="text" value="04:00 PM" readonly />
+                                    <i class="fa-regular fa-clock"></i>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="time-input-group">
+                                    <input type="text" value="02:00 AM" readonly />
+                                    <i class="fa-regular fa-clock"></i>
+                                </div>
+                            </td>
+                            <td class="text-end"><span class="status-badge status-open">OPEN</span></td>
+                        </tr>
+                        <tr>
+                            <td>Fri - Sun</td>
+                            <td>
+                                <div class="time-input-group">
+                                    <input type="text" value="12:00 PM" readonly />
+                                    <i class="fa-regular fa-clock"></i>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="time-input-group">
+                                    <input type="text" value="04:00 AM" readonly />
+                                    <i class="fa-regular fa-clock"></i>
+                                </div>
+                            </td>
+                            <td class="text-end"><span class="status-badge status-open">OPEN</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Security -->
+<div class="settings-card">
+    <div class="card-title-row">
+        <div class="card-title-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <h4 class="card-title-text">Security</h4>
+    </div>
+    
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h6 class="fw-bold mb-1 text-dark">Manage Access</h6>
+            <p class="text-muted mb-0" style="font-size: 13px;">Update your account password or manage store visibility.</p>
+        </div>
+        <div class="d-flex gap-4 align-items-center">
+            <button class="btn border fw-bold text-dark" style="background-color: #f8fafc; font-size: 13px;">Change Password</button>
+            <a href="#" class="text-decoration-none" style="color: #94a3b8; font-size: 13px;">Deactivate Store</a>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Save Button -->
+<button class="floating-save-btn">
+    <i class="fa-regular fa-floppy-disk"></i> Save Changes
+</button>

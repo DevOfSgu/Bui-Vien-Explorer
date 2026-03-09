@@ -13,8 +13,8 @@
                 <i class="fa-solid fa-map-location-dot"></i>
             </div>
             <div class="stat-content">
-                <p>Total Zones</p>
-                <h4>12</h4>
+                <p>Total POIs</p>
+                <h4>@ViewBag.TotalZones</h4>
             </div>
         </div>
     </div>
@@ -45,15 +45,15 @@
         </div>
     </div>
 
-    <!-- Total App Opens -->
+    <!-- Average Dwell Time -->
     <div class="col-xl-3 col-md-6">
         <div class="stat-card">
-            <div class="stat-icon" style="background-color: #fee2e2; color: #ef4444;">
-                <i class="fa-solid fa-mobile-screen"></i>
+            <div class="stat-icon" style="background-color: #fef08a; color: #ca8a04;">
+                <i class="fa-solid fa-stopwatch"></i>
             </div>
             <div class="stat-content">
-                <p>Total App Opens</p>
-                <h4>3,400</h4>
+                <p>Avg. Listen Time / POI</p>
+                <h4>@ViewBag.AvgDwellTime<small style="font-size:14px; font-weight:normal; color:#64748b;">s</small></h4>
             </div>
         </div>
     </div>
@@ -87,57 +87,30 @@
         </div>
     </div>
 
-    <!-- Recent Activity Column -->
+    <!-- Top POIs Column -->
     <div class="col-xl-4 col-lg-5">
         <div class="card-custom h-100">
-            <h6 class="fw-bold mb-4">Recent Activity</h6>
+            <h6 class="fw-bold mb-4">Top POIs (Most Listened)</h6>
             
-            <div class="position-relative ms-3">
-                <div class="position-absolute h-100" style="left: 15px; top: 10px; border-left: 2px solid #edf2f9;"></div>
-                
-                <!-- Activity 1 -->
-                <div class="d-flex position-relative mb-4">
-                    <div class="d-flex align-items-center justify-content-center bg-white rounded-circle z-1" style="width: 32px; height: 32px; border: 2px solid #fecaca;">
-                        <i class="fa-solid fa-music text-danger" style="font-size:12px;"></i>
-                    </div>
-                    <div class="ms-3">
-                        <p class="mb-1 text-dark" style="font-size: 13px;">New audio added to <span class="fw-bold text-danger">Sahara Beer Club</span></p>
-                        <small class="text-muted" style="font-size: 11px;">2 hours ago</small>
-                    </div>
-                </div>
-
-                <!-- Activity 2 -->
-                <div class="d-flex position-relative mb-4">
-                    <div class="d-flex align-items-center justify-content-center bg-white rounded-circle z-1" style="width: 32px; height: 32px; border: 2px solid #bfdbfe;">
-                        <i class="fa-solid fa-location-dot text-primary" style="font-size:12px;"></i>
-                    </div>
-                    <div class="ms-3">
-                        <p class="mb-1 text-dark" style="font-size: 13px;">New zone <span class="fw-bold text-danger">Bui Vien Arch</span> created</p>
-                        <small class="text-muted" style="font-size: 11px;">5 hours ago</small>
-                    </div>
-                </div>
-                
-                <!-- Activity 3 -->
-                <div class="d-flex position-relative mb-4">
-                    <div class="d-flex align-items-center justify-content-center bg-white rounded-circle z-1" style="width: 32px; height: 32px; border: 2px solid #bbf7d0;">
-                        <i class="fa-solid fa-user text-success" style="font-size:12px;"></i>
-                    </div>
-                    <div class="ms-3">
-                        <p class="mb-1 text-dark" style="font-size: 13px;">New admin user Nguyen Van A joined</p>
-                        <small class="text-muted" style="font-size: 11px;">Yesterday at 3:45 PM</small>
-                    </div>
-                </div>
-
-                <!-- Activity 4 -->
-                <div class="d-flex position-relative">
-                    <div class="d-flex align-items-center justify-content-center bg-white rounded-circle z-1" style="width: 32px; height: 32px; border: 2px solid #fef08a;">
-                        <i class="fa-solid fa-pen text-warning" style="font-size:12px;"></i>
-                    </div>
-                    <div class="ms-3">
-                        <p class="mb-1 text-dark" style="font-size: 13px;">Audio narration updated for <span class="fw-bold text-danger">Cong Coffee</span></p>
-                        <small class="text-muted" style="font-size: 11px;">Sep 12, 10:20 AM</small>
-                    </div>
-                </div>
+            <div class="ms-1">
+                @{
+                    int rank = 1;
+                    foreach(var poi in ViewBag.TopPoIs)
+                    {
+                        var color = rank == 1 ? "text-danger" : (rank == 2 ? "text-warning" : (rank == 3 ? "text-primary" : "text-muted"));
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="fw-bold @color" style="font-size:18px; width:30px;">#@rank</div>
+                            <div class="flex-grow-1 ms-2">
+                                <div class="text-dark fw-bold" style="font-size:14px;">@poi.Name</div>
+                                <div class="progress mt-1" style="height: 6px;">
+                                    <div class="progress-bar bg-danger" role="progressbar" style="width: @(Math.Min(100, (poi.Count * 100) / 500))%" aria-valuenow="@poi.Count" aria-valuemin="0" aria-valuemax="500"></div>
+                                </div>
+                            </div>
+                            <div class="ms-3 text-muted" style="font-size:12px;">@poi.Count <i class="fa-solid fa-headphones"></i></div>
+                        </div>
+                        rank++;
+                    }
+                }
             </div>
         </div>
     </div>

@@ -1,0 +1,92 @@
+@model TravelSystem.Shared.Models.Zone
+@{
+    ViewData["Title"] = "Add New POI";
+}
+
+<div class="header-actions">
+    <div class="d-flex align-items-center gap-3">
+        <a asp-action="Index" asp-route-routeId="@Model.RouteId" class="btn btn-outline-secondary" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <div class="page-title">Create Point of Interest (Zone)</div>
+    </div>
+</div>
+
+<div class="card-custom">
+    <form asp-action="Create" method="post">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Name</label>
+                    <input asp-for="Name" class="form-control" placeholder="Enter POI Name" required />
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Description</label>
+                    <textarea asp-for="Description" class="form-control" rows="4" placeholder="Description of this place..."></textarea>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Select Route</label>
+                        <select asp-for="RouteId" class="form-select" asp-items="@(new SelectList(ViewBag.Routes, "Id", "Name"))">
+                            <option value="">-- Choose Route --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Category (Type)</label>
+                        <select asp-for="ZoneType" class="form-select">
+                            <option value="0">Bars & Clubs</option>
+                            <option value="1">Restaurants & Cafes</option>
+                            <option value="2">Shopping</option>
+                            <option value="3">Landmark/Street</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Linked Vendor Shop (Optional)</label>
+                    <select asp-for="ShopId" class="form-select" asp-items="@(new SelectList(ViewBag.Shops, "Id", "Name"))">
+                        <option value="">-- No Vendor / Generic Landmark --</option>
+                    </select>
+                    <small class="text-muted">If linked, vendor can edit narrations for this POI.</small>
+                </div>
+            </div>
+
+            <!-- GPS & Map settings right sidebar -->
+            <div class="col-md-4">
+                <div class="p-3 mb-4 rounded" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
+                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-location-dot text-danger me-2"></i> Location Settings</h6>
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Latitude</label>
+                        <input asp-for="Latitude" type="number" step="0.00000001" class="form-control form-control-sm" placeholder="10.7688" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Longitude</label>
+                        <input asp-for="Longitude" type="number" step="0.00000001" class="form-control form-control-sm" placeholder="106.6924" />
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Geo-fence Radius (meters)</label>
+                        <input asp-for="Radius" type="number" class="form-control form-control-sm" value="10" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Order Index on Route</label>
+                        <input asp-for="OrderIndex" type="number" class="form-control form-control-sm" value="1" />
+                    </div>
+
+                    <div class="form-check form-switch mt-4">
+                        <input class="form-check-input" type="checkbox" asp-for="IsActive" checked>
+                        <label class="form-check-label fw-bold">Active Station</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary-custom w-100 py-2 mt-2">
+                    <i class="fa-solid fa-check me-2"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
