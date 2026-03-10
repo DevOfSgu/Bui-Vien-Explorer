@@ -11,6 +11,8 @@ public class AppDbContext : DbContext
     public DbSet<Shop> Shops { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<Analytics> Analytics { get; set; }
+    // store global configuration items keyed by string
+    public DbSet<TravelSystem.Shared.Models.AppSetting> AppSettings { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options) { }
@@ -32,5 +34,9 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(n => n.ZoneId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // AppSetting uses string key
+        modelBuilder.Entity<TravelSystem.Shared.Models.AppSetting>()
+            .HasKey(s => s.Key);
     }
 }
