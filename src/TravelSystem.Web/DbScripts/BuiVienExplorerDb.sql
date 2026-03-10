@@ -1,4 +1,8 @@
 ﻿-- ============================================================
+-- SCHEMA - Bùi Viện Explorer (SQL Server)
+-- Chạy đúng DB: BuiVienExplorerDb
+-- ============================================================
+USE BuiVienExplorerDb;
 -- RESET: Xóa bảng cũ (nếu có) trước khi tạo lại
 -- Thứ tự xóa: bảng con trước, bảng cha sau (tránh lỗi FK)
 -- ============================================================
@@ -86,6 +90,8 @@ CREATE TABLE Narrations (
     -- Nội dung kịch bản thuyết minh
     VoiceId NVARCHAR(50),
     -- "vi-VN-Standard-A", "en-US-Wavenet-D"
+    ApprovalStatus NVARCHAR(20) NOT NULL DEFAULT 'Pending',
+    -- "Pending", "Approved", "Rejected"
     UpdatedAt DATETIME DEFAULT GETDATE(),
     UpdatedBy INT NULL,
     -- Admin/Vendor nào cập nhật

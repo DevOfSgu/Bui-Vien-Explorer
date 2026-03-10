@@ -9,39 +9,138 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Login - Bùi Viện Explorer</title>
+    <link rel="icon" type="image/png" href="~/icons/favicon.png" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; }
-        .login-card { max-width: 400px; margin: 100px auto; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .login-header { background-color: #343a40; color: white; border-radius: 10px 10px 0 0; padding: 20px; text-align: center; }
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+        .login-card { 
+            max-width: 420px; 
+            width: 100%;
+            border: none;
+            border-radius: 16px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+            background: #ffffff;
+            overflow: hidden;
+        }
+        .login-header { 
+            background-color: #ffffff; 
+            color: #212529; 
+            padding: 40px 30px 20px; 
+            text-align: center; 
+        }
+        .login-header img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .login-header h3 {
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        .login-header p {
+            color: #6c757d;
+            font-size: 0.95rem;
+        }
+        .form-control {
+            border-radius: 8px;
+            padding: 12px 15px;
+            border: 1px solid #dee2e6;
+            transition: all 0.2s;
+        }
+        .form-control:focus {
+            box-shadow: 0 0 0 3px rgba(33, 37, 41, 0.1);
+            border-color: #212529;
+        }
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+        .btn-login {
+            background-color: #212529;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-login:hover {
+            background-color: #343a40;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(33, 37, 41, 0.2);
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container d-flex justify-content-center">
         <div class="card login-card">
             <div class="login-header">
+                <img src="~/icons/logoapp.png" alt="Bùi Viện Explorer Logo" />
                 <h3>Admin Portal</h3>
-                <p class="mb-0">Bùi Viện Explorer</p>
+                <p class="mb-0">Bùi Viện Explorer Management</p>
             </div>
-            <div class="card-body p-4">
+            <div class="card-body px-4 pb-5 pt-2">
                 @if (ViewBag.Error != null)
                 {
-                    <div class="alert alert-danger">@ViewBag.Error</div>
+                    <div class="alert alert-danger" style="border-radius: 8px; font-size: 0.9rem;">
+                        <strong>Error:</strong> @ViewBag.Error
+                    </div>
                 }
                 
                 <form method="post" asp-area="Admin" asp-controller="Auth" asp-action="Login">
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label class="form-label">Username</label>
-                        <input type="text" name="username" class="form-control" required />
+                        <input type="text" name="username" class="form-control" placeholder="Enter your username" required />
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label class="form-label">Password</label>
-                        <input type="password" name="password" class="form-control" required />
+                        <div class="input-group">
+                            <input type="password" id="passwordInput" name="password" class="form-control" placeholder="Enter your password" required />
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword" style="border-color: #dee2e6;">
+                                <i class="fa-regular fa-eye" id="toggleIcon"></i>
+                            </button>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-dark w-100 mt-3">Login to Admin</button>
+                    <button type="submit" class="btn btn-login w-100 mt-2">Sign In</button>
+                    
+                    <div class="text-center mt-4">
+                        <a href="/" class="text-decoration-none text-muted" style="font-size: 0.9rem;">&larr; Back to App</a>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
+    
+    <script>
+        document.getElementById('togglePassword').addEventListener('click', function () {
+            const passwordInput = document.getElementById('passwordInput');
+            const toggleIcon = document.getElementById('toggleIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        });
+    </script>
 </body>
 </html>

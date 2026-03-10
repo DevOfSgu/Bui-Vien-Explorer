@@ -14,7 +14,7 @@
             "port": 1433,
             "driver": "MSSQL",
             "name": "BuiVienExplorer",
-            "database": "TravelSystem",
+            "database": "BuiVienExplorerDb",
             "username": "sa",
             "password": "Yuu123@123"
         }

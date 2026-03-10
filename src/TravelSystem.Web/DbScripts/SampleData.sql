@@ -1,4 +1,4 @@
--- ============================================================
+﻿-- ============================================================
 -- SAMPLE DATA - Bùi Viện Explorer (Đã mở rộng 20 record/bảng)
 -- ============================================================
 -- Xóa data cũ
@@ -163,7 +163,7 @@ VALUES (N'admin', N'123456', 0, NULL, 1),
     (N'vendor17', N'123456', 1, 17, 1),
     (N'vendor18', N'123456', 1, 18, 1);
 -- ============================================================
--- 3. Insert 20 Routes
+-- 3. Insert 1 Route
 -- ============================================================
 INSERT INTO Routes (
         Name,
@@ -179,158 +179,6 @@ VALUES (
         10.76968,
         106.69156,
         N'route-1',
-        1
-    ),
-    (
-        N'Saigon Street Food Walk',
-        N'Thưởng thức các món ăn đường phố đậm chất Việt Nam.',
-        10.76950,
-        106.69180,
-        N'route-2',
-        1
-    ),
-    (
-        N'Bui Vien Craft Beer Tour',
-        N'Khám phá các quán bia tươi hấp dẫn nhất khu phố Tây.',
-        10.76940,
-        106.69190,
-        N'route-3',
-        1
-    ),
-    (
-        N'District 1 Nightlife Route',
-        N'Trải nghiệm cuộc sống về đêm náo nhiệt ở trung tâm Sài Gòn.',
-        10.76920,
-        106.69200,
-        N'route-4',
-        1
-    ),
-    (
-        N'Coffee & Chill Experience',
-        N'Dành cho những ai thích các không gian quán cafe yên tĩnh.',
-        10.76910,
-        106.69220,
-        N'route-5',
-        1
-    ),
-    (
-        N'Photography Walk',
-        N'Góc phố đẹp để chụp ảnh lãng mạn.',
-        10.76900,
-        106.69230,
-        N'route-6',
-        1
-    ),
-    (
-        N'Live Music Venue Crawl',
-        N'Dạo quanh các quán bar có nhạc sống.',
-        10.76890,
-        106.69240,
-        N'route-7',
-        1
-    ),
-    (
-        N'Late Night Snacks Trail',
-        N'Tìm đồ ăn ngon sau nửa đêm.',
-        10.76880,
-        106.69250,
-        N'route-8',
-        1
-    ),
-    (
-        N'Premium Cocktail Tour',
-        N'Thưởng thức các món cocktail pha chế độc lạ.',
-        10.76870,
-        106.69260,
-        N'route-9',
-        1
-    ),
-    (
-        N'Backpacker Highlights',
-        N'Dành cho dân phượt quốc tế.',
-        10.76860,
-        106.69270,
-        N'route-10',
-        1
-    ),
-    (
-        N'Historic Alleys Walk',
-        N'Phám phá các con hẻm cổ kính gần Bùi Viện.',
-        10.76850,
-        106.69280,
-        N'route-11',
-        1
-    ),
-    (
-        N'Rooftop Bar Experience',
-        N'Ngắm nhìn toàn cảnh thành phố từ trên cao.',
-        10.76840,
-        106.69290,
-        N'route-12',
-        1
-    ),
-    (
-        N'Vegetarian Food Route',
-        N'Những quán ăn chay thanh tịnh giữa phố thị ồn ào.',
-        10.76830,
-        106.69300,
-        N'route-13',
-        1
-    ),
-    (
-        N'Expat Favorites Walk',
-        N'Những địa điểm được du khách nước ngoài bình chọn.',
-        10.76820,
-        106.69310,
-        N'route-14',
-        1
-    ),
-    (
-        N'Hidden Gems of Pham Ngu Lao',
-        N'Những điểm ít người biết đến nhưng cực chất.',
-        10.76810,
-        106.69320,
-        N'route-15',
-        1
-    ),
-    (
-        N'Local Pub Crawl',
-        N'Du ngoạn tại các quán pub dành cho dân bản địa.',
-        10.76800,
-        106.69330,
-        N'route-16',
-        1
-    ),
-    (
-        N'Street Performance Walk',
-        N'Tìm những nơi múa lửa nghệ thuật đường phố.',
-        10.76790,
-        106.69340,
-        N'route-17',
-        1
-    ),
-    (
-        N'Budget Travel Tour',
-        N'Chơi vui nhưng chỉ tốn dưới 200 cành!',
-        10.76780,
-        106.69350,
-        N'route-18',
-        1
-    ),
-    (
-        N'Weekend Party Route',
-        N'Tuyến đường "quẩy" banh nóc dành cho cuối tuần.',
-        10.76770,
-        106.69360,
-        N'route-19',
-        1
-    ),
-    (
-        N'Morning Sightseeing',
-        N'Ngắm một Bùi Viện rất khác vào lúc sáng sớm.',
-        10.76760,
-        106.69370,
-        N'route-20',
         1
     );
 -- ============================================================
@@ -363,248 +211,248 @@ VALUES (
         0
     ),
     (
-        2,
+        1,
         1,
         N'The Hideout Bar',
         N'Quán bar lâu đời.',
         10.76945,
         106.69170,
         15,
-        1,
+        2,
         0,
         1,
         2
     ),
     (
-        3,
+        1,
         2,
         N'Crazy Buffalo Bar',
         N'Biểu tượng nổi tiếng với mô hình trâu rừng.',
         10.76930,
         106.69185,
         15,
-        1,
+        3,
         0,
         1,
         2
     ),
     (
-        4,
+        1,
         NULL,
         N'Quảng trường giữa',
         N'Nơi hay có múa lửa nghệ thuật.',
         10.76910,
         106.69200,
         25,
-        1,
+        4,
         3,
         1,
         0
     ),
     (
-        5,
+        1,
         3,
         N'Spotted By Locals',
         N'Nhà hàng có không khí lãng mạn.',
         10.76890,
         106.69215,
         15,
-        1,
+        5,
         1,
         1,
         0
     ),
     (
-        6,
+        1,
         4,
         N'Boheme Pub',
         N'Điểm đến cho sinh viên quẩy banh nóc.',
         10.76895,
         106.69225,
         15,
-        1,
+        6,
         0,
         1,
         2
     ),
     (
-        7,
+        1,
         5,
         N'Sahara Beer Club',
         N'Trải nghiệm bia hơi và nhạc DJ.',
         10.76890,
         106.69230,
         15,
-        1,
+        7,
         0,
         1,
         2
     ),
     (
-        8,
+        1,
         6,
         N'Miss Saigon',
         N'Phong cách sang trọng với âm nhạc hiện đại.',
         10.76885,
         106.69235,
         15,
-        1,
+        8,
         0,
         1,
         2
     ),
     (
-        9,
+        1,
         7,
         N'Ocean Club',
         N'Nổi bật với thiết kế xanh mát nhiệt đới.',
         10.76880,
         106.69240,
         15,
-        1,
+        9,
         0,
         1,
         2
     ),
     (
-        10,
+        1,
         8,
         N'Donkey Bar',
         N'Không gian nhỏ, ấm cúng.',
         10.76875,
         106.69245,
         15,
-        1,
+        10,
         0,
         1,
         2
     ),
     (
-        11,
+        1,
         9,
         N'Universal Pub',
         N'Nhạc sống Tây ba lô yêu thích.',
         10.76870,
         106.69250,
         15,
-        1,
+        11,
         0,
         1,
         2
     ),
     (
-        12,
+        1,
         10,
         N'Champion Sports Bar',
         N'Nơi xem bóng đá ngoại hạng Anh tốt nhất.',
         10.76865,
         106.69255,
         15,
-        1,
+        12,
         0,
         1,
         2
     ),
     (
-        13,
+        1,
         11,
         N'Hair of the Dog',
         N'Sôi động thâu đêm.',
         10.76860,
         106.69260,
         15,
-        1,
+        13,
         0,
         1,
         2
     ),
     (
-        14,
+        1,
         12,
         N'Republic Club',
         N'Sang trọng đẳng cấp.',
         10.76855,
         106.69265,
         15,
-        1,
+        14,
         0,
         1,
         2
     ),
     (
-        15,
+        1,
         13,
         N'86 Club',
         N'Góc phố nhìn ra công viên 23/9.',
         10.76850,
         106.69270,
         15,
-        1,
+        15,
         0,
         1,
         2
     ),
     (
-        16,
+        1,
         14,
         N'Le Pub',
         N'Khách Tây hay ngồi vỉa hè.',
         10.76845,
         106.69275,
         15,
-        1,
+        16,
         0,
         1,
         2
     ),
     (
-        17,
+        1,
         15,
         N'Asiana Food Town',
         N'Khu ẩm thực đa quốc gia.',
         10.76840,
         106.69280,
         15,
-        1,
+        17,
         1,
         1,
         0
     ),
     (
-        18,
+        1,
         16,
         N'Krystal Lounge',
         N'Thư giãn thưởng thức Shisha.',
         10.76835,
         106.69285,
         15,
-        1,
+        18,
         0,
         1,
         2
     ),
     (
-        19,
+        1,
         17,
         N'Nubes Rooftop',
         N'Từ tầng thượng bạn có thể ngắm Landmark 81.',
         10.76830,
         106.69290,
         15,
-        1,
+        19,
         0,
         1,
         2
     ),
     (
-        20,
+        1,
         18,
         N'Sky Bar 360',
         N'Nhạc House, chill.',
         10.76825,
         106.69295,
         15,
-        1,
+        20,
         0,
         1,
         2
