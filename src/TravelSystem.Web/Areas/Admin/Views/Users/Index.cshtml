@@ -1,0 +1,66 @@
+@model IEnumerable<TravelSystem.Shared.Models.User>
+
+@{
+    ViewData["Title"] = "User Management";
+}
+
+<div class="header-actions">
+    <h2 class="page-title">User Management</h2>
+    <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#addUserModal">+ Add User</button>
+</div>
+
+@await Html.PartialAsync("_AddUserModal", new TravelSystem.Shared.Models.User())
+
+<div class="card-custom">
+    <table class="table-custom">
+        <thead>
+            <tr>
+                <th>Merchant ID</th>
+                <th>Store Name</th>
+                <th>Role</th>
+                <th>Owner Name</th>
+                <th>Date Joined</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <tr>
+                    <td>@user.Id</td>
+                    <td>@(user.Shop?.Name ?? "-")</td>
+                    <td>@(user.Role == 0 ? "Admin" : "Vendor")</td>
+                    <td>@user.FullName</td>
+                    <td>@user.CreatedAt.ToString("MMM dd, yyyy")</td>
+                    <td>
+                        @if (user.IsActive)
+                        {
+                            <span class="badge-soft badge-gray">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge-soft badge-red">Locked</span>
+                        }
+                    </td>
+                    <td>
+                        @if (user.IsActive)
+                        {
+                            <form asp-action="Lock" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@user.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Lock Account</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form asp-action="Unlock" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@user.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-success">Unlock Account</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

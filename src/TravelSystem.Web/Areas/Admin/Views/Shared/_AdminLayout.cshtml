@@ -316,7 +316,7 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link @(currentController == "Routes" || currentController == "Zones" ? "active" : "")" asp-area="Admin" asp-controller="Routes" asp-action="Index">
-                    <i class="fa-solid fa-map"></i> Routes & Zones
+                    <i class="fa-solid fa-map"></i> Zones Management
                 </a>
             </li>
             <li class="nav-item">
@@ -332,6 +332,11 @@
             <li class="nav-item">
                 <a class="nav-link @(currentController == "Heatmap" ? "active" : "")" asp-area="Admin" asp-controller="Heatmap" asp-action="Index">
                     <i class="fa-solid fa-fire text-danger"></i> Visitor Heatmap
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(currentController == "Users" ? "active" : "")" asp-area="Admin" asp-controller="Users" asp-action="Index">
+                    <i class="fa-solid fa-users"></i> User Management
                 </a>
             </li>
             <li class="nav-item">

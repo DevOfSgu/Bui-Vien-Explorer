@@ -109,15 +109,42 @@
 
     <!-- Pagination -->
     <div class="d-flex justify-content-between align-items-center mt-4">
-        <span class="text-muted" style="font-size: 13px;">Showing <span class="fw-bold text-dark">1</span> to <span class="fw-bold text-dark">3</span> of <span class="fw-bold text-dark">12</span> results</span>
+        @{ 
+            int currentPage = (int)(ViewBag.Page ?? 1);
+            int pageSize = (int)(ViewBag.PageSize ?? 20);
+            int totalCount = (int)(ViewBag.TotalCount ?? 0);
+            int totalPages = (int)(ViewBag.TotalPages ?? 1);
+            int from = (currentPage - 1) * pageSize + 1;
+            int to = Math.Min(currentPage * pageSize, totalCount);
+        }
+        <span class="text-muted" style="font-size: 13px;">Showing <span class="fw-bold text-dark">@from</span> to <span class="fw-bold text-dark">@to</span> of <span class="fw-bold text-dark">@totalCount</span> results</span>
         <nav>
             <ul class="pagination pagination-sm mb-0">
-                <li class="page-item disabled"><a class="page-link" href="#" style="border-color: #edf2f9; color: #94a3b8;"><i class="fa-solid fa-chevron-left"></i></a></li>
-                <li class="page-item active" style="--bs-pagination-active-bg: #ef4444; --bs-pagination-active-border-color: #ef4444;"><a class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#" style="border-color: #edf2f9; color: #64748b;">2</a></li>
-                <li class="page-item"><a class="page-link" href="#" style="border-color: #edf2f9; color: #64748b;">3</a></li>
-                <li class="page-item disabled"><a class="page-link" href="#" style="border-color: #edf2f9; color: #64748b;">...</a></li>
-                <li class="page-item"><a class="page-link" href="#" style="border-color: #edf2f9; color: #64748b;"><i class="fa-solid fa-chevron-right"></i></a></li>
+                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-routeId="@ViewBag.SelectedRouteId" style="border-color: #edf2f9; color: #94a3b8;">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </a>
+                </li>
+                @for (int p = 1; p <= totalPages; p++)
+                {
+                    if (p == currentPage)
+                    {
+                        <li class="page-item active" style="--bs-pagination-active-bg: #ef4444; --bs-pagination-active-border-color: #ef4444;">
+                            <a class="page-link" asp-action="Index" asp-route-page="@p" asp-route-routeId="@ViewBag.SelectedRouteId">@p</a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="page-item">
+                            <a class="page-link" asp-action="Index" asp-route-page="@p" asp-route-routeId="@ViewBag.SelectedRouteId" style="border-color: #edf2f9; color: #64748b;">@p</a>
+                        </li>
+                    }
+                }
+                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-routeId="@ViewBag.SelectedRouteId" style="border-color: #edf2f9; color: #64748b;">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                </li>
             </ul>
         </nav>
     </div>

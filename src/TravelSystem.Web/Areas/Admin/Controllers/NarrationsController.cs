@@ -16,8 +16,9 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             _db = db;
         }
 
-        public async Task<IActionResult> Index(int? zoneId)
+        public async Task<IActionResult> Index(int? zoneId, int page = 1)
         {
+            const int pageSize = 20;
             var query = _db.Narrations.AsQueryable();
 
             if (zoneId.HasValue)
@@ -27,7 +28,17 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 ViewBag.ZoneName = _db.Zones.Find(zoneId.Value)?.Name;
             }
 
-            var narrations = await query.OrderBy(n => n.Id).ToListAsync();
+            var totalCount = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalCount = totalCount;
+            ViewBag.TotalPages = totalPages;
+
+            var narrations = await query.OrderBy(n => n.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
             
             ViewBag.ZonesMap = await _db.Zones.ToDictionaryAsync(z => z.Id, z => z.Name);
             
