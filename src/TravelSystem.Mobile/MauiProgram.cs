@@ -24,6 +24,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<Services.DatabaseService>();
 		builder.Services.AddSingleton<MainPage>();
 		builder.Services.AddSingleton<AppShell>();
+        builder.Services.AddTransient<LanguageSelectionPage>();
 
 		return builder.Build();
 	}
