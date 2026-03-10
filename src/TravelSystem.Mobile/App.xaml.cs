@@ -8,22 +8,22 @@ public partial class App : Application
 {
     private readonly DatabaseService _dbService;
     public App(DatabaseService dbService)
-	{
-		InitializeComponent();
-		_dbService = dbService;
-		Debug.WriteLine("✅ App initialized successfully");
-	}
-
-	protected override Window CreateWindow(IActivationState? activationState)
-	{
-        var window = new Window(new AppShell());
-        Debug.WriteLine("✅ Window created successfully");
-        return window;
+    {
+        InitializeComponent();
+        _dbService = dbService;
+        Debug.WriteLine("✅ App initialized successfully");
     }
+
+    protected override Window CreateWindow(IActivationState? activationState)
+    {
+        // MAUI nguyên bản luôn trả về AppShell làm root
+        return new Window(new AppShell());
+    }
+
     protected override async void OnStart()
     {
         base.OnStart();
-        // Gọi tạo bảng ở đây sẽ an toàn hơn và không làm treo luồng chính
+        // 1. Chờ khởi tạo Database (Tạo bảng SQLite) xong
         await _dbService.InitializeAsync();
     }
 }

@@ -10,5 +10,6 @@ namespace TravelSystem.Shared.Models
         [PrimaryKey]
         public string Key { get; set; } // Ví dụ: "Language", "AutoPlay"
         public string Value { get; set; } // Ví dụ: "vi", "1"
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 }
