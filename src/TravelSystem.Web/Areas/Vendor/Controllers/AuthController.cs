@@ -59,6 +59,59 @@ namespace TravelSystem.Web.Areas.Vendor.Controllers
         }
 
         [HttpGet]
+        public IActionResult Register()
+        {
+            if (User.Identity != null && User.Identity.IsAuthenticated && User.HasClaim(ClaimTypes.Role, "Vendor"))
+            {
+                return RedirectToAction("Index", "Dashboard");
+            }
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Register(string storeName, string ownerName, string username, string password, string confirmPassword)
+        {
+            if (password != confirmPassword)
+            {
+                ViewBag.Error = "Passwords do not match.";
+                return View();
+            }
+
+            var existingUser = await _db.Users.FirstOrDefaultAsync(u => u.Username == username);
+            if (existingUser != null)
+            {
+                ViewBag.Error = "Email address is already in use.";
+                return View();
+            }
+
+            var newShop = new TravelSystem.Shared.Models.Shop
+            {
+                Name = storeName,
+                Address = "To be updated",
+                PhoneNumber = "To be updated",
+                ImageUrl = "/img/default-shop.png"
+            };
+
+            _db.Shops.Add(newShop);
+            await _db.SaveChangesAsync();
+
+            var newUser = new TravelSystem.Shared.Models.User
+            {
+                Username = username,
+                PasswordHash = password,
+                Role = 1,
+                ShopId = newShop.Id,
+                IsActive = false
+            };
+
+            _db.Users.Add(newUser);
+            await _db.SaveChangesAsync();
+
+            ViewBag.Success = "Registration successful! Your store is pending admin approval.";
+            return View();
+        }
+
+        [HttpGet]
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync("VendorAuth");

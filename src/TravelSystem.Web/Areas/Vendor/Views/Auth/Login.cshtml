@@ -8,40 +8,218 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vendor Login - Bùi Viện Explorer</title>
+    <title>Merchant Login - Bùi Viện Explorer</title>
+    <link rel="icon" type="image/png" href="~/icons/favicon.png" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #f0f8ff; } /* Light blue background for vendor */
-        .login-card { max-width: 400px; margin: 100px auto; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .login-header { background-color: #0d6efd; color: white; border-radius: 10px 10px 0 0; padding: 20px; text-align: center; }
+        body { 
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            flex-direction: column;
+        }
+        .login-card { 
+            max-width: 480px; 
+            width: 100%;
+            border: none;
+            border-radius: 12px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.05); 
+            background: #ffffff;
+            padding: 40px;
+        }
+        .icon-circle {
+            width: 60px;
+            height: 60px;
+            background-color: #ffe8e8;
+            color: #ff4d4f;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin: 0 auto 20px;
+        }
+        .brand-title {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #1a1a1a;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        .brand-subtitle {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .login-title {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #1a1a1a;
+            margin-bottom: 5px;
+        }
+        .login-subtitle {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 25px;
+        }
+        .form-label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #343a40;
+            margin-bottom: 8px;
+        }
+        .form-control {
+            border-radius: 8px;
+            padding: 12px 15px 12px 40px;
+            border: 1px solid #e9ecef;
+            font-size: 0.95rem;
+        }
+        .form-control:focus {
+            box-shadow: 0 0 0 3px rgba(255, 77, 79, 0.1);
+            border-color: #ff4d4f;
+        }
+        .input-icon-wrapper {
+            position: relative;
+        }
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #adb5bd;
+            z-index: 10;
+        }
+        .forgot-password {
+            float: right;
+            font-size: 0.85rem;
+            color: #ff4d4f;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .btn-primary {
+            background-color: #ff4d4f;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #ff3333;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 77, 79, 0.2);
+        }
+        .btn-outline-primary {
+            color: #ff4d4f;
+            border: 1px solid #ff4d4f;
+            background-color: transparent;
+            border-radius: 8px;
+            padding: 10px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-outline-primary:hover {
+            background-color: #fff0f0;
+            color: #ff4d4f;
+        }
+        .register-section {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 1px solid #f0f0f0;
+        }
+        .footer-links {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        .footer-benefits {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 40px;
+            color: #868e96;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .footer-copyright {
+            margin-top: 15px;
+            color: #adb5bd;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="card login-card">
-            <div class="login-header">
-                <h3>Vendor Portal</h3>
-                <p class="mb-0">Shop Manager</p>
-            </div>
-            <div class="card-body p-4">
-                @if (ViewBag.Error != null)
-                {
-                    <div class="alert alert-danger">@ViewBag.Error</div>
-                }
-                
-                <form method="post" asp-area="Vendor" asp-controller="Auth" asp-action="Login">
-                    <div class="mb-3">
-                        <label class="form-label">Username</label>
-                        <input type="text" name="username" class="form-control" required />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Password</label>
-                        <input type="password" name="password" class="form-control" required />
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100 mt-3">Login to Vendor</button>
-                </form>
-            </div>
+    <div class="card login-card">
+        <div class="icon-circle">
+            <i class="fa-solid fa-compass"></i>
         </div>
+        
+        <div class="brand-title">Bui Vien Explorer</div>
+        <div class="brand-subtitle">Merchant Partner Portal</div>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-danger" style="border-radius: 8px; font-size: 0.9rem;">
+                <i class="fa-solid fa-circle-exclamation me-2"></i> @ViewBag.Error
+            </div>
+        }
+
+        <div class="login-title">Merchant Partner Login</div>
+        <div class="login-subtitle">Manage your store and menu efficiently</div>
+        
+        <form method="post" asp-area="Vendor" asp-controller="Auth" asp-action="Login">
+            <div class="mb-3">
+                <label class="form-label">Email Address / Username</label>
+                <div class="input-icon-wrapper">
+                    <i class="fa-solid fa-envelope input-icon"></i>
+                    <input type="text" name="username" class="form-control" placeholder="name@company.com" required />
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label mb-0">Password</label>
+                <a href="#" class="forgot-password">Forgot password?</a>
+                <div class="input-icon-wrapper mt-2">
+                    <i class="fa-solid fa-lock input-icon"></i>
+                    <input type="password" name="password" class="form-control" placeholder="Enter your password" required />
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100 mb-3">
+                Sign In <i class="fa-solid fa-arrow-right-to-bracket ms-1"></i>
+            </button>
+            
+            <div class="register-section">
+                <p class="mb-2 text-muted" style="font-size: 0.9rem;">New to Bui Vien Explorer?</p>
+                <a href="@Url.Action("Register", "Auth", new { area = "Vendor" })" class="btn btn-outline-primary w-100 d-block text-decoration-none">
+                    REGISTER YOUR STORE
+                </a>
+            </div>
+            
+            <div class="footer-links">
+                Interested in partnering? <a href="#" style="color: #ff4d4f; text-decoration: none; font-weight: 600;">Contact us</a>
+            </div>
+        </form>
+    </div>
+    
+    <div class="footer-benefits">
+        <div><i class="fa-solid fa-shield-halved me-1"></i> SECURE ACCESS</div>
+        <div><i class="fa-solid fa-headset me-1"></i> 24/7 SUPPORT</div>
+    </div>
+    
+    <div class="footer-copyright">
+        &copy; 2026 BUI VIEN EXPLORER TECHNOLOGIES. ALL RIGHTS RESERVED.
     </div>
 </body>
 </html>

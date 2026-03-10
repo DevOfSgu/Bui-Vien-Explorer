@@ -1,0 +1,214 @@
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Merchant Registration - Bùi Viện Explorer</title>
+    <link rel="icon" type="image/png" href="~/icons/favicon.png" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 40px 0;
+        }
+        .register-card { 
+            max-width: 500px; 
+            width: 100%;
+            border: none;
+            border-radius: 12px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.05); 
+            background: #ffffff;
+            padding: 40px;
+        }
+        .icon-circle {
+            width: 60px;
+            height: 60px;
+            background-color: #ffe8e8;
+            color: #ff4d4f;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin: 0 auto 20px;
+        }
+        .register-title {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #1a1a1a;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        .register-subtitle {
+            color: #6c757d;
+            font-size: 0.95rem;
+            text-align: center;
+            margin-bottom: 35px;
+            line-height: 1.5;
+        }
+        .form-label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #343a40;
+            margin-bottom: 8px;
+        }
+        .form-control {
+            border-radius: 8px;
+            padding: 12px 15px 12px 40px;
+            border: 1px solid #e9ecef;
+            font-size: 0.95rem;
+            background-color: #f8f9fa;
+        }
+        .form-control:focus {
+            box-shadow: 0 0 0 3px rgba(255, 77, 79, 0.1);
+            border-color: #ff4d4f;
+            background-color: #ffffff;
+        }
+        .input-icon-wrapper {
+            position: relative;
+        }
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #adb5bd;
+            z-index: 10;
+        }
+        .btn-primary {
+            background-color: #ff4d4f;
+            border: none;
+            border-radius: 8px;
+            padding: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+        .btn-primary:hover {
+            background-color: #ff3333;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 77, 79, 0.2);
+        }
+        .form-check-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        .terms-link {
+            color: #ff4d4f;
+            text-decoration: none;
+        }
+        .terms-link:hover {
+            color: #cc0000;
+            text-decoration: underline;
+        }
+        .login-back {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        .login-back a {
+            color: #ff4d4f;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .login-back a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="card register-card">
+        <div class="icon-circle">
+            <i class="fa-solid fa-store"></i>
+        </div>
+        
+        <div class="register-title">Merchant Registration</div>
+        <div class="register-subtitle">Join the Bui Vien Explorer community and grow your business.</div>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-danger" style="border-radius: 8px; font-size: 0.9rem;">
+                <i class="fa-solid fa-circle-exclamation me-2"></i> @ViewBag.Error
+            </div>
+        }
+        @if (ViewBag.Success != null)
+        {
+            <div class="alert alert-success" style="border-radius: 8px; font-size: 0.9rem;">
+                <i class="fa-solid fa-check-circle me-2"></i> @ViewBag.Success
+            </div>
+        }
+
+        <form method="post" asp-area="Vendor" asp-controller="Auth" asp-action="Register">
+            <div class="mb-3">
+                <label class="form-label">Store Name</label>
+                <div class="input-icon-wrapper">
+                    <i class="fa-solid fa-shop input-icon"></i>
+                    <input type="text" name="storeName" class="form-control" placeholder="Enter your shop name" required />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Owner Name</label>
+                <div class="input-icon-wrapper">
+                    <i class="fa-solid fa-user input-icon"></i>
+                    <input type="text" name="ownerName" class="form-control" placeholder="Enter full name" required />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Email Address</label>
+                <div class="input-icon-wrapper">
+                    <i class="fa-solid fa-envelope input-icon"></i>
+                    <input type="email" name="username" class="form-control" placeholder="name@example.com" required />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Password</label>
+                    <div class="input-icon-wrapper">
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <input type="password" name="password" class="form-control" placeholder="••••••••" required />
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <label class="form-label">Confirm Password</label>
+                    <div class="input-icon-wrapper">
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <input type="password" name="confirmPassword" class="form-control" placeholder="••••••••" required />
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-check mb-4 d-flex align-items-center">
+                <input class="form-check-input me-2 mt-0" type="checkbox" id="termsCheck" required style="border-color: #dee2e6;">
+                <label class="form-check-label" for="termsCheck">
+                    By clicking Register, you agree to our <a href="#" class="terms-link">Terms of Service</a> and <a href="#" class="terms-link">Privacy Policy</a>.
+                </label>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100">
+                Register Store <i class="fa-solid fa-arrow-right ms-1"></i>
+            </button>
+            
+            <div class="login-back">
+                Already have a merchant account? <a href="@Url.Action("Login", "Auth", new { area = "Vendor" })">Back to Login</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,4 +1,4 @@
-﻿-- ============================================================
+-- ============================================================
 -- SCHEMA - Bùi Viện Explorer (SQL Server)
 -- Chạy đúng DB: BuiVienExplorerDb
 -- ============================================================
@@ -12,6 +12,7 @@ IF OBJECT_ID('AudioFiles', 'U') IS NOT NULL DROP TABLE AudioFiles;
 IF OBJECT_ID('Zones', 'U') IS NOT NULL DROP TABLE Zones;
 IF OBJECT_ID('Users', 'U') IS NOT NULL DROP TABLE Users;
 IF OBJECT_ID('Routes', 'U') IS NOT NULL DROP TABLE Routes;
+IF OBJECT_ID('ShopHours', 'U') IS NOT NULL DROP TABLE ShopHours;
 IF OBJECT_ID('Shops', 'U') IS NOT NULL DROP TABLE Shops;
 -- ============================================================
 -- 1. Shops (Cần tạo trước vì Users và Zones tham chiếu đến nó)
@@ -23,6 +24,20 @@ CREATE TABLE Shops (
     PhoneNumber NVARCHAR(20),
     ImageUrl NVARCHAR(500),
     CreatedAt DATETIME DEFAULT GETDATE()
+);
+
+-- ============================================================
+-- 1a. ShopHours (Lịch mở cửa theo ngày trong tuần & trạng thái)
+-- ============================================================
+CREATE TABLE ShopHours (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    ShopId INT NOT NULL,
+    DayOfWeek TINYINT NOT NULL,
+    -- 1=Thứ hai ... 7=Chủ nhật
+    OpenTime TIME NULL,
+    CloseTime TIME NULL,
+    IsOpen BIT DEFAULT 1,
+    CONSTRAINT FK_ShopHours_Shops FOREIGN KEY (ShopId) REFERENCES Shops(Id) ON DELETE CASCADE
 );
 -- ============================================================
 -- 2. Routes (Tuyến đường tour)

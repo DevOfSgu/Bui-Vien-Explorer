@@ -2,6 +2,7 @@
 -- SAMPLE DATA - Bùi Viện Explorer (Đã mở rộng 20 record/bảng)
 -- ============================================================
 -- Xóa data cũ
+DELETE FROM ShopHours;
 DELETE FROM Narrations;
 DELETE FROM Analytics;
 DELETE FROM Zones;
@@ -9,6 +10,7 @@ DELETE FROM Users;
 DELETE FROM Routes;
 DELETE FROM Shops;
 -- Reset Identity counters
+DBCC CHECKIDENT ('ShopHours', RESEED, 0);
 DBCC CHECKIDENT ('Shops', RESEED, 0);
 DBCC CHECKIDENT ('Routes', RESEED, 0);
 DBCC CHECKIDENT ('Zones', RESEED, 0);
@@ -138,6 +140,15 @@ VALUES (
         N'028-3838-0011',
         NULL
     );
+
+-- ============================================================
+-- 1a. Insert sample hours for shops (Mon-Sun, 8:00-23:00 open by default)
+-- ============================================================
+INSERT INTO ShopHours (ShopId, DayOfWeek, OpenTime, CloseTime, IsOpen)
+SELECT Id, v.Number, '08:00', '23:00', 1
+FROM Shops
+CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7)) v(Number);
+
 -- ============================================================
 -- 2. Insert 20 Users (2 Admins, 18 Vendors)
 -- ============================================================
