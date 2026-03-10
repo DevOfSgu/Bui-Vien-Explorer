@@ -16,8 +16,9 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             _db = db;
         }
 
-        public async Task<IActionResult> Index(int? routeId)
+        public async Task<IActionResult> Index(int? routeId, int page = 1)
         {
+            const int pageSize = 20;
             var query = _db.Zones.AsQueryable();
 
             if (routeId.HasValue)
@@ -26,8 +27,17 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 ViewBag.SelectedRouteId = routeId;
             }
 
+            var totalCount = await query.CountAsync();
+            var totalPages = (int) Math.Ceiling(totalCount / (double)pageSize);
+            ViewBag.Page = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalCount = totalCount;
+            ViewBag.PageSize = pageSize;
+
             var zones = await query
                 .OrderBy(z => z.OrderIndex)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
             // Count narrations for each zone dynamically just for view mockups
