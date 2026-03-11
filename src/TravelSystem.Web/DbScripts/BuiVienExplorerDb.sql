@@ -1,4 +1,4 @@
--- ============================================================
+﻿-- ============================================================
 -- SCHEMA - Bùi Viện Explorer (SQL Server)
 -- Chạy đúng DB: BuiVienExplorerDb
 -- ============================================================
@@ -9,21 +9,9 @@ USE BuiVienExplorerDb;
 IF OBJECT_ID('Analytics', 'U') IS NOT NULL DROP TABLE Analytics;
 IF OBJECT_ID('Narrations', 'U') IS NOT NULL DROP TABLE Narrations;
 IF OBJECT_ID('AudioFiles', 'U') IS NOT NULL DROP TABLE AudioFiles;
-
--- make sure existing Users table has the new profile columns
-IF OBJECT_ID('Users','U') IS NOT NULL
-BEGIN
-    IF COL_LENGTH('Users','FullName') IS NULL
-        ALTER TABLE Users ADD FullName NVARCHAR(100);
-    IF COL_LENGTH('Users','Email') IS NULL
-        ALTER TABLE Users ADD Email NVARCHAR(100);
-END
-
 IF OBJECT_ID('Zones', 'U') IS NOT NULL DROP TABLE Zones;
 IF OBJECT_ID('Users', 'U') IS NOT NULL DROP TABLE Users;
 IF OBJECT_ID('Routes', 'U') IS NOT NULL DROP TABLE Routes;
-IF OBJECT_ID('AppSettings', 'U') IS NOT NULL DROP TABLE AppSettings;
-IF OBJECT_ID('ShopHours', 'U') IS NOT NULL DROP TABLE ShopHours;
 IF OBJECT_ID('Shops', 'U') IS NOT NULL DROP TABLE Shops;
 -- ============================================================
 -- 1. Shops (Cần tạo trước vì Users và Zones tham chiếu đến nó)
@@ -35,20 +23,6 @@ CREATE TABLE Shops (
     PhoneNumber NVARCHAR(20),
     ImageUrl NVARCHAR(500),
     CreatedAt DATETIME DEFAULT GETDATE()
-);
-
--- ============================================================
--- 1a. ShopHours (Lịch mở cửa theo ngày trong tuần & trạng thái)
--- ============================================================
-CREATE TABLE ShopHours (
-    Id INT IDENTITY(1,1) PRIMARY KEY,
-    ShopId INT NOT NULL,
-    DayOfWeek TINYINT NOT NULL,
-    -- 1=Thứ hai ... 7=Chủ nhật
-    OpenTime TIME NULL,
-    CloseTime TIME NULL,
-    IsOpen BIT DEFAULT 1,
-    CONSTRAINT FK_ShopHours_Shops FOREIGN KEY (ShopId) REFERENCES Shops(Id) ON DELETE CASCADE
 );
 -- ============================================================
 -- 2. Routes (Tuyến đường tour)
@@ -71,8 +45,6 @@ CREATE TABLE Users (
     Id INT IDENTITY(1, 1) PRIMARY KEY,
     Username NVARCHAR(50) NOT NULL UNIQUE,
     PasswordHash NVARCHAR(255) NOT NULL,
-    FullName NVARCHAR(100),
-    Email NVARCHAR(100),
     Role INT DEFAULT 0,
     -- 0: Admin, 1: Vendor
     ShopId INT NULL,
@@ -80,18 +52,6 @@ CREATE TABLE Users (
     CreatedAt DATETIME DEFAULT GETDATE(),
     CONSTRAINT FK_Users_Shops FOREIGN KEY (ShopId) REFERENCES Shops(Id)
 );
--- ============================================================
--- 1b. AppSettings (cài đặt hệ thống key/value)
--- ============================================================
-IF OBJECT_ID('AppSettings','U') IS NULL
-BEGIN
-    CREATE TABLE AppSettings (
-        [Key] NVARCHAR(100) PRIMARY KEY,
-        [Value] NVARCHAR(MAX),
-        UpdatedAt DATETIME DEFAULT GETDATE()
-    );
-END
-
 -- ============================================================
 -- 4. Zones (Các điểm dừng / POI)
 -- ============================================================
