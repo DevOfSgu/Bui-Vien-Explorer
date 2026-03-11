@@ -430,7 +430,7 @@ FodyWeavers.xsd
 *.bak
 *.db
 
-/appsettings.json‎
+src/TravelSystem.Web/appsettings.json
 
 *.bat
 
