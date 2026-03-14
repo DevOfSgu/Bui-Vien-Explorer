@@ -6,7 +6,11 @@
                 "appName": "SQLTools",
                 "useUTC": true,
                 "encrypt": false,
-                "trustServerCertificate": true
+                "trustServerCertificate": true,
+                "enableArithAbort": true,
+                "connectionTimeout": 15000,
+                "requestTimeout": 15000,
+                "cancelTimeout": 5000
             },
             "ssh": "Disabled",
             "previewLimit": 50,
