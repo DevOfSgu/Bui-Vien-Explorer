@@ -12,6 +12,8 @@ public class AppDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<Analytics> Analytics { get; set; }
     public DbSet<GuestFavorite> GuestFavorites { get; set; }
+    public DbSet<ShopHour> ShopHours { get; set; }
+
     // store global configuration items keyed by string
     public DbSet<TravelSystem.Shared.Models.AppSetting> AppSettings { get; set; }
 

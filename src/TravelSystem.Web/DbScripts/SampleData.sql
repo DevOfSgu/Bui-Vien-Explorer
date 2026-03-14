@@ -159,7 +159,11 @@ CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7)) v(Number);
 -- ============================================================
 INSERT INTO AppSettings([Key],[Value])
 VALUES ('DefaultLanguage','vi'),
-       ('EnableApiSync','1');
+       ('EnableApiSync','1'),
+       -- Force shop closed override (1 = closed, 0 = follow hours)
+       ('Shop:1:ForceClosed','0'),
+       -- If set, shop is treated as closed until this timestamp (UTC)
+       ('Shop:1:ClosedUntil','2026-01-01T00:00:00Z');
 
 -- ============================================================
 -- 2. Insert 20 Users (2 Admins, 18 Vendors)

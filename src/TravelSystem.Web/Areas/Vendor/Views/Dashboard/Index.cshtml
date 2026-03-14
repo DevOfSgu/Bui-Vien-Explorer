@@ -1,90 +1,41 @@
 @{
     ViewData["Title"] = "Dashboard Home";
+
+    var shopName = ViewBag.ShopName as string ?? "Your Shop";
+    var zoneVisits = (int)(ViewBag.ZoneVisits ?? 0);
+    var narrationListens = (int)(ViewBag.NarrationListens ?? 0);
+    var engagementRate = (int)(ViewBag.EngagementRate ?? 0);
+    var avgDwellSeconds = (int)(ViewBag.AvgDwellTimeSeconds ?? 0);
+    var avgDwell = TimeSpan.FromSeconds(avgDwellSeconds);
+    var avgDwellLabel = $"{(int)avgDwell.TotalMinutes}m {avgDwell.Seconds}s";
+    var shopOpen = ViewBag.ShopOpen as bool? ?? true;
 }
 
 <style>
-    .stat-card {
-        background: #fff;
-        border-radius: 14px;
-        padding: 20px;
-        border: 1px solid #f0f0f0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    }
-    .stat-icon {
-        width: 42px;
-        height: 42px;
-        border-radius: 10px;
-        background: #fee2e2;
-        color: #ef4444;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-    }
-    .stat-icon.green { background: #d1fae5; color: #059669; }
-    .stat-icon.blue { background: #dbeafe; color: #2563eb; }
-    .stat-icon.orange { background: #ffedd5; color: #ea580c; }
-    .stat-badge-green {
-        font-size: 11px;
-        font-weight: 700;
-        color: #16a34a;
-        background: #dcfce7;
-        padding: 3px 8px;
-        border-radius: 20px;
-    }
-    .stat-label { color: #9ca3af; font-size: 13px; font-weight: 500; margin-top: 14px; margin-bottom: 4px; }
-    .stat-value { font-size: 28px; font-weight: 700; color: #111827; margin: 0; }
-    .stat-compare { color: #9ca3af; font-size: 12px; margin-top: 4px; }
+    .status-open { background: #ef4444; color: #fff; border: none; border-radius: 999px; padding: 6px 16px; font-size: 12px; font-weight: 600; }
+    .status-closed { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; border-radius: 999px; padding: 6px 16px; font-size: 12px; font-weight: 600; }
 
-    /* Chart card */
-    .chart-card {
-        background: #fff;
-        border-radius: 14px;
-        border: 1px solid #f0f0f0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        padding: 24px;
-    }
-    .btn-outline-sm {
-        font-size: 12px;
-        font-weight: 500;
-        color: #6b7280;
-        border: 1px solid #e5e7eb;
-        background: transparent;
-        padding: 5px 12px;
-        border-radius: 8px;
-        cursor: pointer;
-    }
-    .btn-outline-sm:hover { background: #f9fafb; }
+    .donut-wrapper { position: relative; width: 140px; height: 140px; }
+    .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+    .donut-center .pct { font-size: 18px; font-weight: 700; color: #111827; }
+    .donut-center .lbl { font-size: 10px; color: #9ca3af; font-weight: 600; letter-spacing: 0.5px; }
 
-    /* Language breakdown */
     .lang-item { display: flex; flex-direction: column; align-items: flex-start; }
     .lang-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
     .lang-pct { font-size: 26px; font-weight: 700; color: #111827; }
     .lang-count { font-size: 12px; color: #9ca3af; }
-
-    /* Donut chart */
-    .donut-wrapper { position: relative; width: 140px; height: 140px; }
-    .donut-center {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        text-align: center;
-    }
-    .donut-center .pct { font-size: 22px; font-weight: 700; color: #111827; }
-    .donut-center .lbl { font-size: 10px; color: #9ca3af; font-weight: 600; letter-spacing: 0.5px; }
-
-    /* Open/Closed status */
-    .status-open { background: #ef4444; color: #fff; border: none; border-radius: 6px; padding: 5px 14px; font-size: 13px; font-weight: 600; }
-    .status-closed { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; border-radius: 6px; padding: 5px 14px; font-size: 13px; font-weight: 600; }
 </style>
 
 <!-- Page header -->
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h5 class="fw-bold mb-0" style="color:#111827;font-size:1.2rem;">Dashboard Home</h5>
+    <div>
+        <h5 class="fw-bold mb-1" style="color:#111827;font-size:1.2rem;">Dashboard Home</h5>
+        <small class="text-muted">@shopName</small>
+    </div>
+
     <div class="d-flex align-items-center gap-2">
-        <button class="status-open">Open</button>
-        <button class="status-closed">Closed</button>
+        <button class="@(shopOpen ? "status-open" : "status-closed")">Open</button>
+        <button class="@(shopOpen ? "status-closed" : "status-open")">Closed</button>
         <button class="btn p-2" style="border:none;background:transparent;color:#9ca3af;font-size:18px;"><i class="fa-regular fa-bell"></i></button>
         <div style="width:36px;height:36px;border-radius:50%;background:#f3f4f6;border:1px solid #e5e7eb;"></div>
     </div>
@@ -94,54 +45,52 @@
 <div class="row g-3 mb-4">
     <div class="col-xl-3 col-md-6">
         <div class="stat-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="stat-icon"><i class="fa-solid fa-location-dot"></i></div>
-                <span class="stat-badge-green">+12%</span>
+            <div class="stat-icon"><i class="fa-solid fa-location-dot"></i></div>
+            <div class="stat-content">
+                <p>Zone Visits</p>
+                <h4>@zoneVisits</h4>
             </div>
-            <div class="stat-label">Zone Visits</div>
-            <h3 class="stat-value">245</h3>
-            <div class="stat-compare">vs yesterday</div>
         </div>
     </div>
     <div class="col-xl-3 col-md-6">
         <div class="stat-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="stat-icon green"><i class="fa-solid fa-headphones"></i></div>
+            <div class="stat-icon green"><i class="fa-solid fa-headphones"></i></div>
+            <div class="stat-content">
+                <p>Narration Listens</p>
+                <h4>@narrationListens</h4>
             </div>
-            <div class="stat-label">Narration Listens</div>
-            <h3 class="stat-value">128</h3>
         </div>
     </div>
     <div class="col-xl-3 col-md-6">
         <div class="stat-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="stat-icon blue"><i class="fa-solid fa-chart-line"></i></div>
+            <div class="stat-icon blue"><i class="fa-solid fa-chart-line"></i></div>
+            <div class="stat-content">
+                <p>Engagement Rate</p>
+                <h4>@engagementRate<span style="font-size:14px;color:#64748b;">%</span></h4>
             </div>
-            <div class="stat-label">Engagement Rate</div>
-            <h3 class="stat-value">52%</h3>
         </div>
     </div>
     <div class="col-xl-3 col-md-6">
         <div class="stat-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="stat-icon orange"><i class="fa-regular fa-clock"></i></div>
+            <div class="stat-icon orange"><i class="fa-regular fa-clock"></i></div>
+            <div class="stat-content">
+                <p>Avg. Dwell Time</p>
+                <h4>@avgDwellLabel</h4>
             </div>
-            <div class="stat-label">Avg. Dwell Time</div>
-            <h3 class="stat-value">12m 30s</h3>
         </div>
     </div>
 </div>
 
 <!-- Traffic Trends Chart -->
-<div class="chart-card mb-4">
+<div class="card-custom mb-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h6 class="fw-bold mb-1" style="color:#111827;">Customer Traffic Trends</h6>
             <small class="text-muted">Weekly scan volume analysis</small>
         </div>
         <div class="d-flex gap-2">
-            <button class="btn-outline-sm">Last 7 Days</button>
-            <button class="btn-outline-sm">Export</button>
+            <button class="btn btn-outline-secondary btn-sm">Last 7 Days</button>
+            <button class="btn btn-outline-secondary btn-sm">Export</button>
         </div>
     </div>
 
@@ -175,7 +124,7 @@
 </div>
 
 <!-- Tourist Language Breakdown -->
-<div class="chart-card mb-4">
+<div class="card-custom mb-4">
     <div class="mb-3">
         <h6 class="fw-bold mb-1" style="color:#111827;">Tourist Language Breakdown</h6>
         <small class="text-muted">Visitor language distribution analysis</small>
