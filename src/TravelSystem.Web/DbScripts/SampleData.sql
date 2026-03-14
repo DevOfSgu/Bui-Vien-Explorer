@@ -1,7 +1,8 @@
-﻿-- ============================================================
+-- ============================================================
 -- SAMPLE DATA - Bùi Viện Explorer (Đã mở rộng 20 record/bảng)
 -- ============================================================
 -- Xóa data cũ (nếu bảng tồn tại)
+IF OBJECT_ID('GuestFavorites','U') IS NOT NULL DELETE FROM GuestFavorites;
 IF OBJECT_ID('AppSettings','U') IS NOT NULL DELETE FROM AppSettings;
 IF OBJECT_ID('ShopHours','U') IS NOT NULL DELETE FROM ShopHours;
 IF OBJECT_ID('Narrations','U') IS NOT NULL DELETE FROM Narrations;
@@ -10,8 +11,10 @@ IF OBJECT_ID('Zones','U') IS NOT NULL DELETE FROM Zones;
 IF OBJECT_ID('Users','U') IS NOT NULL DELETE FROM Users;
 IF OBJECT_ID('Routes','U') IS NOT NULL DELETE FROM Routes;
 IF OBJECT_ID('Shops','U') IS NOT NULL DELETE FROM Shops;
+
 -- Reset Identity counters
-IF OBJECT_ID('AppSettings','U') IS NOT NULL DBCC CHECKIDENT ('AppSettings', RESEED, 0);
+-- AppSettings dùng Key (string) làm PK, không có identity -- không cần RESEED
+
 IF OBJECT_ID('ShopHours','U') IS NOT NULL DBCC CHECKIDENT ('ShopHours', RESEED, 0);
 IF OBJECT_ID('Shops','U') IS NOT NULL DBCC CHECKIDENT ('Shops', RESEED, 0);
 IF OBJECT_ID('Routes','U') IS NOT NULL DBCC CHECKIDENT ('Routes', RESEED, 0);

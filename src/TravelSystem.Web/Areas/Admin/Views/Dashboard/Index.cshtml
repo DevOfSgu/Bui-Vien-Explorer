@@ -115,3 +115,63 @@
         </div>
     </div>
 </div>
+
+<!-- Favorites Stats Row -->
+<div class="row g-4 mt-1">
+    <!-- Total Favorites Stat Card -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background-color: #fce7f3; color: #db2777;">
+                <i class="fa-solid fa-heart"></i>
+            </div>
+            <div class="stat-content">
+                <p>Total Guest Favorites</p>
+                <h4>@ViewBag.TotalFavorites</h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Liked Zones Card -->
+    <div class="col-xl-9">
+        <div class="card-custom h-100">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h6 class="fw-bold mb-0">
+                    <i class="fa-solid fa-heart text-danger me-2"></i> Top Địa Điểm Được Yêu Thích
+                </h6>
+                <small class="text-muted">Từ guest sessions toàn hệ thống</small>
+            </div>
+
+            @if (ViewBag.TopFavorites != null && ((IEnumerable<dynamic>)ViewBag.TopFavorites).Any())
+            {
+                int fRank = 1;
+                foreach (var fav in ViewBag.TopFavorites)
+                {
+                    var fColor = fRank == 1 ? "#ef4444" : (fRank == 2 ? "#f59e0b" : (fRank == 3 ? "#3b82f6" : "#9ca3af"));
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="fw-bold" style="color:@fColor; font-size:18px; width:32px;">#@fRank</div>
+                        <i class="fa-solid fa-location-dot text-muted me-2"></i>
+                        <div class="flex-grow-1">
+                            <div class="text-dark fw-bold" style="font-size:14px;">@fav.Name</div>
+                            <div class="progress mt-1" style="height:6px;">
+                                <div class="progress-bar" role="progressbar"
+                                     style="width:@(Math.Min(100, (int)((fav.Count * 100) / Math.Max(1, ((IEnumerable<dynamic>)ViewBag.TopFavorites).First().Count))))%; background-color:@fColor;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ms-3 text-muted" style="font-size:12px;">
+                            @fav.Count <i class="fa-solid fa-heart text-danger ms-1"></i>
+                        </div>
+                    </div>
+                    fRank++;
+                }
+            }
+            else
+            {
+                <div class="text-center text-muted py-4">
+                    <i class="fa-regular fa-heart" style="font-size:2rem; margin-bottom:10px; display:block; opacity:0.4;"></i>
+                    Chưa có dữ liệu favorites. Người dùng chưa thêm địa điểm yêu thích nào.
+                </div>
+            }
+        </div>
+    </div>
+</div>

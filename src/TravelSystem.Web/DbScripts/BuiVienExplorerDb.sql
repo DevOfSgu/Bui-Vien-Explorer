@@ -1,18 +1,27 @@
-﻿-- ============================================================
+-- ============================================================
 -- SCHEMA - Bùi Viện Explorer (SQL Server)
 -- Chạy đúng DB: BuiVienExplorerDb
 -- ============================================================
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'BuiVienExplorerDb')
+BEGIN
+    CREATE DATABASE BuiVienExplorerDb;
+END
+GO
+
 USE BuiVienExplorerDb;
 -- RESET: Xóa bảng cũ (nếu có) trước khi tạo lại
 -- Thứ tự xóa: bảng con trước, bảng cha sau (tránh lỗi FK)
 -- ============================================================
+IF OBJECT_ID('GuestFavorites', 'U') IS NOT NULL DROP TABLE GuestFavorites;
 IF OBJECT_ID('Analytics', 'U') IS NOT NULL DROP TABLE Analytics;
 IF OBJECT_ID('Narrations', 'U') IS NOT NULL DROP TABLE Narrations;
 IF OBJECT_ID('AudioFiles', 'U') IS NOT NULL DROP TABLE AudioFiles;
 IF OBJECT_ID('Zones', 'U') IS NOT NULL DROP TABLE Zones;
 IF OBJECT_ID('Users', 'U') IS NOT NULL DROP TABLE Users;
+IF OBJECT_ID('ShopHours', 'U') IS NOT NULL DROP TABLE ShopHours;
 IF OBJECT_ID('Routes', 'U') IS NOT NULL DROP TABLE Routes;
 IF OBJECT_ID('Shops', 'U') IS NOT NULL DROP TABLE Shops;
+IF OBJECT_ID('AppSettings', 'U') IS NOT NULL DROP TABLE AppSettings;
 -- ============================================================
 -- 1. Shops (Cần tạo trước vì Users và Zones tham chiếu đến nó)
 -- ============================================================
@@ -23,6 +32,19 @@ CREATE TABLE Shops (
     PhoneNumber NVARCHAR(20),
     ImageUrl NVARCHAR(500),
     CreatedAt DATETIME DEFAULT GETDATE()
+);
+-- ============================================================
+-- 1a. ShopHours (Giờ mở cửa của các shop)
+-- ============================================================
+CREATE TABLE ShopHours (
+    Id INT IDENTITY(1, 1) PRIMARY KEY,
+    ShopId INT NOT NULL,
+    DayOfWeek INT NOT NULL, -- 1=Monday, 2=Tuesday, ..., 7=Sunday
+    OpenTime TIME,
+    CloseTime TIME,
+    IsOpen BIT DEFAULT 1,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    CONSTRAINT FK_ShopHours_Shops FOREIGN KEY (ShopId) REFERENCES Shops(Id) ON DELETE CASCADE
 );
 -- ============================================================
 -- 2. Routes (Tuyến đường tour)
@@ -45,6 +67,8 @@ CREATE TABLE Users (
     Id INT IDENTITY(1, 1) PRIMARY KEY,
     Username NVARCHAR(50) NOT NULL UNIQUE,
     PasswordHash NVARCHAR(255) NOT NULL,
+    FullName NVARCHAR(100),
+    Email NVARCHAR(100),
     Role INT DEFAULT 0,
     -- 0: Admin, 1: Vendor
     ShopId INT NULL,
@@ -121,8 +145,31 @@ CREATE TABLE Analytics (
     CONSTRAINT FK_Analytics_Routes FOREIGN KEY (RouteId) REFERENCES Routes(Id)
 );
 -- ============================================================
--- 7. Indexes (Tối ưu truy vấn báo cáo)
+-- 7. GuestFavorites (Zones yêu thích của guest không đăng nhập)
+-- ============================================================
+CREATE TABLE GuestFavorites (
+    Id        INT IDENTITY(1,1) PRIMARY KEY,
+    GuestId   NVARCHAR(36) NOT NULL,           -- UUID lưu trong localStorage / MAUI Preferences
+    ZoneId    INT NOT NULL,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    CONSTRAINT FK_GuestFav_Zone FOREIGN KEY (ZoneId) REFERENCES Zones(Id) ON DELETE CASCADE,
+    CONSTRAINT UQ_GuestFav UNIQUE (GuestId, ZoneId)
+);
+-- ============================================================
+-- 8. Indexes (Tối ưu truy vấn báo cáo)
 -- ============================================================
 CREATE INDEX IDX_Analytics_Zone ON Analytics(ZoneId, ActionType);
 CREATE INDEX IDX_Analytics_Location ON Analytics(Latitude, Longitude);
 CREATE INDEX IDX_Analytics_Session ON Analytics(SessionId, CreatedAt);
+CREATE INDEX IX_GuestFav_GuestId ON GuestFavorites(GuestId);
+CREATE INDEX IX_GuestFav_ZoneId  ON GuestFavorites(ZoneId);
+
+-- ============================================================
+-- 9. AppSettings (Cài đặt hệ thống)
+-- ============================================================
+CREATE TABLE AppSettings (
+    Id INT IDENTITY(1, 1) PRIMARY KEY,
+    [Key] NVARCHAR(100) NOT NULL UNIQUE,
+    [Value] NVARCHAR(500),
+    CreatedAt DATETIME DEFAULT GETDATE()
+);

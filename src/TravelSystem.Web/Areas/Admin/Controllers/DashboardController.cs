@@ -66,7 +66,31 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 ViewBag.TopPoIs = topList;
             }
 
+            // 3. Top zones được nhiều guest yêu thích nhất (GuestFavorites)
+            var topFavorites = await _db.GuestFavorites
+                .GroupBy(f => f.ZoneId)
+                .OrderByDescending(g => g.Count())
+                .Take(5)
+                .Select(g => new { ZoneId = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            var favoriteZoneIds = topFavorites.Select(t => t.ZoneId).ToList();
+            var favoriteZones = await _db.Zones
+                .Where(z => favoriteZoneIds.Contains(z.Id))
+                .ToDictionaryAsync(z => z.Id, z => z.Name);
+
+            ViewBag.TopFavorites = topFavorites
+                .Select(t => new
+                {
+                    Name = favoriteZones.ContainsKey(t.ZoneId) ? favoriteZones[t.ZoneId] : $"Zone #{t.ZoneId}",
+                    Count = t.Count
+                })
+                .ToList<dynamic>();
+
+            ViewBag.TotalFavorites = await _db.GuestFavorites.CountAsync();
+
             return View();
+
         }
     }
 }
