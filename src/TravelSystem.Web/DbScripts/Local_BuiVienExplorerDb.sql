@@ -15,7 +15,7 @@ IF OBJECT_ID('Users','U') IS NOT NULL
 BEGIN
     IF COL_LENGTH('Users','FullName') IS NULL
         ALTER TABLE Users ADD FullName NVARCHAR(100);
-    IF COL_LENGTH('Users','Email') IS NULL
+    IF COL_LENGTH('Users','Email') IS NULL 
         ALTER TABLE Users ADD Email NVARCHAR(100);
 END
 

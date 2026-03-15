@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using TravelSystem.Mobile.Views;
 
 namespace TravelSystem.Mobile;
@@ -17,11 +17,19 @@ public static class MauiProgram
 			});
 
 #if DEBUG
+     builder.Logging.SetMinimumLevel(LogLevel.Debug);
 		builder.Logging.AddDebug();
 #endif
 		// Register services
 		builder.Services.AddSingleton<TravelSystem.Shared.Factories.SqliteConnectionFactory>();
         builder.Services.AddSingleton<Services.DatabaseService>();
+        builder.Services.AddSingleton<Services.ApiService>();
+
+		// Register ViewModels
+		builder.Services.AddSingleton<ViewModels.MainPageViewModel>();
+		builder.Services.AddTransient<ViewModels.LanguageSelectionViewModel>();
+
+		// Register Pages
 		builder.Services.AddSingleton<MainPage>();
 		builder.Services.AddSingleton<AppShell>();
         builder.Services.AddTransient<LanguageSelectionPage>();

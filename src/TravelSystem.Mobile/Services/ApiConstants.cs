@@ -2,10 +2,16 @@ namespace TravelSystem.Mobile.Services;
 
 public static class ApiConstants
 {
-    // Khi chạy ngrok, bạn sẽ copy URL từ ngrok vào đây
-    // Ví dụ: "https://a1b2-c3d4.ngrok-free.app"
-    public const string BaseApiUrl = "https://YOUR_NGROK_URL_HERE.ngrok-free.app";
+#if DEBUG
+    // Android Emulator: 10.0.2.2 trỏ về localhost của máy host
+    public const string BaseApiUrl = "http://10.0.2.2:5281/";
+#else
+    // Production: thay bằng URL thật khi deploy
+    public const string BaseApiUrl = "https://YOUR_NGROK_URL_HERE.ngrok-free.app/";
+#endif
 
-    public const string LoginEndpoint = "api/auth/login";
-    public const string ToursEndpoint = "api/tours";
+    public const string RoutesEndpoint     = "api/routes";
+    public const string ZonesEndpoint      = "api/zones";
+    public const string NarrationsEndpoint = "api/narrations";
+    public const string AnalyticsEndpoint  = "api/analytics";
 }
