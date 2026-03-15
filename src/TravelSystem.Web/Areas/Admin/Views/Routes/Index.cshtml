@@ -26,7 +26,7 @@
                 <tr>
                     <th>ID</th>
                     <th>ROUTE NAME</th>
-                    <th>QR CODE</th>
+                    <th>IMAGE</th>
                     <th>TOTAL ZONES</th>
                     <th>STATUS</th>
                     <th>ACTIONS</th>
@@ -41,7 +41,16 @@
                             <div class="fw-bold text-dark">@item.Name</div>
                             <small class="text-muted text-truncate d-inline-block" style="max-width:300px;">@item.Description</small>
                         </td>
-                        <td><span class="badge-soft badge-gray" style="font-family: monospace;">@item.QRCode</span></td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                            {
+                                <img src="@item.ImageUrl" alt="Route image" style="width: 64px; height: 40px; object-fit: cover; border-radius: 6px;" />
+                            }
+                            else
+                            {
+                                <span class="badge-soft badge-gray" style="font-family: monospace;">No image</span>
+                            }
+                        </td>
                         <td>
                             @{
                                 int c = counts.ContainsKey(item.Id) ? counts[item.Id] : 0;

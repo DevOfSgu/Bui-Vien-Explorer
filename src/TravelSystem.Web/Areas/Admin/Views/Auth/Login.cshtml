@@ -34,18 +34,13 @@
             background: #ffffff;
             padding: 44px 40px 36px;
         }
-        .logo-icon {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #ff4d4f, #ff7875);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .login-logo {
+            display: block;
             margin: 0 auto 24px;
-            box-shadow: 0 4px 14px rgba(255,77,79,0.35);
+            max-width: 160px;
+            width: 100%;
+            height: auto;
         }
-        .logo-icon img { width: 36px; height: 36px; object-fit: contain; filter: brightness(0) invert(1); }
         .card-title {
             font-weight: 700;
             font-size: 1.5rem;
@@ -159,9 +154,7 @@
 </head>
 <body>
     <div class="login-card">
-        <div class="logo-icon">
-            <img src="~/icons/logo.png" alt="Logo" />
-        </div>
+        <img class="login-logo" src="~/icons/logo.png" alt="Bùi Viện Explorer logo" />
 
         <div class="card-title">Admin Login</div>
         <div class="card-subtitle">Access the platform control center</div>

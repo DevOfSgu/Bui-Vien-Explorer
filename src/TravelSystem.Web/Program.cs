@@ -46,8 +46,6 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
-
 app.MapStaticAssets();
 
 // Route for Areas (Admin & Vendor)

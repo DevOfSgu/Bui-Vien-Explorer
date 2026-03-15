@@ -9,8 +9,7 @@ namespace TravelSystem.Shared.Models
         public int DayOfWeek { get; set; }
         public TimeSpan OpenTime { get; set; }
         public TimeSpan CloseTime { get; set; }
-        public bool IsOpen { get; set; } = true;
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
 
         // Navigation
         public Shop? Shop { get; set; }

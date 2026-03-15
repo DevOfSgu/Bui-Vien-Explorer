@@ -149,8 +149,8 @@ VALUES (
 -- ============================================================
 -- 1a. Insert sample hours for shops (Mon-Sun, 8:00-23:00 open by default)
 -- ============================================================
-INSERT INTO ShopHours (ShopId, DayOfWeek, OpenTime, CloseTime, IsOpen)
-SELECT Id, v.Number, '08:00', '23:00', 1
+INSERT INTO ShopHours (ShopId, DayOfWeek, OpenTime, CloseTime)
+SELECT Id, v.Number, '08:00', '23:00'
 FROM Shops
 CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7)) v(Number);
 
@@ -197,7 +197,7 @@ INSERT INTO Routes (
         Description,
         StartLatitude,
         StartLongitude,
-        QRCode,
+        ImageUrl,
         IsActive
     )
 VALUES (
@@ -205,7 +205,7 @@ VALUES (
         N'Khám phá phố đi bộ Bùi Viện từ đầu đến cuối.',
         10.76968,
         106.69156,
-        N'route-1',
+        NULL,
         1
     );
 -- routeId will be queried when needed below (no variable required)
@@ -228,7 +228,7 @@ INSERT INTO Zones (
         ActiveTime
     )
 VALUES (
-        (SELECT TOP 1 Id FROM Routes WHERE QRCode = N'route-1'),
+        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B�i Vi?n Walking Tour'),
         NULL,
         N'Cổng chào Bùi Viện',
         N'Nơi đón khách tham quan chính thức của toàn phố.',
@@ -241,7 +241,7 @@ VALUES (
         0
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE QRCode = N'route-1'),
+        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B�i Vi?n Walking Tour'),
         1,
         N'The Hideout Bar',
         N'Quán bar lâu đời.',
@@ -254,7 +254,7 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE QRCode = N'route-1'),
+        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B�i Vi?n Walking Tour'),
         2,
         N'Crazy Buffalo Bar',
         N'Biểu tượng nổi tiếng với mô hình trâu rừng.',
@@ -267,7 +267,7 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE QRCode = N'route-1'),
+        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B�i Vi?n Walking Tour'),
         NULL,
         N'Quảng trường giữa',
         N'Nơi hay có múa lửa nghệ thuật.',
@@ -280,7 +280,7 @@ VALUES (
         0
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE QRCode = N'route-1'),
+        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B�i Vi?n Walking Tour'),
         3,
         N'Spotted By Locals',
         N'Nhà hàng có không khí lãng mạn.',
@@ -293,7 +293,7 @@ VALUES (
         0
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE QRCode = N'route-1'),
+        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B�i Vi?n Walking Tour'),
         4,
         N'Boheme Pub',
         N'Điểm đến cho sinh viên quẩy banh nóc.',
@@ -306,7 +306,7 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE QRCode = N'route-1'),
+        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B�i Vi?n Walking Tour'),
         5,
         N'Sahara Beer Club',
         N'Trải nghiệm bia hơi và nhạc DJ.',
@@ -319,7 +319,7 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE QRCode = N'route-1'),
+        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B�i Vi?n Walking Tour'),
         6,
         N'Miss Saigon',
         N'Phong cách sang trọng với âm nhạc hiện đại.',
@@ -332,7 +332,7 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE QRCode = N'route-1'),
+        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B�i Vi?n Walking Tour'),
         7,
         N'Ocean Club',
         N'Nổi bật với thiết kế xanh mát nhiệt đới.',
@@ -345,7 +345,7 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE QRCode = N'route-1'),
+        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B�i Vi?n Walking Tour'),
         8,
         N'Donkey Bar',
         N'Không gian nhỏ, ấm cúng.',
@@ -358,7 +358,7 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE QRCode = N'route-1'),
+        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B�i Vi?n Walking Tour'),
         9,
         N'Universal Pub',
         N'Nhạc sống Tây ba lô yêu thích.',
@@ -371,7 +371,7 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE QRCode = N'route-1'),
+        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B�i Vi?n Walking Tour'),
         10,
         N'Champion Sports Bar',
         N'Nơi xem bóng đá ngoại hạng Anh tốt nhất.',
@@ -384,7 +384,7 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE QRCode = N'route-1'),
+        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B�i Vi?n Walking Tour'),
         11,
         N'Hair of the Dog',
         N'Sôi động thâu đêm.',
@@ -397,7 +397,7 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE QRCode = N'route-1'),
+        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B�i Vi?n Walking Tour'),
         12,
         N'Republic Club',
         N'Sang trọng đẳng cấp.',
@@ -410,7 +410,7 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE QRCode = N'route-1'),
+        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B�i Vi?n Walking Tour'),
         13,
         N'86 Club',
         N'Góc phố nhìn ra công viên 23/9.',
@@ -423,7 +423,7 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE QRCode = N'route-1'),
+        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B�i Vi?n Walking Tour'),
         14,
         N'Le Pub',
         N'Khách Tây hay ngồi vỉa hè.',
@@ -436,7 +436,7 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE QRCode = N'route-1'),
+        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B�i Vi?n Walking Tour'),
         15,
         N'Asiana Food Town',
         N'Khu ẩm thực đa quốc gia.',
@@ -449,7 +449,7 @@ VALUES (
         0
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE QRCode = N'route-1'),
+        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B�i Vi?n Walking Tour'),
         16,
         N'Krystal Lounge',
         N'Thư giãn thưởng thức Shisha.',
@@ -462,7 +462,7 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE QRCode = N'route-1'),
+        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B�i Vi?n Walking Tour'),
         17,
         N'Nubes Rooftop',
         N'Từ tầng thượng bạn có thể ngắm Landmark 81.',
@@ -475,7 +475,7 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE QRCode = N'route-1'),
+        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B�i Vi?n Walking Tour'),
         18,
         N'Sky Bar 360',
         N'Nhạc House, chill.',
@@ -670,3 +670,4 @@ UNION ALL
 SELECT N'Users',
     COUNT(*)
 FROM Users;
+

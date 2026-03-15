@@ -26,57 +26,6 @@
     .lang-count { font-size: 12px; color: #9ca3af; }
 </style>
 
-<!-- Page header -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h5 class="fw-bold mb-1" style="color:#111827;font-size:1.2rem;">Dashboard Home</h5>
-        <small class="text-muted">@shopName</small>
-    </div>
-
-    <div class="d-flex align-items-center gap-2">
-        <span class="@(shopOpen ? "status-open" : "status-closed")">@(shopOpen ? "Open" : "Closed")</span>
-        <button id="shopToggleBtn" class="btn btn-sm" style="border:1px solid #e5e7eb;">
-            @(shopOpen ? "Close shop" : "Re-open shop")
-        </button>
-        <button class="btn p-2" style="border:none;background:transparent;color:#9ca3af;font-size:18px;"><i class="fa-regular fa-bell"></i></button>
-        <div style="width:36px;height:36px;border-radius:50%;background:#f3f4f6;border:1px solid #e5e7eb;"></div>
-    </div>
-
-    @* Anti-forgery token used by the toggle button AJAX request *@
-    @Html.AntiForgeryToken()
-
-    <script>
-        (function () {
-            const toggleBtn = document.getElementById('shopToggleBtn');
-            if (!toggleBtn) return;
-
-            const shopId = '@ViewBag.ShopId';
-            // When the shop is currently open, the toggle should force it closed; otherwise it should clear the force-closed override.
-            const shopOpen = @shopOpen.ToString().ToLower();
-            const forceClosed = shopOpen;
-
-            toggleBtn.addEventListener('click', async () => {
-                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-                if (!token) return;
-
-                const url = '@Url.Action("ToggleShopClosed", "Dashboard", new { area = "Vendor" })';
-                const formData = new FormData();
-                formData.append('__RequestVerificationToken', token);
-                formData.append('shopId', shopId);
-                formData.append('forceClosed', (forceClosed ? 'true' : 'false'));
-
-                const res = await fetch(url, { method: 'POST', body: formData });
-                if (res.ok) {
-                    location.reload();
-                } else {
-                    console.error('Toggle failed', res.statusText);
-                    alert('Unable to update shop status; please try again.');
-                }
-            });
-        })();
-    </script>
-</div>
-
 <!-- Stat Cards -->
 <div class="row g-3 mb-4">
     <div class="col-xl-3 col-md-6">
