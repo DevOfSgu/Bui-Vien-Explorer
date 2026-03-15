@@ -32,6 +32,8 @@ builder.Services.AddAuthentication()
     });
 var app = builder.Build();
 
+// Schema patches intentionally removed: Shops no longer include Description/Radius
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

@@ -1,7 +1,7 @@
 -- ============================================================
--- SAMPLE DATA - BÃ¹i Viá»n Explorer (ÄÃ£ má» rá»ng 20 record/báº£ng)
+-- SAMPLE DATA - Bùi Viện Explorer (Đã mở rộng 20 record/bảng)
 -- ============================================================
--- XÃ³a data cÅ© (náº¿u báº£ng tá»n táº¡i)
+-- Xóa data cũ (nếu bảng tồn tại)
 IF OBJECT_ID('GuestFavorites','U') IS NOT NULL DELETE FROM GuestFavorites;
 IF OBJECT_ID('AppSettings','U') IS NOT NULL DELETE FROM AppSettings;
 IF OBJECT_ID('ShopHours','U') IS NOT NULL DELETE FROM ShopHours;
@@ -13,7 +13,7 @@ IF OBJECT_ID('Routes','U') IS NOT NULL DELETE FROM Routes;
 IF OBJECT_ID('Shops','U') IS NOT NULL DELETE FROM Shops;
 
 -- Reset Identity counters
--- AppSettings dÃ¹ng Key (string) lÃ m PK, khÃ´ng cÃ³ identity -- khÃ´ng cáº§n RESEED
+-- AppSettings dùng Key (string) làm PK, không có identity -- không cần RESEED
 
 IF OBJECT_ID('ShopHours','U') IS NOT NULL DBCC CHECKIDENT ('ShopHours', RESEED, 0);
 IF OBJECT_ID('Shops','U') IS NOT NULL DBCC CHECKIDENT ('Shops', RESEED, 0);
@@ -21,127 +21,128 @@ IF OBJECT_ID('Routes','U') IS NOT NULL DBCC CHECKIDENT ('Routes', RESEED, 0);
 IF OBJECT_ID('Zones','U') IS NOT NULL DBCC CHECKIDENT ('Zones', RESEED, 0);
 IF OBJECT_ID('Narrations','U') IS NOT NULL DBCC CHECKIDENT ('Narrations', RESEED, 0);
 IF OBJECT_ID('Users','U') IS NOT NULL DBCC CHECKIDENT ('Users', RESEED, 0);
+
 -- ============================================================
 -- 1. Insert 20 Shops
 -- ============================================================
 INSERT INTO Shops (Name, Address, PhoneNumber, ImageUrl)
 VALUES (
         N'The Hideout Bar',
-        N'11 BÃ¹i Viá»n, Q1, TP.HCM',
+        N'11 Bùi Viện, Q1, TP.HCM',
         N'028-3838-1111',
         NULL
     ),
     (
         N'Crazy Buffalo Bar',
-        N'9 BÃ¹i Viá»n, Q1, TP.HCM',
+        N'9 Bùi Viện, Q1, TP.HCM',
         N'028-3838-2222',
         NULL
     ),
     (
         N'Spotted By Locals',
-        N'5 BÃ¹i Viá»n, Q1, TP.HCM',
+        N'5 Bùi Viện, Q1, TP.HCM',
         N'028-3838-3333',
         NULL
     ),
     (
         N'Boheme Pub',
-        N'28 BÃ¹i Viá»n, Q1, TP.HCM',
+        N'28 Bùi Viện, Q1, TP.HCM',
         N'028-3838-4444',
         NULL
     ),
     (
         N'Sahara Beer Club',
-        N'111 BÃ¹i Viá»n, Q1, TP.HCM',
+        N'111 Bùi Viện, Q1, TP.HCM',
         N'028-3838-5555',
         NULL
     ),
     (
         N'Miss Saigon',
-        N'50 BÃ¹i Viá»n, Q1, TP.HCM',
+        N'50 Bùi Viện, Q1, TP.HCM',
         N'028-3838-6666',
         NULL
     ),
     (
         N'Ocean Club',
-        N'41 BÃ¹i Viá»n, Q1, TP.HCM',
+        N'41 Bùi Viện, Q1, TP.HCM',
         N'028-3838-7777',
         NULL
     ),
     (
         N'Donkey Bar',
-        N'120 BÃ¹i Viá»n, Q1, TP.HCM',
+        N'120 Bùi Viện, Q1, TP.HCM',
         N'028-3838-8888',
         NULL
     ),
     (
         N'Universal Pub',
-        N'90 BÃ¹i Viá»n, Q1, TP.HCM',
+        N'90 Bùi Viện, Q1, TP.HCM',
         N'028-3838-9999',
         NULL
     ),
     (
         N'Champion Sports Bar',
-        N'45 BÃ¹i Viá»n, Q1, TP.HCM',
+        N'45 Bùi Viện, Q1, TP.HCM',
         N'028-3838-0000',
         NULL
     ),
     (
         N'Hair of the Dog',
-        N'194 BÃ¹i Viá»n, Q1, TP.HCM',
+        N'194 Bùi Viện, Q1, TP.HCM',
         N'028-3838-1122',
         NULL
     ),
     (
         N'Republic Club',
-        N'200 BÃ¹i Viá»n, Q1, TP.HCM',
+        N'200 Bùi Viện, Q1, TP.HCM',
         N'028-3838-2233',
         NULL
     ),
     (
         N'86 Club',
-        N'86 BÃ¹i Viá»n, Q1, TP.HCM',
+        N'86 Bùi Viện, Q1, TP.HCM',
         N'028-3838-3344',
         NULL
     ),
     (
         N'Le Pub',
-        N'175 BÃ¹i Viá»n, Q1, TP.HCM',
+        N'175 Bùi Viện, Q1, TP.HCM',
         N'028-3838-4455',
         NULL
     ),
     (
         N'Asiana Food Town',
-        N'Khu áº©m thá»±c ngáº§m 23/9, Q1, TP.HCM',
+        N'Khu ẩm thực ngầm 23/9, Q1, TP.HCM',
         N'028-3838-5566',
         NULL
     ),
     (
         N'Krystal Lounge',
-        N'80 BÃ¹i Viá»n, Q1, TP.HCM',
+        N'80 Bùi Viện, Q1, TP.HCM',
         N'028-3838-6677',
         NULL
     ),
     (
         N'Nubes Rooftop',
-        N'115 BÃ¹i Viá»n, Q1, TP.HCM',
+        N'115 Bùi Viện, Q1, TP.HCM',
         N'028-3838-7788',
         NULL
     ),
     (
         N'Sky Bar 360',
-        N'99 BÃ¹i Viá»n, Q1, TP.HCM',
+        N'99 Bùi Viện, Q1, TP.HCM',
         N'028-3838-8899',
         NULL
     ),
     (
         N'Corner Coffee & Beer',
-        N'1 BÃ¹i Viá»n, Q1, TP.HCM',
+        N'1 Bùi Viện, Q1, TP.HCM',
         N'028-3838-9900',
         NULL
     ),
     (
-        N'Local BÃ¹i Viá»n',
-        N'33 BÃ¹i Viá»n, Q1, TP.HCM',
+        N'Local Bùi Viện',
+        N'33 Bùi Viện, Q1, TP.HCM',
         N'028-3838-0011',
         NULL
     );
@@ -159,11 +160,7 @@ CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7)) v(Number);
 -- ============================================================
 INSERT INTO AppSettings([Key],[Value],[UpdatedAt])
 VALUES ('DefaultLanguage','vi', GETDATE()),
-       ('EnableApiSync','1', GETDATE()),
-       -- Force shop closed override (1 = closed, 0 = follow hours)
-       ('Shop:1:ForceClosed','0', GETDATE()),
-       -- If set, shop is treated as closed until this timestamp (UTC)
-       ('Shop:1:ClosedUntil','2026-01-01T00:00:00Z', GETDATE());
+       ('EnableApiSync','1', GETDATE());
 
 -- ============================================================
 -- 2. Insert 20 Users (2 Admins, 18 Vendors)
@@ -189,6 +186,7 @@ VALUES (N'admin', N'123456', N'Admin User', N'admin@buivienexplorer.com', 0, NUL
     (N'vendor16', N'123456', N'Vendor 16', N'vendor16@example.com', 1, 16, 1),
     (N'vendor17', N'123456', N'Vendor 17', N'vendor17@example.com', 1, 17, 1),
     (N'vendor18', N'123456', N'Vendor 18', N'vendor18@example.com', 1, 18, 1);
+
 -- ============================================================
 -- 3. Insert 1 Route
 -- ============================================================
@@ -208,12 +206,11 @@ VALUES (
         NULL,
         1
     );
--- routeId will be queried when needed below
+
 DECLARE @routeId INT = CAST(SCOPE_IDENTITY() AS INT);
 
-
 -- ============================================================
--- 4. Insert 20 Zones (Má»i Route gÃ¡n 1 Zone Äá» Äáº£m báº£o cÃ³ data)
+-- 4. Insert 20 Zones
 -- ============================================================
 INSERT INTO Zones (
         RouteId,
@@ -258,7 +255,7 @@ VALUES (
         @routeId,
         2,
         N'Crazy Buffalo Bar',
-        N'Biá»u tÆ°á»£ng ná»i tiáº¿ng vá»i mÃ´ hÃ¬nh trÃ¢u rá»«ng.',
+        N'Biểu tượng nổi tiếng với mô hình trâu rừng.',
         10.76930,
         106.69185,
         15,
@@ -270,8 +267,8 @@ VALUES (
     (
         @routeId,
         NULL,
-        N'Quáº£ng trÆ°á»ng giá»¯a',
-        N'NÆ¡i hay cÃ³ mÃºa lá»­a nghá» thuáº­t.',
+        N'Quảng trường giữa',
+        N'Nơi hay có múa lửa nghệ thuật.',
         10.76910,
         106.69200,
         25,
@@ -284,7 +281,7 @@ VALUES (
         @routeId,
         3,
         N'Spotted By Locals',
-        N'NhÃ  hÃ ng cÃ³ khÃ´ng khÃ­ lÃ£ng máº¡n.',
+        N'Nhà hàng có không khí lãng mạn.',
         10.76890,
         106.69215,
         15,
@@ -297,7 +294,7 @@ VALUES (
         @routeId,
         4,
         N'Boheme Pub',
-        N'Äiá»m Äáº¿n cho sinh viÃªn quáº©y banh nÃ³c.',
+        N'Điểm đến cho sinh viên quẩy banh nóc.',
         10.76895,
         106.69225,
         15,
@@ -310,7 +307,7 @@ VALUES (
         @routeId,
         5,
         N'Sahara Beer Club',
-        N'Tráº£i nghiá»m bia hÆ¡i vÃ  nháº¡c DJ.',
+        N'Trải nghiệm bia hơi và nhạc DJ.',
         10.76890,
         106.69230,
         15,
@@ -323,7 +320,7 @@ VALUES (
         @routeId,
         6,
         N'Miss Saigon',
-        N'Phong cÃ¡ch sang trá»ng vá»i Ã¢m nháº¡c hiá»n Äáº¡i.',
+        N'Phong cách sang trọng với âm nhạc hiện đại.',
         10.76885,
         106.69235,
         15,
@@ -336,7 +333,7 @@ VALUES (
         @routeId,
         7,
         N'Ocean Club',
-        N'Ná»i báº­t vá»i thiáº¿t káº¿ xanh mÃ¡t nhiá»t Äá»i.',
+        N'Nổi bật với thiết kế xanh mát nhiệt đới.',
         10.76880,
         106.69240,
         15,
@@ -349,7 +346,7 @@ VALUES (
         @routeId,
         8,
         N'Donkey Bar',
-        N'KhÃ´ng gian nhá», áº¥m cÃºng.',
+        N'Không gian nhỏ, ấm cúng.',
         10.76875,
         106.69245,
         15,
@@ -362,7 +359,7 @@ VALUES (
         @routeId,
         9,
         N'Universal Pub',
-        N'Nháº¡c sá»ng TÃ¢y ba lÃ´ yÃªu thÃ­ch.',
+        N'Nhạc sống Tây ba lô yêu thích.',
         10.76870,
         106.69250,
         15,
@@ -375,7 +372,7 @@ VALUES (
         @routeId,
         10,
         N'Champion Sports Bar',
-        N'NÆ¡i xem bÃ³ng ÄÃ¡ ngoáº¡i háº¡ng Anh tá»t nháº¥t.',
+        N'Nơi xem bóng đá ngoại hạng Anh tốt nhất.',
         10.76865,
         106.69255,
         15,
@@ -388,7 +385,7 @@ VALUES (
         @routeId,
         11,
         N'Hair of the Dog',
-        N'SÃ´i Äá»ng thÃ¢u ÄÃªm.',
+        N'Sôi động thâu đêm.',
         10.76860,
         106.69260,
         15,
@@ -401,7 +398,7 @@ VALUES (
         @routeId,
         12,
         N'Republic Club',
-        N'Sang trá»ng Äáº³ng cáº¥p.',
+        N'Sang trọng đẳng cấp.',
         10.76855,
         106.69265,
         15,
@@ -414,7 +411,7 @@ VALUES (
         @routeId,
         13,
         N'86 Club',
-        N'GÃ³c phá» nhÃ¬n ra cÃ´ng viÃªn 23/9.',
+        N'Góc phố nhìn ra công viên 23/9.',
         10.76850,
         106.69270,
         15,
@@ -427,7 +424,7 @@ VALUES (
         @routeId,
         14,
         N'Le Pub',
-        N'KhÃ¡ch TÃ¢y hay ngá»i vá»a hÃ¨.',
+        N'Khách Tây hay ngồi vỉa hè.',
         10.76845,
         106.69275,
         15,
@@ -440,7 +437,7 @@ VALUES (
         @routeId,
         15,
         N'Asiana Food Town',
-        N'Khu áº©m thá»±c Äa quá»c gia.',
+        N'Khu ẩm thực đa quốc gia.',
         10.76840,
         106.69280,
         15,
@@ -453,7 +450,7 @@ VALUES (
         @routeId,
         16,
         N'Krystal Lounge',
-        N'ThÆ° giÃ£n thÆ°á»ng thá»©c Shisha.',
+        N'Thư giãn thưởng thức Shisha.',
         10.76835,
         106.69285,
         15,
@@ -466,7 +463,7 @@ VALUES (
         @routeId,
         17,
         N'Nubes Rooftop',
-        N'Tá»« táº§ng thÆ°á»£ng báº¡n cÃ³ thá» ngáº¯m Landmark 81.',
+        N'Từ tầng thượng bạn có thể ngắm Landmark 81.',
         10.76830,
         106.69290,
         15,
@@ -479,7 +476,7 @@ VALUES (
         @routeId,
         18,
         N'Sky Bar 360',
-        N'Nháº¡c House, chill.',
+        N'Nhạc House, chill.',
         10.76825,
         106.69295,
         15,
@@ -490,13 +487,11 @@ VALUES (
     );
 
 -- ============================================================
--- 5. Insert 20 Narrations (GÃ¡n cho 20 Zones, random ngÃ´n ngá»¯)
+-- 5. Insert 20 Narrations
 -- ============================================================
--- capture the first 20 zone ids in variables so we don't assume they start at 1
 DECLARE @z1 INT,@z2 INT,@z3 INT,@z4 INT,@z5 INT,@z6 INT,@z7 INT,@z8 INT,@z9 INT,@z10 INT,
         @z11 INT,@z12 INT,@z13 INT,@z14 INT,@z15 INT,@z16 INT,@z17 INT,@z18 INT,@z19 INT,@z20 INT;
 
--- Silence the "Null value is eliminated by an aggregate" warning when using MAX(CASE...)
 SET ANSI_WARNINGS OFF;
 
 WITH numbered AS (
@@ -534,37 +529,37 @@ INSERT INTO Narrations (ZoneId, Language, Text, VoiceId)
 VALUES (
         @z1,
         N'vi',
-        N'ChÃ o má»«ng báº¡n Äáº¿n vá»i Cá»ng chÃ o BÃ¹i Viá»n. HÃ£y sáºµn sÃ ng tráº£i nghiá»m buá»i tá»i thÃº vá».',
+        N'Chào mừng bạn đến với Cổng chào Bùi Viện. Hãy sẵn sàng trải nghiệm buổi tối thú vị.',
         N'vi-VN-Standard-A'
     ),
     (
         @z2,
         N'vi',
-        N'ÄÃ¢y lÃ  The Hideout Bar, luÃ´n lÃ  Äiá»m nháº­u lÃ½ tÆ°á»ng cá»§a khÃ¡ch phÆ°Æ¡ng xa.',
+        N'Đây là The Hideout Bar, luôn là điểm nhậu lý tưởng của khách phương xa.',
         N'vi-VN-Standard-A'
     ),
     (
         @z3,
         N'vi',
-        N'Crazy Buffalo Bar cÃ³ khÃ´ng gian cá»±c Äáº¡i. HÃ£y chá»¥p má»t bá»©c áº£nh check in á» ÄÃ¢y nhÃ©.',
+        N'Crazy Buffalo Bar có không gian cực đại. Hãy chụp một bức ảnh check in ở đây nhé.',
         N'vi-VN-Standard-A'
     ),
     (
         @z4,
         N'vi',
-        N'Táº¡i quáº£ng trÆ°á»ng trung tÃ¢m nÃ y, cuá»i tuáº§n hay cÃ³ mÃºa lá»­a vÃ  biá»u diá»n áº£o thuáº­t.',
+        N'Tại quảng trường trung tâm này, cuối tuần hay có múa lửa và biểu diễn ảo thuật.',
         N'vi-VN-Standard-A'
     ),
     (
         @z5,
         N'vi',
-        N'Spotted By Locals cung cáº¥p cÃ¡c mÃ³n Än ngon sau khi dáº¡o phá».',
+        N'Spotted By Locals cung cấp các món ăn ngon sau khi dạo phố.',
         N'vi-VN-Standard-A'
     ),
     (
         @z6,
         N'vi',
-        N'Boheme Pub cÃ³ DJ chÆ¡i nháº¡c cá»±c chÃ¡y. HÃ£y ghÃ© vÃ o thá»­ 1 chai bia!',
+        N'Boheme Pub có DJ chơi nhạc cực cháy. Hãy ghé vào thử 1 chai bia!',
         N'vi-VN-Standard-A'
     ),
     (
@@ -594,13 +589,13 @@ VALUES (
     (
         @z11,
         N'vi',
-        N'Universal Pub lÃ  nÆ¡i hay cÃ³ nháº¡c Acoustic.',
+        N'Universal Pub là nơi hay có nhạc Acoustic.',
         N'vi-VN-Standard-A'
     ),
     (
         @z12,
         N'vi',
-        N'Náº¿u báº¡n mÃª bÃ³ng ÄÃ¡, hÃ£y dá»«ng chÃ¢n táº¡i Champion Sports Bar vÃ o cuá»i tuáº§n.',
+        N'Nếu bạn mê bóng đá, hãy dừng chân tại Champion Sports Bar vào cuối tuần.',
         N'vi-VN-Standard-A'
     ),
     (
@@ -618,13 +613,13 @@ VALUES (
     (
         @z15,
         N'vi',
-        N'Tá»« 86 Club báº¡n cÃ³ thá» ngá»i nhÃ¬n ra khu cÃ´ng viÃªn cá»±c ká»³ thoÃ¡ng.',
+        N'Từ 86 Club bạn có thể ngồi nhìn ra khu công viên cực kỳ thoáng.',
         N'vi-VN-Standard-A'
     ),
     (
         @z16,
         N'vi',
-        N'Le Pub lÃ  nÆ¡i giao thoa vÄn hÃ³a ÄÆ°á»ng phá» ráº¥t tuyá»t vá»i.',
+        N'Le Pub là nơi giao thoa văn hóa đường phố rất tuyệt vời.',
         N'vi-VN-Standard-A'
     ),
     (
@@ -636,22 +631,24 @@ VALUES (
     (
         @z18,
         N'vi',
-        N'VÃ o Krystal Lounge báº¡n sáº½ tháº¥y khÃ´ng khÃ­ ráº¥t tÄ©nh lÄng nháº¹ nhÃ ng hÆ¡n.',
+        N'Vào Krystal Lounge bạn sẽ thấy không khí rất tĩnh lặng nhẹ nhàng hơn.',
         N'vi-VN-Standard-A'
     ),
     (
         @z19,
         N'vi',
-        N'Báº¡n muá»n ngáº¯m cáº£nh Æ°? NhÃ¬n lÃªn ngay, Nubes Rooftop á» trÃªn láº§u 6.',
+        N'Bạn muốn ngắm cảnh ư? Nhìn lên ngay, Nubes Rooftop ở trên lầu 6.',
         N'vi-VN-Standard-A'
     ),
     (
         @z20,
         N'en',
-        N'End your night gracefully at Sky Bar 360 with a panoramic view.',        N'en-US-Standard-C'
+        N'End your night gracefully at Sky Bar 360 with a panoramic view.',
+        N'en-US-Standard-C'
     );
 END
--- Kiá»m tra káº¿t quáº£
+
+-- Kiểm tra kết quả
 SELECT N'Routes' AS [Table],
     COUNT(*) AS [Count]
 FROM Routes
@@ -671,4 +668,3 @@ UNION ALL
 SELECT N'Users',
     COUNT(*)
 FROM Users;
-
