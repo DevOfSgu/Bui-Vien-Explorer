@@ -3,47 +3,114 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:TravelSystem.Mobile.ViewModels"
              x:Class="TravelSystem.Mobile.Views.MainPage"
+             BackgroundColor="#F3F4F6"
              x:DataType="vm:MainPageViewModel">
 
-    <ScrollView>
-        <VerticalStackLayout
-            Padding="30,0"
-            Spacing="25">
-            <Image
-                Source="dotnet_bot.png"
-                HeightRequest="185"
-                Aspect="AspectFit"
-                SemanticProperties.Description="dot net bot in a submarine number ten" />
+    <RefreshView Command="{Binding LoadDataCommand}" IsRefreshing="{Binding IsLoading}">
+        <ScrollView>
+            <VerticalStackLayout Padding="22,18,22,18" Spacing="6">
 
-            <Label
-                Text="Hello, World!"
-                Style="{StaticResource Headline}"
-                SemanticProperties.HeadingLevel="Level1" />
+                <Label Text="Discover Tours"
+                       FontSize="36"
+                       FontFamily="SpaceGroteskBold"
+                       FontAttributes="Bold"
+                       TextColor="#1F2937" />
 
-            <Label
-                Text="Welcome to &#10;.NET Multi-platform App UI"
-                Style="{StaticResource SubHeadline}"
-                SemanticProperties.HeadingLevel="Level2"
-                SemanticProperties.Description="Welcome to dot net Multi platform App U I" />
+                <Label Text="Explore the heart of Saigon"
+                       FontSize="16"
+                       TextColor="#667085"
+                       Margin="0,0,0,12" />
 
-            <Button
-                Text="{Binding CounterText}"
-                SemanticProperties.Hint="Counts the number of times you click"
-                Command="{Binding IncrementCounterCommand}"
-                HorizontalOptions="Fill" />
+                <ActivityIndicator IsVisible="{Binding IsLoading}"
+                                   IsRunning="{Binding IsLoading}"
+                                   Color="#FF4B4B"
+                                   Margin="0,6" />
 
-            <Button
-                Text="Test API Connection"
-                Command="{Binding TestApiCommand}"
-                BackgroundColor="Green"
-                TextColor="White"
-                HorizontalOptions="Fill" />
+                <Label Text="{Binding ErrorMessage}"
+                       IsVisible="{Binding HasError}"
+                       TextColor="#C62828"
+                       FontSize="13"
+                       Margin="0,4,0,8" />
 
-            <Label
-                Text="{Binding ApiResult}"
-                FontSize="12"
-                TextColor="Gray" />
-        </VerticalStackLayout>
-    </ScrollView>
+                <CollectionView ItemsSource="{Binding RouteCards}"
+                                SelectionMode="None">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="14" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="vm:RouteCardItem">
+                            <Border BackgroundColor="White"
+                                    Stroke="#ECEEF2"
+                                    StrokeThickness="1"
+                                    Padding="14"
+                                    StrokeShape="RoundRectangle 20">
+                                <Border.Shadow>
+                                    <Shadow Brush="#1A000000" Radius="14" Opacity="0.12" Offset="0,6" />
+                                </Border.Shadow>
+
+                                <Grid ColumnDefinitions="68,*,Auto"
+                                      RowDefinitions="Auto,Auto"
+                                      ColumnSpacing="12"
+                                      RowSpacing="4">
+
+                                    <Border Grid.RowSpan="2"
+                                            BackgroundColor="{Binding IconBackgroundColor}"
+                                            StrokeThickness="0"
+                                            HeightRequest="56"
+                                            WidthRequest="56"
+                                            VerticalOptions="Center"
+                                            StrokeShape="RoundRectangle 28">
+                                        <Label Text="{Binding IconGlyph}"
+                                               FontSize="24"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center" />
+                                    </Border>
+
+                                    <Label Grid.Column="1"
+                                           Text="{Binding Name}"
+                                           FontSize="22"
+                                           FontFamily="SpaceGroteskBold"
+                                           FontAttributes="Bold"
+                                           TextColor="#1F2937" />
+
+                                    <Label Grid.Column="2"
+                                           Grid.RowSpan="2"
+                                           Text="›"
+                                           FontSize="28"
+                                           TextColor="#C2C8D0"
+                                           VerticalOptions="Center" />
+
+                                    <HorizontalStackLayout Grid.Column="1"
+                                                           Grid.Row="1"
+                                                           Spacing="8">
+                                        <Border BackgroundColor="#FF4B4B"
+                                                StrokeThickness="0"
+                                                Padding="12,6"
+                                                StrokeShape="RoundRectangle 18">
+                                            <Label Text="{Binding StopsText}"
+                                                   FontSize="11"
+                                                   FontAttributes="Bold"
+                                                   TextColor="White" />
+                                        </Border>
+
+                                        <Border BackgroundColor="#FF4B4B"
+                                                StrokeThickness="0"
+                                                Padding="12,6"
+                                                StrokeShape="RoundRectangle 18">
+                                            <Label Text="{Binding MinutesText}"
+                                                   FontSize="11"
+                                                   FontAttributes="Bold"
+                                                   TextColor="White" />
+                                        </Border>
+                                    </HorizontalStackLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
 
 </ContentPage>

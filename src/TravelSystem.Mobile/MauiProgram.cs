@@ -12,9 +12,12 @@ public static class MauiProgram
 			.UseMauiApp<App>()
 			.ConfigureFonts(fonts =>
 			{
-				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-			});
+                fonts.AddFont("SpaceGrotesk-Bold.ttf", "SpaceGroteskBold");
+                fonts.AddFont("SpaceGrotesk-Light.ttf", "SpaceGroteskLight");
+                fonts.AddFont("SpaceGrotesk-Medium.ttf", "SpaceGroteskMedium");
+                fonts.AddFont("SpaceGrotesk-Regular.ttf", "SpaceGroteskRegular");
+                fonts.AddFont("SpaceGrotesk-SemiBold.ttf", "SpaceGroteskSemiBold");
+            });
 
 #if DEBUG
      builder.Logging.SetMinimumLevel(LogLevel.Debug);
@@ -32,6 +35,8 @@ public static class MauiProgram
 		// Register Pages
 		builder.Services.AddSingleton<MainPage>();
 		builder.Services.AddSingleton<AppShell>();
+        builder.Services.AddSingleton<SavedPage>();
+		builder.Services.AddSingleton<SettingsPage>();
         builder.Services.AddTransient<LanguageSelectionPage>();
 
 		return builder.Build();

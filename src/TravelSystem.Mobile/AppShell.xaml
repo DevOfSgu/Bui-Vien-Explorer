@@ -3,13 +3,53 @@
     x:Class="TravelSystem.Mobile.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:TravelSystem.Mobile"
     xmlns:views="clr-namespace:TravelSystem.Mobile.Views"
-    Title="TravelSystem.Mobile">
+    Shell.BackgroundColor="White"
+    Shell.ForegroundColor="#111827"
+    Shell.TitleColor="#111827"
+    Shell.TabBarBackgroundColor="White"
+    Shell.TabBarForegroundColor="#FF4B4B"
+    Shell.TabBarTitleColor="#FF4B4B"
+    Shell.TabBarUnselectedColor="#94A3B8"
+    Title="Bùi Viện Explorer">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate views:MainPage}"
-        Route="MainPage" />
+    <Shell.TitleView>
+        <Grid ColumnDefinitions="Auto,*,Auto" Padding="10,5" HeightRequest="60" VerticalOptions="Center">
+            <Image Source="logoapp.png"
+                   WidthRequest="40"
+                   HeightRequest="40"
+                   Aspect="AspectFit"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"/>
+            <Label Grid.Column="1"
+                   Text="Bùi Viện Explorer"
+                   FontSize="20"
+                   FontFamily="SpaceGroteskBold"
+                   FontAttributes="Bold"
+                   Margin="10,0,0,0"
+                   VerticalOptions="Center" />
+
+        </Grid>
+    </Shell.TitleView>
+
+    <TabBar Route="MainTabs">
+        <ShellContent
+            Title="Home"
+            Icon="home.png"
+            ContentTemplate="{DataTemplate views:MainPage}"
+            Route="MainPage" />
+
+        <ShellContent
+            Title="Saved"
+            Icon="favourite.png"
+            ContentTemplate="{DataTemplate views:SavedPage}"
+            Route="SavedPage" />
+
+        <ShellContent
+            Title="Settings"
+            Icon="setting.png"
+            ContentTemplate="{DataTemplate views:SettingsPage}"
+            Route="SettingsPage" />
+    </TabBar>
 
 </Shell>

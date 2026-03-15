@@ -7,6 +7,7 @@ namespace TravelSystem.Mobile;
 public partial class App : Application
 {
     private readonly DatabaseService _dbService;
+
     public App(DatabaseService dbService)
     {
         InitializeComponent();
@@ -16,7 +17,6 @@ public partial class App : Application
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        // MAUI nguyên bản luôn trả về AppShell làm root
         return new Window(new AppShell());
     }
 

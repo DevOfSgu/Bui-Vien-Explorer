@@ -22,14 +22,14 @@
                     </Border>
 
                     <VerticalStackLayout Spacing="-8" HorizontalOptions="Center">
-                        <Label Text="Bùi Viện" FontSize="36" FontAttributes="Bold" TextColor="#1C1C1E" HorizontalOptions="Center" />
-                        <Label Text="Explorer" FontSize="36" FontAttributes="Bold" TextColor="#1C1C1E" HorizontalOptions="Center" />
+                        <Label Text="Bùi Viện" FontSize="36" FontFamily="SpaceGroteskBold" FontAttributes="Bold" TextColor="#1C1C1E" HorizontalOptions="Center" />
+                        <Label Text="Explorer" FontSize="36" FontFamily="SpaceGroteskBold" FontAttributes="Bold" TextColor="#1C1C1E" HorizontalOptions="Center" />
                     </VerticalStackLayout>
 
                     <Label Text="AUDIO GUIDE EXPERIENCE" FontSize="11" FontAttributes="Bold" TextColor="#8E8E93" CharacterSpacing="1.5" HorizontalOptions="Center" Margin="0, 8, 0, 0" />
                 </VerticalStackLayout>
 
-                <Label Text="Choose Your Language" FontSize="18" FontAttributes="Bold" TextColor="#1C1C1E" HorizontalOptions="Center" />
+                <Label Text="Choose Your Language" FontSize="18" FontFamily="SpaceGroteskBold" FontAttributes="Bold" TextColor="#1C1C1E" HorizontalOptions="Center" />
 
                 <VerticalStackLayout Spacing="16" x:Name="LanguageList">
 
@@ -53,7 +53,7 @@
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
                                 </Border.StrokeShape>
-                                <Ellipse x:Name="viet_dot" Fill="#FF4B4B" IsVisible="False" WidthRequest="12" HeightRequest="12" HorizontalOptions="Center" VerticalOptions="Center" />
+                                <Ellipse x:Name="viet_dot" Fill="#FF4B4B" IsVisible="True" WidthRequest="12" HeightRequest="12" HorizontalOptions="Center" VerticalOptions="Center" />
                             </Border>
                         </Grid>
                     </Border>

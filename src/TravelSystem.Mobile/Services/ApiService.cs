@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Net.Http.Json;
+using TravelSystem.Shared.Models;
 
 namespace TravelSystem.Mobile.Services;
 
@@ -17,35 +19,58 @@ public class ApiService
         };
     }
 
-    public async Task<string> TestConnectionAsync()
+    public async Task<IReadOnlyList<RouteSummary>> GetRouteSummariesAsync()
     {
-        var endpoint = ApiConstants.RoutesEndpoint;
-
         try
         {
-            Debug.WriteLine($"[API] Sending GET request to {_httpClient.BaseAddress}{endpoint}");
-            _logger.LogInformation("[API] Sending GET request to {BaseAddress}{Endpoint}", _httpClient.BaseAddress, endpoint);
+            Debug.WriteLine($"[API] Loading routes from {_httpClient.BaseAddress}{ApiConstants.RoutesEndpoint}");
+            var routes = await _httpClient.GetFromJsonAsync<List<Routes>>(ApiConstants.RoutesEndpoint) ?? [];
 
-            var response = await _httpClient.GetAsync(endpoint);
+            var results = new List<RouteSummary>();
+            foreach (var route in routes)
+            {
+                var zonesEndpoint = $"{ApiConstants.ZonesEndpoint}?routeId={route.Id}";
+                var zones = await _httpClient.GetFromJsonAsync<List<ZoneSummaryDto>>(zonesEndpoint) ?? [];
 
-            Debug.WriteLine($"[API] Received status {(int)response.StatusCode} from {endpoint}");
-            _logger.LogInformation("[API] Received response {StatusCode} from {Endpoint}", (int)response.StatusCode, endpoint);
+                var stopCount = zones.Count;
+                var minutes = zones.Sum(z => z.ActiveTime > 0 ? z.ActiveTime : 0);
+                if (minutes <= 0)
+                {
+                    minutes = stopCount * 8;
+                }
 
-            response.EnsureSuccessStatusCode();
+                var zoneType = zones.FirstOrDefault()?.ZoneType ?? 0;
 
-            var data = await response.Content.ReadAsStringAsync();
+                results.Add(new RouteSummary(
+                    route.Id,
+                    route.Name,
+                    route.Description,
+                    stopCount,
+                    minutes,
+                    zoneType));
+            }
 
-            var preview = data.Length > 500 ? data[..500] + "..." : data;
-            Debug.WriteLine($"[API] Response payload preview: {preview}");
-            _logger.LogDebug("[API] Response payload from {Endpoint}: {Payload}", endpoint, preview);
-
-            return data;
+            _logger.LogInformation("[API] Loaded {RouteCount} routes for home screen", results.Count);
+            return results;
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[API] Error while calling {_httpClient.BaseAddress}{endpoint}: {ex}");
-            _logger.LogError(ex, "[API] Error while calling {BaseAddress}{Endpoint}", _httpClient.BaseAddress, endpoint);
-            return $"Error: {ex.Message}";
+            _logger.LogError(ex, "[API] Error while loading route summaries");
+            throw;
         }
     }
-}
+
+    private sealed class ZoneSummaryDto
+    {
+        public int ZoneType { get; set; }
+        public int ActiveTime { get; set; }
+    }
+    }
+
+public sealed record RouteSummary(
+    int RouteId,
+    string Name,
+    string Description,
+    int StopCount,
+    int DurationMinutes,
+    int ZoneType);
