@@ -42,7 +42,6 @@ CREATE TABLE ShopHours (
     DayOfWeek INT NOT NULL, -- 1=Monday, 2=Tuesday, ..., 7=Sunday
     OpenTime TIME,
     CloseTime TIME,
-    IsOpen BIT DEFAULT 1,
     CreatedAt DATETIME DEFAULT GETDATE(),
     CONSTRAINT FK_ShopHours_Shops FOREIGN KEY (ShopId) REFERENCES Shops(Id) ON DELETE CASCADE
 );
@@ -55,7 +54,7 @@ CREATE TABLE Routes (
     Description NVARCHAR(500),
     StartLatitude DECIMAL(10, 8),
     StartLongitude DECIMAL(11, 8),
-    QRCode NVARCHAR(255),
+    ImageUrl NVARCHAR(255),
     IsActive BIT DEFAULT 1,
     CreatedAt DATETIME DEFAULT GETDATE(),
     UpdatedAt DATETIME DEFAULT GETDATE()

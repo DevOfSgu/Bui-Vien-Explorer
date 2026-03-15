@@ -46,6 +46,15 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Ensure database schema contains expected columns (ImageUrl for Routes; no QRCode/IsOpen columns anymore).
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.ExecuteSqlRaw("IF COL_LENGTH('Routes','ImageUrl') IS NULL ALTER TABLE Routes ADD ImageUrl nvarchar(max) NULL;");
+    db.Database.ExecuteSqlRaw("IF COL_LENGTH('Routes','QRCode') IS NOT NULL ALTER TABLE Routes DROP COLUMN QRCode;");
+    db.Database.ExecuteSqlRaw("IF COL_LENGTH('ShopHours','IsOpen') IS NOT NULL ALTER TABLE ShopHours DROP COLUMN IsOpen;");
+}
+
 app.MapStaticAssets();
 
 // Route for Areas (Admin & Vendor)
