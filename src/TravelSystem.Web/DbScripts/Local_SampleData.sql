@@ -1,7 +1,7 @@
 -- ============================================================
--- SAMPLE DATA - B˘i Vi?n Explorer (–„ m? r?ng 20 record/b?ng)
+-- SAMPLE DATA - B√πi Vi?n Explorer (√ê√£ m? r?ng 20 record/b?ng)
 -- ============================================================
--- XÛa data cu (n?u b?ng t?n t?i)
+-- X√≥a data cu (n?u b?ng t?n t?i)
 IF OBJECT_ID('AppSettings','U') IS NOT NULL DELETE FROM AppSettings;
 IF OBJECT_ID('ShopHours','U') IS NOT NULL DELETE FROM ShopHours;
 IF OBJECT_ID('Narrations','U') IS NOT NULL DELETE FROM Narrations;
@@ -24,85 +24,85 @@ IF OBJECT_ID('Users','U') IS NOT NULL DBCC CHECKIDENT ('Users', RESEED, 0);
 INSERT INTO Shops (Name, Address, PhoneNumber, ImageUrl)
 VALUES (
         N'The Hideout Bar',
-        N'11 B˘i Vi?n, Q1, TP.HCM',
+        N'11 B√πi Vi?n, Q1, TP.HCM',
         N'028-3838-1111',
         NULL
     ),
     (
         N'Crazy Buffalo Bar',
-        N'9 B˘i Vi?n, Q1, TP.HCM',
+        N'9 B√πi Vi?n, Q1, TP.HCM',
         N'028-3838-2222',
         NULL
     ),
     (
         N'Spotted By Locals',
-        N'5 B˘i Vi?n, Q1, TP.HCM',
+        N'5 B√πi Vi?n, Q1, TP.HCM',
         N'028-3838-3333',
         NULL
     ),
     (
         N'Boheme Pub',
-        N'28 B˘i Vi?n, Q1, TP.HCM',
+        N'28 B√πi Vi?n, Q1, TP.HCM',
         N'028-3838-4444',
         NULL
     ),
     (
         N'Sahara Beer Club',
-        N'111 B˘i Vi?n, Q1, TP.HCM',
+        N'111 B√πi Vi?n, Q1, TP.HCM',
         N'028-3838-5555',
         NULL
     ),
     (
         N'Miss Saigon',
-        N'50 B˘i Vi?n, Q1, TP.HCM',
+        N'50 B√πi Vi?n, Q1, TP.HCM',
         N'028-3838-6666',
         NULL
     ),
     (
         N'Ocean Club',
-        N'41 B˘i Vi?n, Q1, TP.HCM',
+        N'41 B√πi Vi?n, Q1, TP.HCM',
         N'028-3838-7777',
         NULL
     ),
     (
         N'Donkey Bar',
-        N'120 B˘i Vi?n, Q1, TP.HCM',
+        N'120 B√πi Vi?n, Q1, TP.HCM',
         N'028-3838-8888',
         NULL
     ),
     (
         N'Universal Pub',
-        N'90 B˘i Vi?n, Q1, TP.HCM',
+        N'90 B√πi Vi?n, Q1, TP.HCM',
         N'028-3838-9999',
         NULL
     ),
     (
         N'Champion Sports Bar',
-        N'45 B˘i Vi?n, Q1, TP.HCM',
+        N'45 B√πi Vi?n, Q1, TP.HCM',
         N'028-3838-0000',
         NULL
     ),
     (
         N'Hair of the Dog',
-        N'194 B˘i Vi?n, Q1, TP.HCM',
+        N'194 B√πi Vi?n, Q1, TP.HCM',
         N'028-3838-1122',
         NULL
     ),
     (
         N'Republic Club',
-        N'200 B˘i Vi?n, Q1, TP.HCM',
+        N'200 B√πi Vi?n, Q1, TP.HCM',
         N'028-3838-2233',
         NULL
     ),
     (
         N'86 Club',
-        N'86 B˘i Vi?n, Q1, TP.HCM',
+        N'86 B√πi Vi?n, Q1, TP.HCM',
         N'028-3838-3344',
         NULL
     ),
     (
         N'Le Pub',
-        N'175 B˘i Vi?n, Q1, TP.HCM',
+        N'175 B√πi Vi?n, Q1, TP.HCM',
         N'028-3838-4455',
         NULL
     ),
@@ -114,31 +114,31 @@ VALUES (
     ),
     (
         N'Krystal Lounge',
-        N'80 B˘i Vi?n, Q1, TP.HCM',
+        N'80 B√πi Vi?n, Q1, TP.HCM',
         N'028-3838-6677',
         NULL
     ),
     (
         N'Nubes Rooftop',
-        N'115 B˘i Vi?n, Q1, TP.HCM',
+        N'115 B√πi Vi?n, Q1, TP.HCM',
         N'028-3838-7788',
         NULL
     ),
     (
         N'Sky Bar 360',
-        N'99 B˘i Vi?n, Q1, TP.HCM',
+        N'99 B√πi Vi?n, Q1, TP.HCM',
         N'028-3838-8899',
         NULL
     ),
     (
         N'Corner Coffee & Beer',
-        N'1 B˘i Vi?n, Q1, TP.HCM',
+        N'1 B√πi Vi?n, Q1, TP.HCM',
         N'028-3838-9900',
         NULL
     ),
     (
-        N'Local B˘i Vi?n',
-        N'33 B˘i Vi?n, Q1, TP.HCM',
+        N'Local B√πi Vi?n',
+        N'33 B√πi Vi?n, Q1, TP.HCM',
         N'028-3838-0011',
         NULL
     );
@@ -194,18 +194,19 @@ INSERT INTO Routes (
         IsActive
     )
 VALUES (
-        N'B˘i Vi?n Walking Tour',
-        N'Kh·m ph· ph? di b? B˘i Vi?n t? d?u d?n cu?i.',
+        N'B√πi Vi·ªán Walking Tour',
+        N'Kh√°m ph√° ph·ªë ƒëi b·ªô B√πi Vi·ªán t·ª´ ƒë·∫ßu ƒë·∫øn cu·ªëi.',
         10.76968,
         106.69156,
         NULL,
         1
     );
--- routeId will be queried when needed below (no variable required)
+-- routeId will be queried when needed below
+DECLARE @routeId INT = CAST(SCOPE_IDENTITY() AS INT);
 
 
 -- ============================================================
--- 4. Insert 20 Zones (M?i Route g·n 1 Zone d? d?m b?o cÛ data)
+-- 4. Insert 20 Zones (M?i Route g√°n 1 Zone d? d?m b?o c√≥ data)
 -- ============================================================
 INSERT INTO Zones (
         RouteId,
@@ -221,10 +222,10 @@ INSERT INTO Zones (
         ActiveTime
     )
 VALUES (
-        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B˘i Vi?n Walking Tour'),
+        @routeId,
         NULL,
-        N'C?ng ch‡o B˘i Vi?n',
-        N'Noi dÛn kh·ch tham quan chÌnh th?c c?a to‡n ph?.',
+        N'C·ªïng ch√†o B√πi Vi·ªán',
+        N'N∆°i ƒë√≥n kh√°ch tham quan ch√≠nh th·ª©c c·ªßa to√†n ph·ªë.',
         10.76968,
         106.69156,
         20,
@@ -234,10 +235,10 @@ VALUES (
         0
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B˘i Vi?n Walking Tour'),
+        @routeId,
         1,
         N'The Hideout Bar',
-        N'Qu·n bar l‚u d?i.',
+        N'Qu√°n bar l√¢u ƒë·ªùi.',
         10.76945,
         106.69170,
         15,
@@ -247,10 +248,10 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B˘i Vi?n Walking Tour'),
+        @routeId,
         2,
         N'Crazy Buffalo Bar',
-        N'Bi?u tu?ng n?i ti?ng v?i mÙ hÏnh tr‚u r?ng.',
+        N'Bi?u tu?ng n?i ti?ng v?i m√¥ h√¨nh tr√¢u r?ng.',
         10.76930,
         106.69185,
         15,
@@ -260,10 +261,10 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B˘i Vi?n Walking Tour'),
+        @routeId,
         NULL,
         N'Qu?ng tru?ng gi?a',
-        N'Noi hay cÛ m˙a l?a ngh? thu?t.',
+        N'Noi hay c√≥ m√∫a l?a ngh? thu?t.',
         10.76910,
         106.69200,
         25,
@@ -273,10 +274,10 @@ VALUES (
         0
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B˘i Vi?n Walking Tour'),
+        @routeId,
         3,
         N'Spotted By Locals',
-        N'Nh‡ h‡ng cÛ khÙng khÌ l„ng m?n.',
+        N'Nh√† h√†ng c√≥ kh√¥ng kh√≠ l√£ng m?n.',
         10.76890,
         106.69215,
         15,
@@ -286,10 +287,10 @@ VALUES (
         0
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B˘i Vi?n Walking Tour'),
+        @routeId,
         4,
         N'Boheme Pub',
-        N'–i?m d?n cho sinh viÍn qu?y banh nÛc.',
+        N'√êi?m d?n cho sinh vi√™n qu?y banh n√≥c.',
         10.76895,
         106.69225,
         15,
@@ -299,10 +300,10 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B˘i Vi?n Walking Tour'),
+        @routeId,
         5,
         N'Sahara Beer Club',
-        N'Tr?i nghi?m bia hoi v‡ nh?c DJ.',
+        N'Tr?i nghi?m bia hoi v√† nh?c DJ.',
         10.76890,
         106.69230,
         15,
@@ -312,10 +313,10 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B˘i Vi?n Walking Tour'),
+        @routeId,
         6,
         N'Miss Saigon',
-        N'Phong c·ch sang tr?ng v?i ‚m nh?c hi?n d?i.',
+        N'Phong c√°ch sang tr?ng v?i √¢m nh?c hi?n d?i.',
         10.76885,
         106.69235,
         15,
@@ -325,10 +326,10 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B˘i Vi?n Walking Tour'),
+        @routeId,
         7,
         N'Ocean Club',
-        N'N?i b?t v?i thi?t k? xanh m·t nhi?t d?i.',
+        N'N?i b?t v?i thi?t k? xanh m√°t nhi?t d?i.',
         10.76880,
         106.69240,
         15,
@@ -338,10 +339,10 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B˘i Vi?n Walking Tour'),
+        @routeId,
         8,
         N'Donkey Bar',
-        N'KhÙng gian nh?, ?m c˙ng.',
+        N'Kh√¥ng gian nh?, ?m c√∫ng.',
         10.76875,
         106.69245,
         15,
@@ -351,10 +352,10 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B˘i Vi?n Walking Tour'),
+        @routeId,
         9,
         N'Universal Pub',
-        N'Nh?c s?ng T‚y ba lÙ yÍu thÌch.',
+        N'Nh?c s?ng T√¢y ba l√¥ y√™u th√≠ch.',
         10.76870,
         106.69250,
         15,
@@ -364,10 +365,10 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B˘i Vi?n Walking Tour'),
+        @routeId,
         10,
         N'Champion Sports Bar',
-        N'Noi xem bÛng d· ngo?i h?ng Anh t?t nh?t.',
+        N'Noi xem b√≥ng d√° ngo?i h?ng Anh t?t nh?t.',
         10.76865,
         106.69255,
         15,
@@ -377,10 +378,10 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B˘i Vi?n Walking Tour'),
+        @routeId,
         11,
         N'Hair of the Dog',
-        N'SÙi d?ng th‚u dÍm.',
+        N'S√¥i d?ng th√¢u d√™m.',
         10.76860,
         106.69260,
         15,
@@ -390,7 +391,7 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B˘i Vi?n Walking Tour'),
+        @routeId,
         12,
         N'Republic Club',
         N'Sang tr?ng d?ng c?p.',
@@ -403,10 +404,10 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B˘i Vi?n Walking Tour'),
+        @routeId,
         13,
         N'86 Club',
-        N'GÛc ph? nhÏn ra cÙng viÍn 23/9.',
+        N'G√≥c ph? nh√¨n ra c√¥ng vi√™n 23/9.',
         10.76850,
         106.69270,
         15,
@@ -416,10 +417,10 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B˘i Vi?n Walking Tour'),
+        @routeId,
         14,
         N'Le Pub',
-        N'Kh·ch T‚y hay ng?i v?a hË.',
+        N'Kh√°ch T√¢y hay ng?i v?a h√®.',
         10.76845,
         106.69275,
         15,
@@ -429,7 +430,7 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B˘i Vi?n Walking Tour'),
+        @routeId,
         15,
         N'Asiana Food Town',
         N'Khu ?m th?c da qu?c gia.',
@@ -442,10 +443,10 @@ VALUES (
         0
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B˘i Vi?n Walking Tour'),
+        @routeId,
         16,
         N'Krystal Lounge',
-        N'Thu gi„n thu?ng th?c Shisha.',
+        N'Thu gi√£n thu?ng th?c Shisha.',
         10.76835,
         106.69285,
         15,
@@ -455,10 +456,10 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B˘i Vi?n Walking Tour'),
+        @routeId,
         17,
         N'Nubes Rooftop',
-        N'T? t?ng thu?ng b?n cÛ th? ng?m Landmark 81.',
+        N'T? t?ng thu?ng b?n c√≥ th? ng?m Landmark 81.',
         10.76830,
         106.69290,
         15,
@@ -468,7 +469,7 @@ VALUES (
         2
     ),
     (
-        (SELECT TOP 1 Id FROM Routes WHERE Name = N'B˘i Vi?n Walking Tour'),
+        @routeId,
         18,
         N'Sky Bar 360',
         N'Nh?c House, chill.',
@@ -482,7 +483,7 @@ VALUES (
     );
 
 -- ============================================================
--- 5. Insert 20 Narrations (G·n cho 20 Zones, random ngÙn ng?)
+-- 5. Insert 20 Narrations (G√°n cho 20 Zones, random ng√¥n ng?)
 -- ============================================================
 -- capture the first 20 zone ids in variables so we don't assume they start at 1
 DECLARE @z1 INT,@z2 INT,@z3 INT,@z4 INT,@z5 INT,@z6 INT,@z7 INT,@z8 INT,@z9 INT,@z10 INT,
@@ -520,37 +521,37 @@ INSERT INTO Narrations (ZoneId, Language, Text, VoiceId)
 VALUES (
         @z1,
         N'vi',
-        N'Ch‡o m?ng b?n d?n v?i C?ng ch‡o B˘i Vi?n. H„y s?n s‡ng tr?i nghi?m bu?i t?i th˙ v?.',
+        N'Ch√†o m?ng b?n d?n v?i C?ng ch√†o B√πi Vi?n. H√£y s?n s√†ng tr?i nghi?m bu?i t?i th√∫ v?.',
         N'vi-VN-Standard-A'
     ),
     (
         @z2,
         N'vi',
-        N'–‚y l‡ The Hideout Bar, luÙn l‡ di?m nh?u l˝ tu?ng c?a kh·ch phuong xa.',
+        N'√ê√¢y l√† The Hideout Bar, lu√¥n l√† di?m nh?u l√Ω tu?ng c?a kh√°ch phuong xa.',
         N'vi-VN-Standard-A'
     ),
     (
         @z3,
         N'vi',
-        N'Crazy Buffalo Bar cÛ khÙng gian c?c d?i. H„y ch?p m?t b?c ?nh check in ? d‚y nhÈ.',
+        N'Crazy Buffalo Bar c√≥ kh√¥ng gian c?c d?i. H√£y ch?p m?t b?c ?nh check in ? d√¢y nh√©.',
         N'vi-VN-Standard-A'
     ),
     (
         @z4,
         N'vi',
-        N'T?i qu?ng tru?ng trung t‚m n‡y, cu?i tu?n hay cÛ m˙a l?a v‡ bi?u di?n ?o thu?t.',
+        N'T?i qu?ng tru?ng trung t√¢m n√†y, cu?i tu?n hay c√≥ m√∫a l?a v√† bi?u di?n ?o thu?t.',
         N'vi-VN-Standard-A'
     ),
     (
         @z5,
         N'vi',
-        N'Spotted By Locals cung c?p c·c mÛn an ngon sau khi d?o ph?.',
+        N'Spotted By Locals cung c?p c√°c m√≥n an ngon sau khi d?o ph?.',
         N'vi-VN-Standard-A'
     ),
     (
         @z6,
         N'vi',
-        N'Boheme Pub cÛ DJ choi nh?c c?c ch·y. H„y ghÈ v‡o th? 1 chai bia!',
+        N'Boheme Pub c√≥ DJ choi nh?c c?c ch√°y. H√£y gh√© v√†o th? 1 chai bia!',
         N'vi-VN-Standard-A'
     ),
     (
@@ -580,13 +581,13 @@ VALUES (
     (
         @z11,
         N'vi',
-        N'Universal Pub l‡ noi hay cÛ nh?c Acoustic.',
+        N'Universal Pub l√† noi hay c√≥ nh?c Acoustic.',
         N'vi-VN-Standard-A'
     ),
     (
         @z12,
         N'vi',
-        N'N?u b?n mÍ bÛng d·, h„y d?ng ch‚n t?i Champion Sports Bar v‡o cu?i tu?n.',
+        N'N?u b?n m√™ b√≥ng d√°, h√£y d?ng ch√¢n t?i Champion Sports Bar v√†o cu?i tu?n.',
         N'vi-VN-Standard-A'
     ),
     (
@@ -604,13 +605,13 @@ VALUES (
     (
         @z15,
         N'vi',
-        N'T? 86 Club b?n cÛ th? ng?i nhÏn ra khu cÙng viÍn c?c k? tho·ng.',
+        N'T? 86 Club b?n c√≥ th? ng?i nh√¨n ra khu c√¥ng vi√™n c?c k? tho√°ng.',
         N'vi-VN-Standard-A'
     ),
     (
         @z16,
         N'vi',
-        N'Le Pub l‡ noi giao thoa van hÛa du?ng ph? r?t tuy?t v?i.',
+        N'Le Pub l√† noi giao thoa van h√≥a du?ng ph? r?t tuy?t v?i.',
         N'vi-VN-Standard-A'
     ),
     (
@@ -622,13 +623,13 @@ VALUES (
     (
         @z18,
         N'vi',
-        N'V‡o Krystal Lounge b?n s? th?y khÙng khÌ r?t tinh lang nh? nh‡ng hon.',
+        N'V√†o Krystal Lounge b?n s? th?y kh√¥ng kh√≠ r?t tinh lang nh? nh√†ng hon.',
         N'vi-VN-Standard-A'
     ),
     (
         @z19,
         N'vi',
-        N'B?n mu?n ng?m c?nh u? NhÏn lÍn ngay, Nubes Rooftop ? trÍn l?u 6.',
+        N'B?n mu?n ng?m c?nh u? Nh√¨n l√™n ngay, Nubes Rooftop ? tr√™n l?u 6.',
         N'vi-VN-Standard-A'
     ),
     (
