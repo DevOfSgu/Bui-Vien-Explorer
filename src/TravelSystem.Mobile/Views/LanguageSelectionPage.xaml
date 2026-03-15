@@ -6,110 +6,133 @@
              NavigationPage.HasNavigationBar="False">
 
     <Grid RowDefinitions="*, Auto" Padding="24, 0, 24, 40">
-        
-        <!-- Nửa trên chứa Logo, Tiêu đề và Danh sách -->
+
         <ScrollView Grid.Row="0" VerticalScrollBarVisibility="Never" Margin="0, 60, 0, 0">
-            <VerticalStackLayout Spacing="32">
-                
-                <!-- Header: Logo & Title -->
+            <VerticalStackLayout Spacing="32" Padding="0,0,0,80">
+
                 <VerticalStackLayout Spacing="16" HorizontalOptions="Center">
-                    <Frame HasShadow="True" CornerRadius="20" HeightRequest="80" WidthRequest="80" 
-                           BackgroundColor="White" Padding="0" HorizontalOptions="Center"
-                           BorderColor="Transparent">
-                        <Image Source="logoapp.png" Aspect="AspectFit" Margin="16" />
-                        <!-- TODO: Logo App có bg đỏ và la bàn trắng -->
-                    </Frame>
-                    
+                    <Border HeightRequest="80" WidthRequest="80" Background="White" Padding="0" HorizontalOptions="Center" Stroke="Transparent" StrokeThickness="0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="20" />
+                        </Border.StrokeShape>
+                        <Border.Shadow>
+                            <Shadow Brush="#E5E5EA" Offset="0,5" Radius="10" Opacity="0.3" />
+                        </Border.Shadow>
+                        <Image Source="logoapp.png" Aspect="AspectFit" WidthRequest="100" HeightRequest="180" HorizontalOptions="Center" Margin="16" />
+                    </Border>
+
                     <VerticalStackLayout Spacing="-8" HorizontalOptions="Center">
                         <Label Text="Bùi Viện" FontSize="36" FontAttributes="Bold" TextColor="#1C1C1E" HorizontalOptions="Center" />
                         <Label Text="Explorer" FontSize="36" FontAttributes="Bold" TextColor="#1C1C1E" HorizontalOptions="Center" />
                     </VerticalStackLayout>
-                    
+
                     <Label Text="AUDIO GUIDE EXPERIENCE" FontSize="11" FontAttributes="Bold" TextColor="#8E8E93" CharacterSpacing="1.5" HorizontalOptions="Center" Margin="0, 8, 0, 0" />
                 </VerticalStackLayout>
 
-                <!-- Label Danh sách Ngôn ngữ -->
                 <Label Text="Choose Your Language" FontSize="18" FontAttributes="Bold" TextColor="#1C1C1E" HorizontalOptions="Center" />
 
-                <!-- Danh sách Ngôn Ngữ -->
                 <VerticalStackLayout Spacing="16" x:Name="LanguageList">
-                    
-                    <!-- 1. Tiếng Việt (Selected mặc định) -->
-                    <Frame HasShadow="True" BorderColor="#FF4B4B" CornerRadius="36" Padding="20,16" BackgroundColor="White">
-                        <Frame.Shadow>
+
+                    <Border Stroke="#FF4B4B" StrokeThickness="1" Padding="20,16" Background="White">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="36" />
+                        </Border.StrokeShape>
+                        <Border.Shadow>
                             <Shadow Brush="#FFE5E5" Offset="0,10" Radius="20" Opacity="0.8" />
-                        </Frame.Shadow>
-                        <Frame.GestureRecognizers>
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnLanguageSelected" CommandParameter="vi" />
-                        </Frame.GestureRecognizers>
+                        </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="60, *, 40">
-                            <!-- TODO: Hình lá cờ cần thiết kế viền bo tròn hoặc tròn hẳn -->
                             <Image Source="ic_flag_vn.png" WidthRequest="44" HeightRequest="44" Aspect="AspectFit" Grid.Column="0" />
                             <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
                                 <Label Text="Tiếng Việt" FontSize="18" FontAttributes="Bold" TextColor="#FF4B4B" />
                                 <Label Text="VIETNAMESE" FontSize="11" TextColor="#8E8E93" FontAttributes="Bold" CharacterSpacing="1" Margin="0,2,0,0"/>
                             </VerticalStackLayout>
-                            <!-- Nút Check (Radio) - Trạng thái Chọn -->
-                            <Frame Grid.Column="2" WidthRequest="24" HeightRequest="24" CornerRadius="12" 
-                                   BorderColor="#FF4B4B" BorderWidth="2" BackgroundColor="White" HasShadow="False" Padding="4">
-                                <Ellipse Fill="#FF4B4B" /> 
-                            </Frame>
+                            <Border x:Name="vn_border" Grid.Column="2" WidthRequest="24" HeightRequest="24" Stroke="#FF4B4B" StrokeThickness="2" Background="White" Padding="4">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+                                <Ellipse x:Name="viet_dot" Fill="#FF4B4B" IsVisible="False" WidthRequest="12" HeightRequest="12" HorizontalOptions="Center" VerticalOptions="Center" />
+                            </Border>
                         </Grid>
-                    </Frame>
+                    </Border>
 
-                    <!-- 2. English -->
-                    <Frame HasShadow="True" BorderColor="Transparent" CornerRadius="36" Padding="20,16" BackgroundColor="White">
-                        <Frame.Shadow>
+                    <Border Stroke="Transparent" StrokeThickness="0" Padding="20,16" Background="White">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="36" />
+                        </Border.StrokeShape>
+                        <Border.Shadow>
                             <Shadow Brush="#E5E5EA" Offset="0,10" Radius="20" Opacity="0.4" />
-                        </Frame.Shadow>
-                        <Frame.GestureRecognizers>
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnLanguageSelected" CommandParameter="en" />
-                        </Frame.GestureRecognizers>
+                        </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="60, *, 40">
                             <Image Source="ic_flag_en.png" WidthRequest="44" HeightRequest="44" Aspect="AspectFit" Grid.Column="0" />
                             <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
                                 <Label Text="English" FontSize="18" FontAttributes="Bold" TextColor="#1C1C1E" />
                                 <Label Text="ENGLISH" FontSize="11" TextColor="#8E8E93" FontAttributes="Bold" CharacterSpacing="1" Margin="0,2,0,0"/>
                             </VerticalStackLayout>
-                            <!-- Nút Check - Trạng thái chưa chọn -->
-                            <Frame Grid.Column="2" WidthRequest="24" HeightRequest="24" CornerRadius="12" BorderWidth="2"
-                                   BorderColor="#E5E5EA" BackgroundColor="Transparent" HasShadow="False" />
+                            <Border x:Name="eng_border" Grid.Column="2" WidthRequest="24" HeightRequest="24" Stroke="#E5E5EA" StrokeThickness="2" Background="Transparent">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+                                <Ellipse x:Name="end_dot"  Fill="#FF4B4B" IsVisible="False" WidthRequest="12" HeightRequest="12" HorizontalOptions="Center" VerticalOptions="Center"/>
+                            </Border>
                         </Grid>
-                    </Frame>
+                    </Border>
 
-                    <!-- 3. Français (Ví dụ Language bị disabled mờ 50%) -->
-                    <Frame HasShadow="False" BorderColor="Transparent" CornerRadius="36" Padding="20,16" BackgroundColor="Transparent" Opacity="0.5">
-                        <Frame.GestureRecognizers>
+                    <Border Stroke="Transparent" StrokeThickness="0" Padding="20,16" Background="White">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="36" />
+                        </Border.StrokeShape>
+                        <Border.Shadow>
+                            <Shadow Brush="#E5E5EA" Offset="0,10" Radius="20" Opacity="0.4" />
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnLanguageSelected" CommandParameter="fr" />
-                        </Frame.GestureRecognizers>
+                        </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="60, *, 40">
                             <Image Source="ic_flag_fr.png" WidthRequest="44" HeightRequest="44" Aspect="AspectFit" Grid.Column="0" />
                             <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
                                 <Label Text="Français" FontSize="18" FontAttributes="Bold" TextColor="#1C1C1E" />
                                 <Label Text="FRENCH" FontSize="11" TextColor="#8E8E93" FontAttributes="Bold" CharacterSpacing="1" Margin="0,2,0,0"/>
                             </VerticalStackLayout>
-                            <Frame Grid.Column="2" WidthRequest="24" HeightRequest="24" CornerRadius="12" BorderWidth="2"
-                                   BorderColor="#E5E5EA" BackgroundColor="Transparent" HasShadow="False" />
+                            <Border x:Name="fran_border" Grid.Column="2" WidthRequest="24" HeightRequest="24" Stroke="#E5E5EA" StrokeThickness="2" Background="Transparent">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+                                <Ellipse x:Name="fran_dot" IsVisible="False" WidthRequest="12" HeightRequest="12" HorizontalOptions="Center" VerticalOptions="Center" Fill="#FF4B4B" />
+                            </Border>
                         </Grid>
-                    </Frame>
-
+                    </Border>
                 </VerticalStackLayout>
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- Trái tim của Màn hình: Button & Text điều khoản -->
+        <BoxView Grid.Row="0" HeightRequest="100" VerticalOptions="End" InputTransparent="True">
+            <BoxView.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#00FAF8F5" Offset="0.0" />
+                    <GradientStop Color="#FAF8F5" Offset="0.9" />
+                </LinearGradientBrush>
+            </BoxView.Background>
+        </BoxView>
+
         <VerticalStackLayout Grid.Row="1" Spacing="20" Margin="0, 20, 0, 0">
             <Button Text="GET STARTED   ➔" FontAttributes="Bold" FontSize="16" TextColor="White" 
                     BackgroundColor="#FF4B4B" CornerRadius="28" HeightRequest="60" 
-                    Clicked="OnGetStartedClicked">
+                    Command="{Binding GetStartedCommand}">
                 <Button.Shadow>
                     <Shadow Brush="#FF4B4B" Offset="0,15" Radius="25" Opacity="0.4" />
                 </Button.Shadow>
             </Button>
-            
-            <Label Text="BY CONTINUING, YOU AGREE TO OUR TERMS &amp; PRIVACY&#10;POLICY" 
+
+            <Label Text="Developed by Hao and Phong" 
                    FontSize="9" TextColor="#AEAEB2" FontAttributes="Bold" HorizontalOptions="Center" HorizontalTextAlignment="Center" CharacterSpacing="0.8" LineHeight="1.5" />
         </VerticalStackLayout>
+
     </Grid>
 
 </ContentPage>

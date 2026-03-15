@@ -1,4 +1,4 @@
-﻿using TravelSystem.Mobile.Services;
+using TravelSystem.Mobile.Services;
 
 namespace TravelSystem.Mobile;
 
@@ -27,7 +27,8 @@ public partial class AppShell : Shell
         if (dbService != null)
         {
             var lang = await dbService.GetSettingAsync("Language", "");
-            if (string.IsNullOrEmpty(lang))
+            // if (string.IsNullOrEmpty(lang))
+            if (true)
             {
                 // DispatchDelayed (hoãn 100ms) để nhường đường cho Animation của TabBar Android chạy xong
                 // Tránh tranh chấp UI Thread gây lỗi JavaProxyThrowable
