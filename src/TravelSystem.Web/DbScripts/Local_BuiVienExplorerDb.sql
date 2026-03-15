@@ -2,29 +2,26 @@
 -- SCHEMA - Bùi Viện Explorer (SQL Server)
 -- Chạy đúng DB: BuiVienExplorerDb
 -- ============================================================
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'BuiVienExplorerDb')
+BEGIN
+    CREATE DATABASE BuiVienExplorerDb;
+END
+GO
+
 USE BuiVienExplorerDb;
 -- RESET: Xóa bảng cũ (nếu có) trước khi tạo lại
 -- Thứ tự xóa: bảng con trước, bảng cha sau (tránh lỗi FK)
 -- ============================================================
+IF OBJECT_ID('GuestFavorites', 'U') IS NOT NULL DROP TABLE GuestFavorites;
 IF OBJECT_ID('Analytics', 'U') IS NOT NULL DROP TABLE Analytics;
 IF OBJECT_ID('Narrations', 'U') IS NOT NULL DROP TABLE Narrations;
 IF OBJECT_ID('AudioFiles', 'U') IS NOT NULL DROP TABLE AudioFiles;
-
--- make sure existing Users table has the new profile columns
-IF OBJECT_ID('Users','U') IS NOT NULL
-BEGIN
-    IF COL_LENGTH('Users','FullName') IS NULL
-        ALTER TABLE Users ADD FullName NVARCHAR(100);
-    IF COL_LENGTH('Users','Email') IS NULL 
-        ALTER TABLE Users ADD Email NVARCHAR(100);
-END
-
 IF OBJECT_ID('Zones', 'U') IS NOT NULL DROP TABLE Zones;
 IF OBJECT_ID('Users', 'U') IS NOT NULL DROP TABLE Users;
 IF OBJECT_ID('Routes', 'U') IS NOT NULL DROP TABLE Routes;
-IF OBJECT_ID('AppSettings', 'U') IS NOT NULL DROP TABLE AppSettings;
 IF OBJECT_ID('ShopHours', 'U') IS NOT NULL DROP TABLE ShopHours;
 IF OBJECT_ID('Shops', 'U') IS NOT NULL DROP TABLE Shops;
+IF OBJECT_ID('AppSettings', 'U') IS NOT NULL DROP TABLE AppSettings;
 -- ============================================================
 -- 1. Shops (Cần tạo trước vì Users và Zones tham chiếu đến nó)
 -- ============================================================
@@ -38,15 +35,15 @@ CREATE TABLE Shops (
 );
 
 -- ============================================================
--- 1a. ShopHours (Lịch mở cửa theo ngày trong tuần & trạng thái)
+-- 1a. ShopHours (Giờ mở cửa của các shop)
 -- ============================================================
 CREATE TABLE ShopHours (
-    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Id INT IDENTITY(1, 1) PRIMARY KEY,
     ShopId INT NOT NULL,
-    DayOfWeek TINYINT NOT NULL,
-    -- 1=Thứ hai ... 7=Chủ nhật
-    OpenTime TIME NULL,
-    CloseTime TIME NULL,
+    DayOfWeek INT NOT NULL, -- 1=Monday, 2=Tuesday, ..., 7=Sunday
+    OpenTime TIME,
+    CloseTime TIME,
+    CreatedAt DATETIME DEFAULT GETDATE(),
     CONSTRAINT FK_ShopHours_Shops FOREIGN KEY (ShopId) REFERENCES Shops(Id) ON DELETE CASCADE
 );
 -- ============================================================
@@ -79,18 +76,6 @@ CREATE TABLE Users (
     CreatedAt DATETIME DEFAULT GETDATE(),
     CONSTRAINT FK_Users_Shops FOREIGN KEY (ShopId) REFERENCES Shops(Id)
 );
--- ============================================================
--- 1b. AppSettings (cài đặt hệ thống key/value)
--- ============================================================
-IF OBJECT_ID('AppSettings','U') IS NULL
-BEGIN
-    CREATE TABLE AppSettings (
-        [Key] NVARCHAR(100) PRIMARY KEY,
-        [Value] NVARCHAR(MAX),
-        UpdatedAt DATETIME DEFAULT GETDATE()
-    );
-END
-
 -- ============================================================
 -- 4. Zones (Các điểm dừng / POI)
 -- ============================================================
@@ -160,8 +145,32 @@ CREATE TABLE Analytics (
     CONSTRAINT FK_Analytics_Routes FOREIGN KEY (RouteId) REFERENCES Routes(Id)
 );
 -- ============================================================
--- 7. Indexes (Tối ưu truy vấn báo cáo)
+-- 7. GuestFavorites (Zones yêu thích của guest không đăng nhập)
+-- ============================================================
+CREATE TABLE GuestFavorites (
+    Id        INT IDENTITY(1,1) PRIMARY KEY,
+    GuestId   NVARCHAR(36) NOT NULL,           -- UUID lưu trong localStorage / MAUI Preferences
+    ZoneId    INT NOT NULL,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    CONSTRAINT FK_GuestFav_Zone FOREIGN KEY (ZoneId) REFERENCES Zones(Id) ON DELETE CASCADE,
+    CONSTRAINT UQ_GuestFav UNIQUE (GuestId, ZoneId)
+);
+-- ============================================================
+-- 8. Indexes (Tối ưu truy vấn báo cáo)
 -- ============================================================
 CREATE INDEX IDX_Analytics_Zone ON Analytics(ZoneId, ActionType);
 CREATE INDEX IDX_Analytics_Location ON Analytics(Latitude, Longitude);
 CREATE INDEX IDX_Analytics_Session ON Analytics(SessionId, CreatedAt);
+CREATE INDEX IX_GuestFav_GuestId ON GuestFavorites(GuestId);
+CREATE INDEX IX_GuestFav_ZoneId  ON GuestFavorites(ZoneId);
+
+-- ============================================================
+-- 9. AppSettings (Cài đặt hệ thống)
+-- ============================================================
+CREATE TABLE AppSettings (
+    Id INT IDENTITY(1, 1) PRIMARY KEY,
+    [Key] NVARCHAR(100) NOT NULL UNIQUE,
+    [Value] NVARCHAR(500),
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE()
+);
