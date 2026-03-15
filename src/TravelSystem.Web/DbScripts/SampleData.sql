@@ -1,7 +1,8 @@
-﻿-- ============================================================
+-- ============================================================
 -- SAMPLE DATA - Bùi Viện Explorer (Đã mở rộng 20 record/bảng)
 -- ============================================================
 -- Xóa data cũ (nếu bảng tồn tại)
+IF OBJECT_ID('GuestFavorites','U') IS NOT NULL DELETE FROM GuestFavorites;
 IF OBJECT_ID('AppSettings','U') IS NOT NULL DELETE FROM AppSettings;
 IF OBJECT_ID('ShopHours','U') IS NOT NULL DELETE FROM ShopHours;
 IF OBJECT_ID('Narrations','U') IS NOT NULL DELETE FROM Narrations;
@@ -10,8 +11,10 @@ IF OBJECT_ID('Zones','U') IS NOT NULL DELETE FROM Zones;
 IF OBJECT_ID('Users','U') IS NOT NULL DELETE FROM Users;
 IF OBJECT_ID('Routes','U') IS NOT NULL DELETE FROM Routes;
 IF OBJECT_ID('Shops','U') IS NOT NULL DELETE FROM Shops;
+
 -- Reset Identity counters
-IF OBJECT_ID('AppSettings','U') IS NOT NULL DBCC CHECKIDENT ('AppSettings', RESEED, 0);
+-- AppSettings dùng Key (string) làm PK, không có identity -- không cần RESEED
+
 IF OBJECT_ID('ShopHours','U') IS NOT NULL DBCC CHECKIDENT ('ShopHours', RESEED, 0);
 IF OBJECT_ID('Shops','U') IS NOT NULL DBCC CHECKIDENT ('Shops', RESEED, 0);
 IF OBJECT_ID('Routes','U') IS NOT NULL DBCC CHECKIDENT ('Routes', RESEED, 0);
@@ -154,9 +157,13 @@ CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7)) v(Number);
 -- ============================================================
 -- 1b. System settings defaults
 -- ============================================================
-INSERT INTO AppSettings([Key],[Value])
-VALUES ('DefaultLanguage','vi'),
-       ('EnableApiSync','1');
+INSERT INTO AppSettings([Key],[Value],[UpdatedAt])
+VALUES ('DefaultLanguage','vi', GETDATE()),
+       ('EnableApiSync','1', GETDATE()),
+       -- Force shop closed override (1 = closed, 0 = follow hours)
+       ('Shop:1:ForceClosed','0', GETDATE()),
+       -- If set, shop is treated as closed until this timestamp (UTC)
+       ('Shop:1:ClosedUntil','2026-01-01T00:00:00Z', GETDATE());
 
 -- ============================================================
 -- 2. Insert 20 Users (2 Admins, 18 Vendors)
@@ -487,6 +494,10 @@ VALUES (
 -- capture the first 20 zone ids in variables so we don't assume they start at 1
 DECLARE @z1 INT,@z2 INT,@z3 INT,@z4 INT,@z5 INT,@z6 INT,@z7 INT,@z8 INT,@z9 INT,@z10 INT,
         @z11 INT,@z12 INT,@z13 INT,@z14 INT,@z15 INT,@z16 INT,@z17 INT,@z18 INT,@z19 INT,@z20 INT;
+
+-- Silence the "Null value is eliminated by an aggregate" warning when using MAX(CASE...)
+SET ANSI_WARNINGS OFF;
+
 WITH numbered AS (
     SELECT Id, ROW_NUMBER() OVER (ORDER BY Id) AS rn
     FROM Zones
@@ -513,6 +524,8 @@ SELECT
     @z19 = MAX(CASE WHEN rn = 19 THEN Id END),
     @z20 = MAX(CASE WHEN rn = 20 THEN Id END)
 FROM numbered;
+
+SET ANSI_WARNINGS ON;
 
 IF EXISTS (SELECT 1 FROM Zones)
 BEGIN

@@ -9,136 +9,220 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Login - Bùi Viện Explorer</title>
-    <link rel="icon" type="image/png" href="~/icons/favicon.png" />
+    <link rel="icon" type="image/png" href="~/icons/logo.png" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { 
+        * { box-sizing: border-box; }
+        body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: radial-gradient(ellipse at top left, #ffe0e0 0%, #fdf5f5 40%, #fdf5f5 60%, #ffe0e0 100%);
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             margin: 0;
         }
-        .login-card { 
-            max-width: 420px; 
+        .login-card {
+            max-width: 460px;
             width: 100%;
             border: none;
-            border-radius: 16px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
-            background: #ffffff;
-            overflow: hidden;
-        }
-        .login-header { 
-            background-color: #ffffff; 
-            color: #212529; 
-            padding: 40px 30px 20px; 
-            text-align: center; 
-        }
-        .login-header img {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
             border-radius: 16px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.07);
+            background: #ffffff;
+            padding: 44px 40px 36px;
         }
-        .login-header h3 {
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #ff4d4f, #ff7875);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            box-shadow: 0 4px 14px rgba(255,77,79,0.35);
+        }
+        .logo-icon img { width: 36px; height: 36px; object-fit: contain; filter: brightness(0) invert(1); }
+        .card-title {
             font-weight: 700;
             font-size: 1.5rem;
-            margin-bottom: 5px;
+            color: #1a1a1a;
+            text-align: center;
+            margin-bottom: 6px;
         }
-        .login-header p {
-            color: #6c757d;
-            font-size: 0.95rem;
-        }
-        .form-control {
-            border-radius: 8px;
-            padding: 12px 15px;
-            border: 1px solid #dee2e6;
-            transition: all 0.2s;
-        }
-        .form-control:focus {
-            box-shadow: 0 0 0 3px rgba(33, 37, 41, 0.1);
-            border-color: #212529;
+        .card-subtitle {
+            color: #9ca3af;
+            font-size: 0.9rem;
+            text-align: center;
+            margin-bottom: 32px;
         }
         .form-label {
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #374151;
             margin-bottom: 8px;
-            color: #495057;
         }
+        .input-wrapper { position: relative; }
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 0.9rem;
+            z-index: 5;
+        }
+        .eye-icon {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 0.9rem;
+            cursor: pointer;
+            z-index: 5;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+        .eye-icon:hover { color: #ff4d4f; }
+        .form-control {
+            border-radius: 8px;
+            padding: 12px 40px;
+            border: 1px solid #e5e7eb;
+            font-size: 0.95rem;
+            background-color: #fafafa;
+            color: #1a1a1a;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .form-control::placeholder { color: #9ca3af; }
+        .form-control:focus {
+            outline: none;
+            border-color: #ff4d4f;
+            box-shadow: 0 0 0 3px rgba(255,77,79,0.1);
+            background-color: #fff;
+        }
+        .row-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .forgot-link {
+            font-size: 0.82rem;
+            color: #ff4d4f;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .forgot-link:hover { text-decoration: underline; }
+        .form-check-input:checked { background-color: #ff4d4f; border-color: #ff4d4f; }
+        .form-check-input:focus { box-shadow: 0 0 0 3px rgba(255,77,79,0.15); }
+        .form-check-label { font-size: 0.87rem; color: #6b7280; }
         .btn-login {
-            background-color: #212529;
+            background: linear-gradient(135deg, #ff4d4f, #ff6b6b);
             color: #fff;
             border: none;
             border-radius: 8px;
-            padding: 12px;
+            padding: 13px;
             font-weight: 600;
-            transition: all 0.3s;
+            font-size: 1rem;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 4px 14px rgba(255,77,79,0.3);
         }
         .btn-login:hover {
-            background-color: #343a40;
+            background: linear-gradient(135deg, #e03e3f, #ff4d4f);
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(33, 37, 41, 0.2);
+            box-shadow: 0 6px 18px rgba(255,77,79,0.35);
+            color: #fff;
         }
+        .footer-text {
+            text-align: center;
+            margin-top: 18px;
+            font-size: 0.78rem;
+            color: #9ca3af;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 28px;
+            color: #6b7280;
+            font-size: 0.87rem;
+            text-decoration: none;
+        }
+        .back-link:hover { color: #ff4d4f; }
     </style>
 </head>
 <body>
-    <div class="container d-flex justify-content-center">
-        <div class="card login-card">
-            <div class="login-header">
-                <img src="~/icons/logoapp.png" alt="Bùi Viện Explorer Logo" />
-                <h3>Admin Portal</h3>
-                <p class="mb-0">Bùi Viện Explorer Management</p>
-            </div>
-            <div class="card-body px-4 pb-5 pt-2">
-                @if (ViewBag.Error != null)
-                {
-                    <div class="alert alert-danger" style="border-radius: 8px; font-size: 0.9rem;">
-                        <strong>Error:</strong> @ViewBag.Error
-                    </div>
-                }
-                
-                <form method="post" asp-area="Admin" asp-controller="Auth" asp-action="Login">
-                    <div class="mb-4">
-                        <label class="form-label">Username</label>
-                        <input type="text" name="username" class="form-control" placeholder="Enter your username" required />
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label">Password</label>
-                        <div class="input-group">
-                            <input type="password" id="passwordInput" name="password" class="form-control" placeholder="Enter your password" required />
-                            <button class="btn btn-outline-secondary" type="button" id="togglePassword" style="border-color: #dee2e6;">
-                                <i class="fa-regular fa-eye" id="toggleIcon"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-login w-100 mt-2">Sign In</button>
-                    
-                    <div class="text-center mt-4">
-                        <a href="/" class="text-decoration-none text-muted" style="font-size: 0.9rem;">&larr; Back to App</a>
-                    </div>
-                </form>
-            </div>
+    <div class="login-card">
+        <div class="logo-icon">
+            <img src="~/icons/logo.png" alt="Logo" />
         </div>
+
+        <div class="card-title">Admin Login</div>
+        <div class="card-subtitle">Access the platform control center</div>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-danger" style="border-radius:8px;font-size:0.88rem;padding:10px 14px;">
+                <i class="fa-solid fa-circle-exclamation me-2"></i>@ViewBag.Error
+            </div>
+        }
+
+        <form method="post" asp-area="Admin" asp-controller="Auth" asp-action="Login">
+            <div class="mb-3">
+                <label class="form-label">Email Address</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-envelope input-icon"></i>
+                    <input type="text" name="username" class="form-control" placeholder="admin@buivien.com" required />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="row-label">
+                    <label class="form-label mb-0">Password</label>
+                    <a href="#" class="forgot-link">Forgot password?</a>
+                </div>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-lock input-icon"></i>
+                    <input type="password" id="passwordInput" name="password" class="form-control" placeholder="••••••••" required />
+                    <button type="button" class="eye-icon" id="togglePassword">
+                        <i class="fa-regular fa-eye" id="toggleIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-check mb-4">
+                <input class="form-check-input" type="checkbox" id="rememberMe">
+                <label class="form-check-label" for="rememberMe">Remember this device</label>
+            </div>
+
+            <button type="submit" class="btn-login">Sign In</button>
+
+            <div class="footer-text">
+                &copy; 2026 Bui Vien Explorer Platform. All rights reserved.
+            </div>
+        </form>
     </div>
-    
+
+    <a href="/" class="back-link">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back to public site
+    </a>
+
     <script>
         document.getElementById('togglePassword').addEventListener('click', function () {
-            const passwordInput = document.getElementById('passwordInput');
-            const toggleIcon = document.getElementById('toggleIcon');
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                toggleIcon.classList.remove('fa-eye');
-                toggleIcon.classList.add('fa-eye-slash');
+            const input = document.getElementById('passwordInput');
+            const icon = document.getElementById('toggleIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
             } else {
-                passwordInput.type = 'password';
-                toggleIcon.classList.remove('fa-eye-slash');
-                toggleIcon.classList.add('fa-eye');
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
             }
         });
     </script>

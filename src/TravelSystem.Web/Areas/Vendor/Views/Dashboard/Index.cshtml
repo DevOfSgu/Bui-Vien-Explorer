@@ -1,333 +1,209 @@
 @{
     ViewData["Title"] = "Dashboard Home";
+
+    var shopName = ViewBag.ShopName as string ?? "Your Shop";
+    var zoneVisits = (int)(ViewBag.ZoneVisits ?? 0);
+    var narrationListens = (int)(ViewBag.NarrationListens ?? 0);
+    var engagementRate = (int)(ViewBag.EngagementRate ?? 0);
+    var avgDwellSeconds = (int)(ViewBag.AvgDwellTimeSeconds ?? 0);
+    var avgDwell = TimeSpan.FromSeconds(avgDwellSeconds);
+    var avgDwellLabel = $"{(int)avgDwell.TotalMinutes}m {avgDwell.Seconds}s";
+    var shopOpen = ViewBag.ShopOpen as bool? ?? true;
 }
 
 <style>
-    /* Dashboard specific customizations to match the new mockup */
-    .stat-badge {
-        padding: 4px 8px;
-        border-radius: 12px;
-        font-size: 11px;
-        font-weight: 600;
-        background-color: #dcfce7;
-        color: #16a34a;
-    }
-    
-    .dashboard-card {
-        background: #fff;
-        border-radius: 12px;
-        padding: 24px;
-        border: 1px solid #edf2f9;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: 100%;
-    }
-    
-    .card-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-    
-    .card-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 8px;
-        background-color: #fee2e2;
-        color: #ef4444;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-    }
-    
-    .card-label {
-        color: #64748b;
-        font-size: 13px;
-        font-weight: 500;
-        margin-bottom: 5px;
-    }
-    
-    .card-value {
-        font-size: 28px;
-        font-weight: 700;
-        color: #111827;
-        margin: 0;
-    }
+    .status-open { background: #ef4444; color: #fff; border: none; border-radius: 999px; padding: 6px 16px; font-size: 12px; font-weight: 600; }
+    .status-closed { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; border-radius: 999px; padding: 6px 16px; font-size: 12px; font-weight: 600; }
 
-    /* Live Feed */
-    .live-feed-item {
-        display: flex;
-        align-items: flex-start;
-        margin-bottom: 20px;
-    }
-    
-    .live-feed-item:last-child {
-        margin-bottom: 0;
-    }
+    .donut-wrapper { position: relative; width: 140px; height: 140px; }
+    .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+    .donut-center .pct { font-size: 18px; font-weight: 700; color: #111827; }
+    .donut-center .lbl { font-size: 10px; color: #9ca3af; font-weight: 600; letter-spacing: 0.5px; }
 
-    .feed-avatar {
-        width: 40px;
-        height: 40px;
-        background-color: #f1f5f9;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #64748b;
-        margin-right: 15px;
-    }
-
-    .feed-content h6 {
-        font-size: 14px;
-        font-weight: 600;
-        margin-bottom: 2px;
-    }
-    
-    .feed-content span {
-        color: #94a3b8;
-        font-weight: 400;
-    }
-
-    .feed-action {
-        font-size: 13px;
-        font-weight: 500;
-        color: #ef4444;
-        margin-bottom: 2px;
-    }
-
-    .feed-time {
-        font-size: 11px;
-        color: #94a3b8;
-    }
-    
-    .btn-outline-custom {
-        border: 1px solid #e2e8f0;
-        color: #475569;
-        font-weight: 500;
-        font-size: 13px;
-        padding: 5px 12px;
-        border-radius: 6px;
-        background: transparent;
-    }
-
-    .table-detail th {
-        color: #64748b;
-        font-size: 12px;
-        font-weight: 600;
-        border-bottom: 1px solid #edf2f9;
-        padding: 15px 20px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .table-detail td {
-        padding: 15px 20px;
-        vertical-align: middle;
-        font-size: 14px;
-        border-bottom: 1px solid #f1f5f9;
-    }
-
-    .customer-td {
-        display: flex;
-        align-items: center;
-    }
-
-    .customer-avatar {
-        width: 32px;
-        height: 32px;
-        background-color: #f1f5f9;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 12px;
-        color: #94a3b8;
-        font-size: 14px;
-    }
+    .lang-item { display: flex; flex-direction: column; align-items: flex-start; }
+    .lang-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+    .lang-pct { font-size: 26px; font-weight: 700; color: #111827; }
+    .lang-count { font-size: 12px; color: #9ca3af; }
 </style>
 
-<div class="row g-4 mb-4">
-    <!-- Total Scans Today -->
+<!-- Page header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="fw-bold mb-1" style="color:#111827;font-size:1.2rem;">Dashboard Home</h5>
+        <small class="text-muted">@shopName</small>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+        <span class="@(shopOpen ? "status-open" : "status-closed")">@(shopOpen ? "Open" : "Closed")</span>
+        <button id="shopToggleBtn" class="btn btn-sm" style="border:1px solid #e5e7eb;">
+            @(shopOpen ? "Close shop" : "Re-open shop")
+        </button>
+        <button class="btn p-2" style="border:none;background:transparent;color:#9ca3af;font-size:18px;"><i class="fa-regular fa-bell"></i></button>
+        <div style="width:36px;height:36px;border-radius:50%;background:#f3f4f6;border:1px solid #e5e7eb;"></div>
+    </div>
+
+    @* Anti-forgery token used by the toggle button AJAX request *@
+    @Html.AntiForgeryToken()
+
+    <script>
+        (function () {
+            const toggleBtn = document.getElementById('shopToggleBtn');
+            if (!toggleBtn) return;
+
+            const shopId = '@ViewBag.ShopId';
+            // When the shop is currently open, the toggle should force it closed; otherwise it should clear the force-closed override.
+            const shopOpen = @shopOpen.ToString().ToLower();
+            const forceClosed = shopOpen;
+
+            toggleBtn.addEventListener('click', async () => {
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                if (!token) return;
+
+                const url = '@Url.Action("ToggleShopClosed", "Dashboard", new { area = "Vendor" })';
+                const formData = new FormData();
+                formData.append('__RequestVerificationToken', token);
+                formData.append('shopId', shopId);
+                formData.append('forceClosed', (forceClosed ? 'true' : 'false'));
+
+                const res = await fetch(url, { method: 'POST', body: formData });
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    console.error('Toggle failed', res.statusText);
+                    alert('Unable to update shop status; please try again.');
+                }
+            });
+        })();
+    </script>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
     <div class="col-xl-3 col-md-6">
-        <div class="dashboard-card">
-            <div class="card-top">
-                <div class="card-icon"><i class="fa-solid fa-qrcode"></i></div>
-                <div class="stat-badge">+12%</div>
-            </div>
-            <div>
-                <div class="card-label">Total Scans Today</div>
-                <h3 class="card-value">142</h3>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-location-dot"></i></div>
+            <div class="stat-content">
+                <p>Zone Visits</p>
+                <h4>@zoneVisits</h4>
             </div>
         </div>
     </div>
-
-    <!-- Vouchers Redeemed -->
     <div class="col-xl-3 col-md-6">
-        <div class="dashboard-card">
-            <div class="card-top">
-                <div class="card-icon"><i class="fa-solid fa-gift"></i></div>
-                <div class="stat-badge">+5%</div>
-            </div>
-            <div>
-                <div class="card-label">Vouchers Redeemed</div>
-                <h3 class="card-value">48</h3>
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="fa-solid fa-headphones"></i></div>
+            <div class="stat-content">
+                <p>Narration Listens</p>
+                <h4>@narrationListens</h4>
             </div>
         </div>
     </div>
-
-    <!-- Est. Revenue -->
     <div class="col-xl-3 col-md-6">
-        <div class="dashboard-card">
-            <div class="card-top">
-                <div class="card-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
-                <div class="stat-badge">+8%</div>
-            </div>
-            <div>
-                <div class="card-label">Est. Revenue from App</div>
-                <h3 class="card-value">$1,240.00</h3>
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="fa-solid fa-chart-line"></i></div>
+            <div class="stat-content">
+                <p>Engagement Rate</p>
+                <h4>@engagementRate<span style="font-size:14px;color:#64748b;">%</span></h4>
             </div>
         </div>
     </div>
-
-    <!-- Average Rating -->
     <div class="col-xl-3 col-md-6">
-        <div class="dashboard-card">
-            <div class="card-top">
-                <div class="card-icon"><i class="fa-solid fa-star"></i></div>
-                <div class="stat-badge">+0.2%</div>
-            </div>
-            <div>
-                <div class="card-label">Average Rating</div>
-                <h3 class="card-value">4.8</h3>
+        <div class="stat-card">
+            <div class="stat-icon orange"><i class="fa-regular fa-clock"></i></div>
+            <div class="stat-content">
+                <p>Avg. Dwell Time</p>
+                <h4>@avgDwellLabel</h4>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-4 mb-4">
-    <!-- Chart Section -->
-    <div class="col-xl-8 col-lg-7">
-        <div class="card-custom h-100 p-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h5 class="fw-bold mb-1 text-dark">Customer Traffic Trends</h5>
-                    <small class="text-muted">Weekly scan volume analysis</small>
-                </div>
-                <div class="d-flex gap-2">
-                    <button class="btn-outline-custom">Last 7 Days</button>
-                    <button class="btn-outline-custom">Export</button>
-                </div>
-            </div>
-            
-            <!-- Mockup Chart Area representing the red curve -->
-            <div class="text-center position-relative w-100" style="height: 250px; background: linear-gradient(0deg, #fff 0%, #fef2f2 100%); border-bottom: 1px solid #f1f5f9;">
-                <!-- A simple SVG curve to mock the design -->
-                <svg width="100%" height="100%" viewBox="0 0 800 250" preserveAspectRatio="none">
-                    <path d="M0 200 Q 200 150 400 100 T 600 180 T 800 60" fill="none" stroke="#ef4444" stroke-width="6" stroke-linecap="round"/>
-                </svg>
-                <div class="d-flex justify-content-between position-absolute w-100" style="bottom: -25px; color: #a1a1aa; font-size: 11px; font-weight: 600; padding: 0 10px;">
-                    <span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span>
-                </div>
-            </div>
+<!-- Traffic Trends Chart -->
+<div class="card-custom mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h6 class="fw-bold mb-1" style="color:#111827;">Customer Traffic Trends</h6>
+            <small class="text-muted">Weekly scan volume analysis</small>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary btn-sm">Last 7 Days</button>
+            <button class="btn btn-outline-secondary btn-sm">Export</button>
         </div>
     </div>
 
-    <!-- Live Feed Section -->
-    <div class="col-xl-4 col-lg-5">
-        <div class="card-custom h-100 p-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="fw-bold mb-0 text-dark">Live Feed</h5>
-                <div style="width: 8px; height: 8px; background-color: #10b981; border-radius: 50%;"></div>
-            </div>
-            
-            <div class="live-feed-list">
-                <div class="live-feed-item">
-                    <div class="feed-avatar"><i class="fa-solid fa-user"></i></div>
-                    <div class="feed-content">
-                        <h6>John D. <span>scanned</span></h6>
-                        <div class="feed-action">BOGOF Draft Beer</div>
-                        <div class="feed-time">2 mins ago</div>
-                    </div>
-                </div>
-                
-                <div class="live-feed-item mt-4">
-                    <div class="feed-avatar"><i class="fa-solid fa-user"></i></div>
-                    <div class="feed-content">
-                        <h6>Sarah M. <span>scanned</span></h6>
-                        <div class="feed-action">Happy Hour Voucher</div>
-                        <div class="feed-time">15 mins ago</div>
-                    </div>
-                </div>
-                
-                <div class="live-feed-item mt-4">
-                    <div class="feed-avatar"><i class="fa-solid fa-user"></i></div>
-                    <div class="feed-content">
-                        <h6>Mike R. <span>scanned</span></h6>
-                        <div class="feed-action">Loyalty Reward</div>
-                        <div class="feed-time">24 mins ago</div>
-                    </div>
-                </div>
-                
-                <div class="live-feed-item mt-4">
-                    <div class="feed-avatar"><i class="fa-solid fa-user"></i></div>
-                    <div class="feed-content">
-                        <h6>Emma W. <span style="color:#ef4444;opacity:0.6;">scanned</span></h6>
-                        <div class="feed-action" style="color:#f87171;">Draft Pint 50% Off</div>
-                        <div class="feed-time">45 mins ago</div>
-                    </div>
-                </div>
-            </div>
-            
-            <button class="btn w-100 mt-4 text-danger fw-bold" style="border: 1px solid #fee2e2; background-color: transparent; border-radius: 8px; font-size: 14px;">View All Activity</button>
+    <!-- SVG area chart mimicking the mockup -->
+    <div style="position:relative; width:100%; height:220px;">
+        <svg width="100%" height="100%" viewBox="0 0 800 220" preserveAspectRatio="none">
+            <defs>
+                <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#ef4444" stop-opacity="0.18"/>
+                    <stop offset="100%" stop-color="#ef4444" stop-opacity="0.01"/>
+                </linearGradient>
+            </defs>
+            <!-- Filled area -->
+            <path d="M0 190 C100 180, 150 160, 250 140 S400 120, 480 130 S600 160, 680 80 L800 40 L800 220 L0 220 Z"
+                  fill="url(#areaGrad)"/>
+            <!-- Line -->
+            <path d="M0 190 C100 180, 150 160, 250 140 S400 120, 480 130 S600 160, 680 80 L800 40"
+                  fill="none" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <!-- Day labels -->
+        <div class="d-flex justify-content-between" style="position:absolute;bottom:0;left:0;right:0;padding: 0 5px;">
+            <span style="font-size:11px;font-weight:600;color:#9ca3af;">MON</span>
+            <span style="font-size:11px;font-weight:600;color:#9ca3af;">TUE</span>
+            <span style="font-size:11px;font-weight:600;color:#9ca3af;">WED</span>
+            <span style="font-size:11px;font-weight:600;color:#9ca3af;">THU</span>
+            <span style="font-size:11px;font-weight:600;color:#9ca3af;">FRI</span>
+            <span style="font-size:11px;font-weight:600;color:#9ca3af;">SAT</span>
+            <span style="font-size:11px;font-weight:600;color:#9ca3af;">SUN</span>
         </div>
     </div>
 </div>
 
-<!-- Recent Details Table -->
-<div class="row">
-    <div class="col-12">
-        <div class="card-custom p-0 overflow-hidden">
-            <div class="p-4 border-bottom border-light">
-                <h5 class="fw-bold mb-0 text-dark">Recent QR Scans Detail</h5>
+<!-- Tourist Language Breakdown -->
+<div class="card-custom mb-4">
+    <div class="mb-3">
+        <h6 class="fw-bold mb-1" style="color:#111827;">Tourist Language Breakdown</h6>
+        <small class="text-muted">Visitor language distribution analysis</small>
+    </div>
+
+    <div class="d-flex align-items-center gap-5 flex-wrap">
+        <!-- Donut -->
+        <div class="donut-wrapper flex-shrink-0">
+            <svg width="140" height="140" viewBox="0 0 140 140">
+                <!-- Background ring -->
+                <circle cx="70" cy="70" r="52" fill="none" stroke="#f3f4f6" stroke-width="18"/>
+                <!-- English 55% = ~198deg -->
+                <circle cx="70" cy="70" r="52" fill="none" stroke="#ef4444" stroke-width="18"
+                        stroke-dasharray="198 328" stroke-dashoffset="82" stroke-linecap="butt"/>
+                <!-- Vietnamese 30% = ~108deg -->
+                <circle cx="70" cy="70" r="52" fill="none" stroke="#6b7280" stroke-width="18"
+                        stroke-dasharray="108 328" stroke-dashoffset="-116" stroke-linecap="butt"/>
+                <!-- Korean 15% = ~54deg - pinkish -->
+                <circle cx="70" cy="70" r="52" fill="none" stroke="#fca5a5" stroke-width="18"
+                        stroke-dasharray="54 328" stroke-dashoffset="-224" stroke-linecap="butt"/>
+            </svg>
+            <div class="donut-center">
+                <div class="pct">100%</div>
+                <div class="lbl">TOTAL SCANS</div>
             </div>
-            <div class="table-responsive">
-                <table class="table table-custom table-detail mb-0">
-                    <thead>
-                        <tr>
-                            <th>Customer</th>
-                            <th>Voucher Type</th>
-                            <th>Status</th>
-                            <th>Time</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="customer-td">
-                                <div class="customer-avatar"><i class="fa-solid fa-user"></i></div>
-                                <span class="fw-bold text-dark">John Doe</span>
-                            </td>
-                            <td class="text-dark">BOGOF Draft Beer</td>
-                            <td><span class="stat-badge border">REDEEMED</span></td>
-                            <td class="text-muted">14:24 PM</td>
-                            <td class="fw-bold text-dark">$8.50</td>
-                        </tr>
-                        <tr>
-                            <td class="customer-td">
-                                <div class="customer-avatar"><i class="fa-solid fa-user"></i></div>
-                                <span class="fw-bold text-dark">Sarah Miller</span>
-                            </td>
-                            <td class="text-dark">Happy Hour Discount</td>
-                            <td><span class="stat-badge border">REDEEMED</span></td>
-                            <td class="text-muted">14:15 PM</td>
-                            <td class="fw-bold text-dark">$12.00</td>
-                        </tr>
-                    </tbody>
-                </table>
+        </div>
+
+        <!-- Legend -->
+        <div class="d-flex gap-5 flex-wrap">
+            <div class="lang-item">
+                <div class="mb-1"><span class="lang-dot" style="background:#ef4444;"></span>🇺🇸 <strong>English</strong></div>
+                <div class="lang-pct">55%</div>
+                <div class="lang-count">352 Scans</div>
+            </div>
+            <div class="lang-item">
+                <div class="mb-1"><span class="lang-dot" style="background:#6b7280;"></span>🇻🇳 <strong>Vietnamese</strong></div>
+                <div class="lang-pct">30%</div>
+                <div class="lang-count">192 Scans</div>
+            </div>
+            <div class="lang-item">
+                <div class="mb-1"><span class="lang-dot" style="background:#fca5a5;"></span>🇰🇷 <strong>Korean</strong></div>
+                <div class="lang-pct">15%</div>
+                <div class="lang-count">96 Scans</div>
             </div>
         </div>
     </div>
