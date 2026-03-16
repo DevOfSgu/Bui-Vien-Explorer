@@ -733,5 +733,5 @@ Developed by **DevOfSgu** team
 ---
 
 **Bui Vien Explorer**  
-Travel Guide System for District 4, HCMC  
+Travel Guide System for BUI VIEN WALK STREET, HCMC  
 ASP.NET Core + .NET MAUI + SQL Server
