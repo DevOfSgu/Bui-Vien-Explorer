@@ -1,5 +1,7 @@
 @{
     ViewData["Title"] = "Store Settings";
+    var shop = ViewBag.Shop as TravelSystem.Shared.Models.Shop ?? new TravelSystem.Shared.Models.Shop();
+    var hours = ViewBag.Hours as List<TravelSystem.Shared.Models.ShopHour> ?? new List<TravelSystem.Shared.Models.ShopHour>();
 }
 
 <style>
@@ -260,6 +262,8 @@
     <p>Manage your club profile, media, and operating hours.</p>
 </div>
 
+<form method="post" asp-action="Index" asp-controller="Settings" asp-area="Vendor" enctype="multipart/form-data">
+
 <!-- Basic Info -->
 <div class="settings-card">
     <div class="card-title-row">
@@ -271,13 +275,13 @@
         <div class="col-md-6">
             <div class="form-group">
                 <label>Store Name</label>
-                <input type="text" class="form-control-custom" value="Sahara Beer Club" />
+                <input type="text" name="shop.Name" class="form-control-custom" value="@shop.Name" />
             </div>
         </div>
         <div class="col-md-6">
             <div class="form-group">
                 <label>Category</label>
-                <select class="form-control-custom" style="appearance: auto;">
+                <select name="shop.Category" class="form-control-custom" style="appearance: auto;">
                     <option selected>Bar</option>
                     <option>Restaurant</option>
                     <option>Club</option>
@@ -288,9 +292,16 @@
     </div>
     
     <div class="form-group">
-        <label>Description</label>
-        <textarea class="form-control-custom" rows="4">The ultimate craft beer destination in the heart of the city. We serve over 50 types of local and international brews with a desert-themed atmosphere.</textarea>
+        <label>Address</label>
+        <input type="text" name="shop.Address" class="form-control-custom" value="@shop.Address" placeholder="e.g., 123 Bùi Viện, District 1, HCM" />
     </div>
+    
+    <div class="form-group">
+        <label>Phone Number</label>
+        <input type="tel" name="shop.PhoneNumber" class="form-control-custom" value="@shop.PhoneNumber" placeholder="+84 28 ... " />
+    </div>
+    
+    
 </div>
 
 <!-- Media -->
@@ -305,14 +316,15 @@
             <div class="form-group">
                 <label>Store Logo</label>
                 <div class="d-flex flex-column align-items-center mt-2">
-                    <div class="position-relative">
-                        <div class="upload-box upload-logo">
+                    <div class="position-relative" style="cursor: pointer;" onclick="document.getElementById('logoInput').click();">
+                        <div class="upload-box upload-logo" id="logoPreview">
                             <i class="fa-solid fa-store" style="font-size: 30px; color: #94a3b8;"></i>
                         </div>
                         <div class="upload-icon-overlay">
                             <i class="fa-solid fa-cloud-arrow-up"></i>
                         </div>
                     </div>
+                    <input type="file" id="logoInput" accept="image/png,image/jpeg" style="display: none;" onchange="handleLogoUpload(event)" />
                     <span class="upload-helper-text">PNG, JPG UP TO 2MB</span>
                 </div>
             </div>
@@ -321,11 +333,12 @@
         <div class="col-md-9">
             <div class="form-group">
                 <label>Store Gallery</label>
-                <div class="d-flex gap-3 flex-wrap mt-2">
-                    <div class="upload-box upload-gallery-add flex-column">
+                <div class="d-flex gap-3 flex-wrap mt-2" id="galleryContainer">
+                    <div class="upload-box upload-gallery-add flex-column" style="cursor: pointer;" onclick="document.getElementById('galleryInput').click();">
                         <i class="fa-regular fa-image"></i>
                         <span class="text-uppercase">Add Photo</span>
                     </div>
+                    <input type="file" id="galleryInput" accept="image/png,image/jpeg" multiple style="display: none;" onchange="handleGalleryUpload(event)" />
                     <!-- Sample Gallery Images -->
                     <img src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=400&fit=crop" class="gallery-preview" alt="Gallery 1" />
                     <img src="https://images.unsplash.com/photo-1548651877-c91703e7280d?q=80&w=400&fit=crop" class="gallery-preview" alt="Gallery 2" />
@@ -340,28 +353,15 @@
 <div class="settings-card">
     <div class="card-title-row">
         <div class="card-title-icon"><i class="fa-regular fa-clock"></i></div>
-        <h4 class="card-title-text">Location & Hours</h4>
+        <h4 class="card-title-text">Operating Hours & Location</h4>
+    </div>
+    
+    <div class="row g-5 mb-4">
+        
     </div>
     
     <div class="row g-5">
-        <div class="col-md-5 border-end border-light pe-5">
-            <div class="form-group mb-3">
-                <label class="mb-3">Geographic Location</label>
-                <div class="geo-row">
-                    <span class="geo-label">Latitude</span>
-                    <span class="geo-value fw-bold">24.7136° N</span>
-                </div>
-                <div class="geo-row">
-                    <span class="geo-label">Longitude</span>
-                    <span class="geo-value fw-bold">46.6753° E</span>
-                </div>
-                <div class="map-placeholder">
-                    <i class="fa-regular fa-map"></i>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-7 ps-4">
+        <div class="col-md-12">
             <div class="form-group">
                 <label class="mb-3">Operating Hours</label>
                 <table class="hours-table">
@@ -374,54 +374,57 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>Monday</td>
-                            <td>
-                                <div class="time-input-group">
-                                    <input type="text" value="04:00 PM" readonly />
-                                    <i class="fa-regular fa-clock"></i>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="time-input-group">
-                                    <input type="text" value="02:00 AM" readonly />
-                                    <i class="fa-regular fa-clock"></i>
-                                </div>
-                            </td>
-                            <td class="text-end"><span class="status-badge status-open">OPEN</span></td>
-                        </tr>
-                        <tr>
-                            <td>Tue - Thu</td>
-                            <td>
-                                <div class="time-input-group">
-                                    <input type="text" value="04:00 PM" readonly />
-                                    <i class="fa-regular fa-clock"></i>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="time-input-group">
-                                    <input type="text" value="02:00 AM" readonly />
-                                    <i class="fa-regular fa-clock"></i>
-                                </div>
-                            </td>
-                            <td class="text-end"><span class="status-badge status-open">OPEN</span></td>
-                        </tr>
-                        <tr>
-                            <td>Fri - Sun</td>
-                            <td>
-                                <div class="time-input-group">
-                                    <input type="text" value="12:00 PM" readonly />
-                                    <i class="fa-regular fa-clock"></i>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="time-input-group">
-                                    <input type="text" value="04:00 AM" readonly />
-                                    <i class="fa-regular fa-clock"></i>
-                                </div>
-                            </td>
-                            <td class="text-end"><span class="status-badge status-open">OPEN</span></td>
-                        </tr>
+                        @{
+                            string[] days = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+                            string[] dayRanges = { "Sunday", "Monday", "Tue - Wed", "Tue - Wed", "Tue - Wed", "Fri", "Fri - Sat" };
+                            
+                            // Group hours by day
+                            var mondayHour = hours.FirstOrDefault(h => h.DayOfWeek == 1);
+                            var tueThuHour = hours.FirstOrDefault(h => h.DayOfWeek == 2);
+                            var friSunHour = hours.FirstOrDefault(h => h.DayOfWeek == 5);
+                        }
+                        
+                        @if (mondayHour != null)
+                        {
+                            <tr>
+                                <td>Monday</td>
+                                <td>
+                                    <input type="time" name="hours[0].OpenTime" class="form-control-custom" style="width: 120px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;" value="@mondayHour.OpenTime.ToString(@"hh\:mm")" />
+                                </td>
+                                <td>
+                                    <input type="time" name="hours[0].CloseTime" class="form-control-custom" style="width: 120px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;" value="@mondayHour.CloseTime.ToString(@"hh\:mm")" />
+                                </td>
+                                <td class="text-end"><span class="status-badge status-open">OPEN</span></td>
+                            </tr>
+                        }
+                        
+                        @if (tueThuHour != null)
+                        {
+                            <tr>
+                                <td>Tue - Thu</td>
+                                <td>
+                                    <input type="time" name="hours[1].OpenTime" class="form-control-custom" style="width: 120px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;" value="@tueThuHour.OpenTime.ToString(@"hh\:mm")" />
+                                </td>
+                                <td>
+                                    <input type="time" name="hours[1].CloseTime" class="form-control-custom" style="width: 120px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;" value="@tueThuHour.CloseTime.ToString(@"hh\:mm")" />
+                                </td>
+                                <td class="text-end"><span class="status-badge status-open">OPEN</span></td>
+                            </tr>
+                        }
+                        
+                        @if (friSunHour != null)
+                        {
+                            <tr>
+                                <td>Fri - Sun</td>
+                                <td>
+                                    <input type="time" name="hours[2].OpenTime" class="form-control-custom" style="width: 120px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;" value="@friSunHour.OpenTime.ToString(@"hh\:mm")" />
+                                </td>
+                                <td>
+                                    <input type="time" name="hours[2].CloseTime" class="form-control-custom" style="width: 120px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;" value="@friSunHour.CloseTime.ToString(@"hh\:mm")" />
+                                </td>
+                                <td class="text-end"><span class="status-badge status-open">OPEN</span></td>
+                            </tr>
+                        }
                     </tbody>
                 </table>
             </div>
@@ -449,6 +452,44 @@
 </div>
 
 <!-- Floating Save Button -->
-<button class="floating-save-btn">
+<button type="submit" class="floating-save-btn">
     <i class="fa-regular fa-floppy-disk"></i> Save Changes
 </button>
+</form>
+
+<script>
+    function handleLogoUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const logoPreview = document.getElementById('logoPreview');
+                logoPreview.innerHTML = '<img src="' + e.target.result + '" class="upload-logo" style="border-radius: 50%; margin-bottom: 0;" alt="Logo Preview" />';
+                const overlay = document.createElement('div');
+                overlay.className = 'upload-icon-overlay';
+                overlay.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i>';
+                logoPreview.appendChild(overlay);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function handleGalleryUpload(event) {
+        const files = event.target.files;
+        if (files) {
+            const galleryContainer = document.getElementById('galleryContainer');
+            for (let i = 0; i < files.length; i++) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'gallery-preview';
+                    img.alt = 'Gallery Image ' + (i + 1);
+                    galleryContainer.appendChild(img);
+                };
+                reader.readAsDataURL(files[i]);
+            }
+        }
+        event.target.value = '';
+    }
+</script>

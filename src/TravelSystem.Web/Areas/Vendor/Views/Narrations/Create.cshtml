@@ -44,24 +44,7 @@
 
             <!-- Settings Sidebar -->
             <div class="col-md-4">
-                <div class="p-3 mb-4 rounded" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
-                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-microphone text-primary me-2"></i> Audio Configuration</h6>
-                    
-                    <div class="mb-3">
-                        <label class="form-label text-muted small">Voice Profile (Optional)</label>
-                        <select asp-for="VoiceId" class="form-select form-select-sm">
-                            <option value="">-- Let Device Decide --</option>
-                            <option value="Wavenet-A">Premium Female (A)</option>
-                            <option value="Wavenet-B">Premium Male (B)</option>
-                            <option value="Wavenet-C">Premium Female (C)</option>
-                            <option value="Wavenet-D">Premium Male (D)</option>
-                        </select>
-                    </div>
 
-                    <div class="alert alert-info mt-4 pb-0" style="font-size: 13px;">
-                        <i class="fa-solid fa-circle-info me-1"></i> If you leave the Voice Profile empty, the mobile device's default System Voice will be used for synthesis.
-                    </div>
-                </div>
 
                 <button type="submit" class="btn btn-primary-custom w-100 py-2 mt-2">
                     <i class="fa-solid fa-check me-2"></i> Save Script
