@@ -56,6 +56,9 @@ CREATE TABLE Routes (
     StartLongitude DECIMAL(11, 8),
     ImageUrl NVARCHAR(255),
     IsActive BIT DEFAULT 1,
+    IsLocked BIT DEFAULT 0,
+    IsHidden BIT DEFAULT 0,
+    LockReason NVARCHAR(500),
     CreatedAt DATETIME DEFAULT GETDATE(),
     UpdatedAt DATETIME DEFAULT GETDATE()
 );
@@ -94,6 +97,9 @@ CREATE TABLE Zones (
     ZoneType INT DEFAULT 0,
     -- 0:Bar, 1:Restaurant, 2:Landmark...
     IsActive BIT DEFAULT 1,
+    IsLocked BIT DEFAULT 0,
+    IsHidden BIT DEFAULT 0,
+    LockReason NVARCHAR(500),
     ActiveTime INT DEFAULT 0,
     -- 0:All, 1:Day, 2:Night
     CreatedAt DATETIME DEFAULT GETDATE(),

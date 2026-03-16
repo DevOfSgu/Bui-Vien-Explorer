@@ -18,16 +18,10 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
         }
 
         // GET: Admin/Zones
-        public async Task<IActionResult> Index(int? routeId, int page = 1)
+        public async Task<IActionResult> Index(int page = 1)
         {
             const int pageSize = 20;
             var query = _db.Zones.AsQueryable();
-
-            if (routeId.HasValue)
-            {
-                query = query.Where(z => z.RouteId == routeId.Value);
-                ViewBag.SelectedRouteId = routeId;
-            }
 
             var totalCount = await query.CountAsync();
             var totalPages = (int) Math.Ceiling(totalCount / (double)pageSize);
@@ -51,11 +45,10 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
         }
 
         // GET: Admin/Zones/Create
-        public IActionResult Create(int? routeId)
+        public IActionResult Create()
         {
-            ViewBag.Routes = _db.Routes.ToList();
             ViewBag.Shops = _db.Shops.ToList();
-            return View(new Zone { RouteId = routeId ?? 0, IsActive = true });
+            return View(new Zone { IsActive = true });
         }
 
         // POST: Admin/Zones/Create
@@ -72,10 +65,9 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
 
                 _db.Zones.Add(zone);
                 await _db.SaveChangesAsync();
-                return RedirectToAction(nameof(Index), new { routeId = zone.RouteId });
+                return RedirectToAction(nameof(Index));
             }
 
-            ViewBag.Routes = _db.Routes.ToList();
             ViewBag.Shops = _db.Shops.ToList();
             return View(zone);
         }
@@ -93,7 +85,6 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 ModelState.AddModelError("", $"Zone này đang bị khóa. Lý do: {zone.LockReason}");
             }
 
-            ViewBag.Routes = _db.Routes.ToList();
             ViewBag.Shops = _db.Shops.ToList();
             return View(zone);
         }
@@ -112,7 +103,6 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             if (dbZone.IsLocked)
             {
                 ModelState.AddModelError("", $"Không thể chỉnh sửa. Zone này đang bị khóa. Lý do: {dbZone.LockReason}");
-                ViewBag.Routes = _db.Routes.ToList();
                 ViewBag.Shops = _db.Shops.ToList();
                 return View(zone);
             }
@@ -130,10 +120,9 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 dbZone.IsActive = zone.IsActive;
                 dbZone.UpdatedAt = DateTime.UtcNow;
                 await _db.SaveChangesAsync();
-                return RedirectToAction(nameof(Index), new { routeId = zone.RouteId });
+                return RedirectToAction(nameof(Index));
             }
 
-            ViewBag.Routes = _db.Routes.ToList();
             ViewBag.Shops = _db.Shops.ToList();
             return View(zone);
         }
@@ -146,10 +135,9 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             var zone = await _db.Zones.FindAsync(id);
             if (zone != null)
             {
-                var routeId = zone.RouteId;
                 _db.Zones.Remove(zone);
                 await _db.SaveChangesAsync();
-                return RedirectToAction(nameof(Index), new { routeId });
+                return RedirectToAction(nameof(Index));
             }
             return RedirectToAction(nameof(Index));
         }
@@ -167,7 +155,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 zone.UpdatedAt = DateTime.UtcNow;
                 await _db.SaveChangesAsync();
             }
-            return RedirectToAction(nameof(Index), new { routeId = zone?.RouteId });
+            return RedirectToAction(nameof(Index));
         }
 
         // POST: Admin/Zones/Unlock/5
@@ -183,7 +171,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 zone.UpdatedAt = DateTime.UtcNow;
                 await _db.SaveChangesAsync();
             }
-            return RedirectToAction(nameof(Index), new { routeId = zone?.RouteId });
+            return RedirectToAction(nameof(Index));
         }
 
         // POST: Admin/Zones/Hide/5
@@ -198,7 +186,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 zone.UpdatedAt = DateTime.UtcNow;
                 await _db.SaveChangesAsync();
             }
-            return RedirectToAction(nameof(Index), new { routeId = zone?.RouteId });
+            return RedirectToAction(nameof(Index));
         }
 
         // POST: Admin/Zones/Show/5
@@ -213,7 +201,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 zone.UpdatedAt = DateTime.UtcNow;
                 await _db.SaveChangesAsync();
             }
-            return RedirectToAction(nameof(Index), new { routeId = zone?.RouteId });
+            return RedirectToAction(nameof(Index));
         }
     }
 }

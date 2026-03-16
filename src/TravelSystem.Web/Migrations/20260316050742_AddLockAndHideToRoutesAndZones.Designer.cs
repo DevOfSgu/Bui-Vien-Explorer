@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TravelSystem.Web.Data;
 
@@ -11,9 +12,11 @@ using TravelSystem.Web.Data;
 namespace TravelSystem.Web.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260316050742_AddLockAndHideToRoutesAndZones")]
+    partial class AddLockAndHideToRoutesAndZones
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -137,6 +140,54 @@ namespace TravelSystem.Web.Migrations
                     b.HasIndex("ZoneId");
 
                     b.ToTable("Narrations");
+                });
+
+            modelBuilder.Entity("TravelSystem.Shared.Models.Routes", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsHidden")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsLocked")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LockReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("StartLatitude")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("StartLongitude")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Routes");
                 });
 
             modelBuilder.Entity("TravelSystem.Shared.Models.Shop", b =>
@@ -281,6 +332,9 @@ namespace TravelSystem.Web.Migrations
                     b.Property<int>("Radius")
                         .HasColumnType("int");
 
+                    b.Property<int>("RouteId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("ShopId")
                         .HasColumnType("int");
 
@@ -291,6 +345,8 @@ namespace TravelSystem.Web.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("RouteId");
 
                     b.ToTable("Zones");
                 });
@@ -322,6 +378,15 @@ namespace TravelSystem.Web.Migrations
                         .HasForeignKey("ShopId");
 
                     b.Navigation("Shop");
+                });
+
+            modelBuilder.Entity("TravelSystem.Shared.Models.Zone", b =>
+                {
+                    b.HasOne("TravelSystem.Shared.Models.Routes", null)
+                        .WithMany()
+                        .HasForeignKey("RouteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

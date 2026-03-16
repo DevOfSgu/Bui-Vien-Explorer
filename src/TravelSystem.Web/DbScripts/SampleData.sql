@@ -196,7 +196,10 @@ INSERT INTO Routes (
         StartLatitude,
         StartLongitude,
         ImageUrl,
-        IsActive
+        IsActive,
+        IsLocked,
+        IsHidden,
+        LockReason
     )
 VALUES (
         N'Bùi Viện Walking Tour',
@@ -204,7 +207,10 @@ VALUES (
         10.76968,
         106.69156,
         'images/routes/route-1.jpg',
-        1
+        1,
+        0,
+        0,
+        NULL
     );
 
 
@@ -224,7 +230,10 @@ INSERT INTO Zones (
         OrderIndex,
         ZoneType,
         IsActive,
-        ActiveTime
+        ActiveTime,
+        IsLocked,
+        IsHidden,
+        LockReason
     )
 VALUES (
         @routeId,
@@ -237,7 +246,10 @@ VALUES (
         1,
         3,
         1,
-        0
+        0,
+        0,
+        0,
+        NULL
     ),
     (
         @routeId,
@@ -250,7 +262,10 @@ VALUES (
         2,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
         @routeId,
@@ -263,7 +278,10 @@ VALUES (
         3,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
         @routeId,
@@ -276,7 +294,10 @@ VALUES (
         4,
         3,
         1,
-        0
+        0,
+        0,
+        0,
+        NULL
     ),
     (
         @routeId,
@@ -289,7 +310,10 @@ VALUES (
         5,
         1,
         1,
-        0
+        0,
+        0,
+        0,
+        NULL
     ),
     (
         @routeId,
@@ -302,7 +326,10 @@ VALUES (
         6,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
         @routeId,
@@ -315,7 +342,10 @@ VALUES (
         7,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
         @routeId,
@@ -328,7 +358,10 @@ VALUES (
         8,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
         @routeId,
@@ -341,7 +374,10 @@ VALUES (
         9,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
         @routeId,
@@ -354,7 +390,10 @@ VALUES (
         10,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
         @routeId,
@@ -367,7 +406,10 @@ VALUES (
         11,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
         @routeId,
@@ -380,7 +422,10 @@ VALUES (
         12,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
         @routeId,
@@ -393,7 +438,10 @@ VALUES (
         13,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
         @routeId,
@@ -406,7 +454,10 @@ VALUES (
         14,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
         @routeId,
@@ -419,7 +470,10 @@ VALUES (
         15,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
         @routeId,
@@ -432,7 +486,10 @@ VALUES (
         16,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
         @routeId,
@@ -445,7 +502,10 @@ VALUES (
         17,
         1,
         1,
-        0
+        0,
+        0,
+        0,
+        NULL
     ),
     (
         @routeId,
@@ -458,7 +518,10 @@ VALUES (
         18,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
         @routeId,
@@ -471,7 +534,10 @@ VALUES (
         19,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
         @routeId,
@@ -484,7 +550,10 @@ VALUES (
         20,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     );
 
 -- ============================================================

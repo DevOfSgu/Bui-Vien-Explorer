@@ -39,40 +39,37 @@ public partial class MainPageViewModel : ObservableObject
             IsLoading = true;
             ErrorMessage = string.Empty;
 
-
-            Debug.WriteLine("[MAIN_VM] Initializing local database...");
-            await _databaseService.InitializeAsync();
-            Debug.WriteLine("[MAIN_VM] Local database initialization completed.");
-
-            await LoadRouteCardsFromLocalAsync();
-
-            var lastSyncedAt = await _databaseService.GetSettingAsync("LastSyncedAt", string.Empty);
-            Debug.WriteLine($"[MAIN_VM] LastSyncedAt = {(string.IsNullOrWhiteSpace(lastSyncedAt) ? "<empty>" : lastSyncedAt)}");
-            try
+            Debug.WriteLine("[MAIN_VM] Loading zones from server...");
+            var zones = await _apiService.GetZonesAsync();
+            
+            RouteCards.Clear();
+            if (zones != null && zones.Count > 0)
             {
-                using var syncCts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
-                Debug.WriteLine("[MAIN_VM] Checking server updates...");
-                var syncData = await _apiService.GetRouteSyncDataAsync(lastSyncedAt, syncCts.Token);
-                if (syncData is not null)
+                foreach (var zone in zones)
                 {
-                    Debug.WriteLine($"[MAIN_VM] Server has updates. Routes={syncData.Routes.Count}, Zones={syncData.Zones.Count}, Narrations={syncData.Narrations.Count}, Timestamp={syncData.Timestamp:o}");
-                    await _databaseService.SaveRouteSyncDataAsync(syncData);
-                    Debug.WriteLine("[MAIN_VM] Local database updated from server.");
-                    await LoadRouteCardsFromLocalAsync();
+                    RouteCards.Add(new RouteCardItem
+                    {
+                        Id = zone.Id,
+                        Name = zone.Name ?? string.Empty,
+                        Description = zone.Description ?? string.Empty,
+                        StopCount = 1,
+                        DurationMinutes = zone.ActiveTime > 0 ? zone.ActiveTime : 8,
+                        ImageUrl = string.Empty
+                    });
                 }
-                else
-                {
-                    Debug.WriteLine("[MAIN_VM] No new updates from server. Using local cache.");
-                }
+                Debug.WriteLine($"[MAIN_VM] Loaded {zones.Count} zones from server.");
             }
-            catch (Exception ex)
+            else
             {
-                Debug.WriteLine($"[SYNC] Using local cache because sync failed: {ex.Message}");
+                ErrorMessage = "Không có zone để hiển thị.";
             }
+
+            OnPropertyChanged(nameof(ToursAvailableText));
         }
         catch (Exception ex)
         {
             ErrorMessage = $"Không thể tải dữ liệu: {ex.Message}";
+            Debug.WriteLine($"[MAIN_VM] Error: {ex}");
         }
         finally
         {
@@ -80,59 +77,16 @@ public partial class MainPageViewModel : ObservableObject
         }
     }
 
-    private async Task LoadRouteCardsFromLocalAsync()
-    {
-        var routeSummaries = await _databaseService.GetRouteSummariesAsync();
-        Debug.WriteLine($"[MAIN_VM] Loaded {routeSummaries.Count} routes from local database.");
-
-        RouteCards.Clear();
-        foreach (var item in routeSummaries)
-        {
-            RouteCards.Add(RouteCardItem.FromSummary(item));
-        }
-
-        OnPropertyChanged(nameof(ToursAvailableText));
-
-        if (RouteCards.Count == 0)
-        {
-            ErrorMessage = "Không có tour để hiển thị.";
-        }
-        else
-        {
-            ErrorMessage = string.Empty;
-        }
-    }
 }
 
 public sealed class RouteCardItem
 {
+    public int Id { get; init; }
     public string Name { get; init; } = string.Empty;
     public string Description { get; init; } = string.Empty;
-    public string StopsText { get; init; } = string.Empty;
-    public string MinutesText { get; init; } = string.Empty;
+    public int StopCount { get; set; }
+    public int DurationMinutes { get; set; }
     public string ImageUrl { get; init; } = string.Empty;
-    public string IconGlyph { get; init; } = "🚶";
-    public Color IconBackgroundColor { get; init; } = Color.FromArgb("#F3F4F6");
-
-    public static RouteCardItem FromSummary(RouteSummary summary)
-    {
-        var (icon, color) = summary.ZoneType switch
-        {
-            1 => ("🍜", Color.FromArgb("#FFF1E2")),
-            2 => ("🍸", Color.FromArgb("#EFE7FF")),
-            3 => ("🏛️", Color.FromArgb("#E8EEFF")),
-            _ => ("🚶", Color.FromArgb("#FFE9E9"))
-        };
-
-        return new RouteCardItem
-        {
-            Name = summary.Name,
-            Description = string.IsNullOrWhiteSpace(summary.Description) ? "Explore the heart of Saigon" : summary.Description,
-            StopsText = $"{summary.StopCount} điểm dừng",
-            MinutesText = $"{summary.DurationMinutes} phút",
-            ImageUrl = summary.ImageUrl,
-            IconGlyph = icon,
-            IconBackgroundColor = color
-        };
-    }
+    public string IconGlyph { get; init; } = "📍";
+    public Color IconBackgroundColor { get; init; } = Color.FromArgb("#FFE9E9");
 }

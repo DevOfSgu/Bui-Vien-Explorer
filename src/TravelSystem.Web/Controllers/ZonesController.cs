@@ -15,13 +15,13 @@ public class ZonesController : ControllerBase
         _db = db;
     }
 
-    // GET /api/zones?routeId=1
-    // Lấy danh sách zones của 1 route (loại bỏ zones bị ẩn)
+    // GET /api/zones
+    // Lấy danh sách tất cả zones (loại bỏ zones bị ẩn)
     [HttpGet]
-    public async Task<IActionResult> GetByRoute([FromQuery] int routeId)
+    public async Task<IActionResult> GetAll()
     {
         var zones = await _db.Zones
-            .Where(z => z.RouteId == routeId && z.IsActive && !z.IsHidden)
+            .Where(z => z.IsActive && !z.IsHidden)
             .OrderBy(z => z.OrderIndex)
             .ToListAsync();
         return Ok(zones);

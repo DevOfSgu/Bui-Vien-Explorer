@@ -5,7 +5,7 @@
 
 <div class="header-actions">
     <div class="d-flex align-items-center gap-3">
-        <a asp-action="Index" asp-route-routeId="@Model.RouteId" class="btn btn-outline-secondary" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+        <a asp-action="Index" class="btn btn-outline-secondary" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
             <i class="fa-solid fa-arrow-left"></i>
         </a>
         <div class="page-title">Create Point of Interest (Zone)</div>
@@ -27,12 +27,6 @@
                 </div>
 
                 <div class="row mb-4">
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">Select Route</label>
-                        <select asp-for="RouteId" class="form-select" asp-items="@(new SelectList(ViewBag.Routes, "Id", "Name"))">
-                            <option value="">-- Choose Route --</option>
-                        </select>
-                    </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold">Category (Type)</label>
                         <select asp-for="ZoneType" class="form-select">
@@ -86,7 +80,7 @@
                 <button type="submit" class="btn btn-primary-custom w-100 py-2 mt-2">
                     <i class="fa-solid fa-check me-2"></i> Save Changes
                 </button>
-                <a asp-action="Index" asp-route-routeId="@Model.RouteId" class="btn btn-outline-secondary w-100 py-2 mt-2">
+                <a asp-action="Index" class="btn btn-outline-secondary w-100 py-2 mt-2">
                     <i class="fa-solid fa-xmark me-2"></i> Cancel
                 </a>
             </div>

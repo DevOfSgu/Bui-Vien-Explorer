@@ -5,7 +5,6 @@ namespace TravelSystem.Web.Data;
 
 public class AppDbContext : DbContext
 {
-    public DbSet<Routes> Routes { get; set; }
     public DbSet<Zone> Zones { get; set; }
     public DbSet<Narration> Narrations { get; set; }
     public DbSet<Shop> Shops { get; set; }
@@ -23,13 +22,6 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        // Zone → Route (1 route có nhiều zones)
-        modelBuilder.Entity<Zone>()
-            .HasOne<Routes>()
-            .WithMany()
-            .HasForeignKey(z => z.RouteId)
-            .OnDelete(DeleteBehavior.Cascade);
 
         // Narration → Zone (1 zone có nhiều narrations - đa ngôn ngữ)
         modelBuilder.Entity<Narration>()
