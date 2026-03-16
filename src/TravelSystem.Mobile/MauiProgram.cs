@@ -33,10 +33,10 @@ public static class MauiProgram
 		builder.Services.AddTransient<ViewModels.LanguageSelectionViewModel>();
 
 		// Register Pages
-		builder.Services.AddSingleton<MainPage>();
-		builder.Services.AddSingleton<AppShell>();
-        builder.Services.AddSingleton<SavedPage>();
-		builder.Services.AddSingleton<SettingsPage>();
+		builder.Services.AddTransient<MainPage>();
+		builder.Services.AddTransient<AppShell>();
+        builder.Services.AddTransient<SavedPage>();
+		builder.Services.AddTransient<SettingsPage>();
         builder.Services.AddTransient<LanguageSelectionPage>();
 
 		return builder.Build();

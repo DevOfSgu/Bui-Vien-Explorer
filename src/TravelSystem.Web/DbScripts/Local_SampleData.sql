@@ -1,7 +1,7 @@
 -- ============================================================
--- SAMPLE DATA - Bùi Vi?n Explorer (Ðã m? r?ng 20 record/b?ng)
+-- SAMPLE DATA - Bùi Viện Explorer (Đã mở rộng 20 record/bảng)
 -- ============================================================
--- Xóa data cu (n?u b?ng t?n t?i)
+-- Xóa data cũ (nếu bảng tồn tại)
 IF OBJECT_ID('AppSettings','U') IS NOT NULL DELETE FROM AppSettings;
 IF OBJECT_ID('ShopHours','U') IS NOT NULL DELETE FROM ShopHours;
 IF OBJECT_ID('Narrations','U') IS NOT NULL DELETE FROM Narrations;
@@ -10,6 +10,7 @@ IF OBJECT_ID('Zones','U') IS NOT NULL DELETE FROM Zones;
 IF OBJECT_ID('Users','U') IS NOT NULL DELETE FROM Users;
 IF OBJECT_ID('Routes','U') IS NOT NULL DELETE FROM Routes;
 IF OBJECT_ID('Shops','U') IS NOT NULL DELETE FROM Shops;
+
 -- Reset Identity counters
 IF OBJECT_ID('AppSettings','U') IS NOT NULL DBCC CHECKIDENT ('AppSettings', RESEED, 0);
 IF OBJECT_ID('ShopHours','U') IS NOT NULL DBCC CHECKIDENT ('ShopHours', RESEED, 0);
@@ -18,127 +19,128 @@ IF OBJECT_ID('Routes','U') IS NOT NULL DBCC CHECKIDENT ('Routes', RESEED, 0);
 IF OBJECT_ID('Zones','U') IS NOT NULL DBCC CHECKIDENT ('Zones', RESEED, 0);
 IF OBJECT_ID('Narrations','U') IS NOT NULL DBCC CHECKIDENT ('Narrations', RESEED, 0);
 IF OBJECT_ID('Users','U') IS NOT NULL DBCC CHECKIDENT ('Users', RESEED, 0);
+
 -- ============================================================
 -- 1. Insert 20 Shops
 -- ============================================================
 INSERT INTO Shops (Name, Address, PhoneNumber, ImageUrl)
 VALUES (
         N'The Hideout Bar',
-        N'11 Bùi Vi?n, Q1, TP.HCM',
+        N'11 Bùi Viện, Q1, TP.HCM',
         N'028-3838-1111',
         NULL
     ),
     (
         N'Crazy Buffalo Bar',
-        N'9 Bùi Vi?n, Q1, TP.HCM',
+        N'9 Bùi Viện, Q1, TP.HCM',
         N'028-3838-2222',
         NULL
     ),
     (
         N'Spotted By Locals',
-        N'5 Bùi Vi?n, Q1, TP.HCM',
+        N'5 Bùi Viện, Q1, TP.HCM',
         N'028-3838-3333',
         NULL
     ),
     (
         N'Boheme Pub',
-        N'28 Bùi Vi?n, Q1, TP.HCM',
+        N'28 Bùi Viện, Q1, TP.HCM',
         N'028-3838-4444',
         NULL
     ),
     (
         N'Sahara Beer Club',
-        N'111 Bùi Vi?n, Q1, TP.HCM',
+        N'111 Bùi Viện, Q1, TP.HCM',
         N'028-3838-5555',
         NULL
     ),
     (
         N'Miss Saigon',
-        N'50 Bùi Vi?n, Q1, TP.HCM',
+        N'50 Bùi Viện, Q1, TP.HCM',
         N'028-3838-6666',
         NULL
     ),
     (
         N'Ocean Club',
-        N'41 Bùi Vi?n, Q1, TP.HCM',
+        N'41 Bùi Viện, Q1, TP.HCM',
         N'028-3838-7777',
         NULL
     ),
     (
         N'Donkey Bar',
-        N'120 Bùi Vi?n, Q1, TP.HCM',
+        N'120 Bùi Viện, Q1, TP.HCM',
         N'028-3838-8888',
         NULL
     ),
     (
         N'Universal Pub',
-        N'90 Bùi Vi?n, Q1, TP.HCM',
+        N'90 Bùi Viện, Q1, TP.HCM',
         N'028-3838-9999',
         NULL
     ),
     (
         N'Champion Sports Bar',
-        N'45 Bùi Vi?n, Q1, TP.HCM',
+        N'45 Bùi Viện, Q1, TP.HCM',
         N'028-3838-0000',
         NULL
     ),
     (
         N'Hair of the Dog',
-        N'194 Bùi Vi?n, Q1, TP.HCM',
+        N'194 Bùi Viện, Q1, TP.HCM',
         N'028-3838-1122',
         NULL
     ),
     (
         N'Republic Club',
-        N'200 Bùi Vi?n, Q1, TP.HCM',
+        N'200 Bùi Viện, Q1, TP.HCM',
         N'028-3838-2233',
         NULL
     ),
     (
         N'86 Club',
-        N'86 Bùi Vi?n, Q1, TP.HCM',
+        N'86 Bùi Viện, Q1, TP.HCM',
         N'028-3838-3344',
         NULL
     ),
     (
         N'Le Pub',
-        N'175 Bùi Vi?n, Q1, TP.HCM',
+        N'175 Bùi Viện, Q1, TP.HCM',
         N'028-3838-4455',
         NULL
     ),
     (
         N'Asiana Food Town',
-        N'Khu ?m th?c ng?m 23/9, Q1, TP.HCM',
+        N'Khu ẩm thực ngầm 23/9, Q1, TP.HCM',
         N'028-3838-5566',
         NULL
     ),
     (
         N'Krystal Lounge',
-        N'80 Bùi Vi?n, Q1, TP.HCM',
+        N'80 Bùi Viện, Q1, TP.HCM',
         N'028-3838-6677',
         NULL
     ),
     (
         N'Nubes Rooftop',
-        N'115 Bùi Vi?n, Q1, TP.HCM',
+        N'115 Bùi Viện, Q1, TP.HCM',
         N'028-3838-7788',
         NULL
     ),
     (
         N'Sky Bar 360',
-        N'99 Bùi Vi?n, Q1, TP.HCM',
+        N'99 Bùi Viện, Q1, TP.HCM',
         N'028-3838-8899',
         NULL
     ),
     (
         N'Corner Coffee & Beer',
-        N'1 Bùi Vi?n, Q1, TP.HCM',
+        N'1 Bùi Viện, Q1, TP.HCM',
         N'028-3838-9900',
         NULL
     ),
     (
-        N'Local Bùi Vi?n',
-        N'33 Bùi Vi?n, Q1, TP.HCM',
+        N'Local Bùi Viện',
+        N'33 Bùi Viện, Q1, TP.HCM',
         N'028-3838-0011',
         NULL
     );
@@ -182,6 +184,7 @@ VALUES (N'admin', N'123456', N'Admin User', N'admin@buivienexplorer.com', 0, NUL
     (N'vendor16', N'123456', N'Vendor 16', N'vendor16@example.com', 1, 16, 1),
     (N'vendor17', N'123456', N'Vendor 17', N'vendor17@example.com', 1, 17, 1),
     (N'vendor18', N'123456', N'Vendor 18', N'vendor18@example.com', 1, 18, 1);
+
 -- ============================================================
 -- 3. Insert 1 Route
 -- ============================================================
@@ -193,20 +196,22 @@ INSERT INTO Routes (
         ImageUrl,
         IsActive
     )
+
 VALUES (
         N'Bùi Viện Walking Tour',
         N'Khám phá phố đi bộ Bùi Viện từ đầu đến cuối.',
         10.76968,
         106.69156,
-        NULL,
+        '/images/routes/route-1.jpg',
         1
     );
+
 -- routeId will be queried when needed below
 DECLARE @routeId INT = CAST(SCOPE_IDENTITY() AS INT);
 
 
 -- ============================================================
--- 4. Insert 20 Zones (M?i Route gán 1 Zone d? d?m b?o có data)
+-- 4. Insert 20 Zones (Mỗi Route gán 1 Zone để đảm bảo có data)
 -- ============================================================
 INSERT INTO Zones (
         RouteId,
@@ -251,7 +256,7 @@ VALUES (
         @routeId,
         2,
         N'Crazy Buffalo Bar',
-        N'Bi?u tu?ng n?i ti?ng v?i mô hình trâu r?ng.',
+        N'Biểu tượng nổi tiếng với mô hình trâu rừng.',
         10.76930,
         106.69185,
         15,
@@ -263,8 +268,8 @@ VALUES (
     (
         @routeId,
         NULL,
-        N'Qu?ng tru?ng gi?a',
-        N'Noi hay có múa l?a ngh? thu?t.',
+        N'Quảng trường giữa',
+        N'Nơi hay có múa lửa nghệ thuật.',
         10.76910,
         106.69200,
         25,
@@ -277,7 +282,7 @@ VALUES (
         @routeId,
         3,
         N'Spotted By Locals',
-        N'Nhà hàng có không khí lãng m?n.',
+        N'Nhà hàng có không khí lãng mạn.',
         10.76890,
         106.69215,
         15,
@@ -290,7 +295,7 @@ VALUES (
         @routeId,
         4,
         N'Boheme Pub',
-        N'Ði?m d?n cho sinh viên qu?y banh nóc.',
+        N'Điểm đến cho sinh viên quẩy banh nóc.',
         10.76895,
         106.69225,
         15,
@@ -303,7 +308,7 @@ VALUES (
         @routeId,
         5,
         N'Sahara Beer Club',
-        N'Tr?i nghi?m bia hoi và nh?c DJ.',
+        N'Trải nghiệm bia hơi và nhạc DJ.',
         10.76890,
         106.69230,
         15,
@@ -316,7 +321,7 @@ VALUES (
         @routeId,
         6,
         N'Miss Saigon',
-        N'Phong cách sang tr?ng v?i âm nh?c hi?n d?i.',
+        N'Phong cách sang trọng với âm nhạc hiện đại.',
         10.76885,
         106.69235,
         15,
@@ -329,7 +334,7 @@ VALUES (
         @routeId,
         7,
         N'Ocean Club',
-        N'N?i b?t v?i thi?t k? xanh mát nhi?t d?i.',
+        N'Nổi bật với thiết kế xanh mát nhiệt đới.',
         10.76880,
         106.69240,
         15,
@@ -342,7 +347,7 @@ VALUES (
         @routeId,
         8,
         N'Donkey Bar',
-        N'Không gian nh?, ?m cúng.',
+        N'Không gian nhỏ, ấm cúng.',
         10.76875,
         106.69245,
         15,
@@ -355,7 +360,7 @@ VALUES (
         @routeId,
         9,
         N'Universal Pub',
-        N'Nh?c s?ng Tây ba lô yêu thích.',
+        N'Nhạc sống Tây ba lô yêu thích.',
         10.76870,
         106.69250,
         15,
@@ -368,7 +373,7 @@ VALUES (
         @routeId,
         10,
         N'Champion Sports Bar',
-        N'Noi xem bóng dá ngo?i h?ng Anh t?t nh?t.',
+        N'Nơi xem bóng đá ngoại hạng Anh tốt nhất.',
         10.76865,
         106.69255,
         15,
@@ -381,7 +386,7 @@ VALUES (
         @routeId,
         11,
         N'Hair of the Dog',
-        N'Sôi d?ng thâu dêm.',
+        N'Sôi động thâu đêm.',
         10.76860,
         106.69260,
         15,
@@ -394,7 +399,7 @@ VALUES (
         @routeId,
         12,
         N'Republic Club',
-        N'Sang tr?ng d?ng c?p.',
+        N'Sang trọng đẳng cấp.',
         10.76855,
         106.69265,
         15,
@@ -407,7 +412,7 @@ VALUES (
         @routeId,
         13,
         N'86 Club',
-        N'Góc ph? nhìn ra công viên 23/9.',
+        N'Góc phố nhìn ra công viên 23/9.',
         10.76850,
         106.69270,
         15,
@@ -420,7 +425,7 @@ VALUES (
         @routeId,
         14,
         N'Le Pub',
-        N'Khách Tây hay ng?i v?a hè.',
+        N'Khách Tây hay ngồi vỉa hè.',
         10.76845,
         106.69275,
         15,
@@ -433,7 +438,7 @@ VALUES (
         @routeId,
         15,
         N'Asiana Food Town',
-        N'Khu ?m th?c da qu?c gia.',
+        N'Khu ẩm thực đa quốc gia.',
         10.76840,
         106.69280,
         15,
@@ -446,7 +451,7 @@ VALUES (
         @routeId,
         16,
         N'Krystal Lounge',
-        N'Thu giãn thu?ng th?c Shisha.',
+        N'Thư giãn thưởng thức Shisha.',
         10.76835,
         106.69285,
         15,
@@ -459,7 +464,7 @@ VALUES (
         @routeId,
         17,
         N'Nubes Rooftop',
-        N'T? t?ng thu?ng b?n có th? ng?m Landmark 81.',
+        N'Từ tầng thượng bạn có thể ngắm Landmark 81.',
         10.76830,
         106.69290,
         15,
@@ -472,7 +477,7 @@ VALUES (
         @routeId,
         18,
         N'Sky Bar 360',
-        N'Nh?c House, chill.',
+        N'Nhạc House, chill.',
         10.76825,
         106.69295,
         15,
@@ -483,11 +488,12 @@ VALUES (
     );
 
 -- ============================================================
--- 5. Insert 20 Narrations (Gán cho 20 Zones, random ngôn ng?)
+-- 5. Insert 20 Narrations (Gán cho 20 Zones, random ngôn ngữ)
 -- ============================================================
 -- capture the first 20 zone ids in variables so we don't assume they start at 1
 DECLARE @z1 INT,@z2 INT,@z3 INT,@z4 INT,@z5 INT,@z6 INT,@z7 INT,@z8 INT,@z9 INT,@z10 INT,
         @z11 INT,@z12 INT,@z13 INT,@z14 INT,@z15 INT,@z16 INT,@z17 INT,@z18 INT,@z19 INT,@z20 INT;
+
 WITH numbered AS (
     SELECT Id, ROW_NUMBER() OVER (ORDER BY Id) AS rn
     FROM Zones
@@ -521,37 +527,37 @@ INSERT INTO Narrations (ZoneId, Language, Text, VoiceId)
 VALUES (
         @z1,
         N'vi',
-        N'Chào m?ng b?n d?n v?i C?ng chào Bùi Vi?n. Hãy s?n sàng tr?i nghi?m bu?i t?i thú v?.',
+        N'Chào mừng bạn đến với Cổng chào Bùi Viện. Hãy sẵn sàng trải nghiệm buổi tối thú vị.',
         N'vi-VN-Standard-A'
     ),
     (
         @z2,
         N'vi',
-        N'Ðây là The Hideout Bar, luôn là di?m nh?u lý tu?ng c?a khách phuong xa.',
+        N'Đây là The Hideout Bar, luôn là điểm nhậu lý tưởng của khách phương xa.',
         N'vi-VN-Standard-A'
     ),
     (
         @z3,
         N'vi',
-        N'Crazy Buffalo Bar có không gian c?c d?i. Hãy ch?p m?t b?c ?nh check in ? dây nhé.',
+        N'Crazy Buffalo Bar có không gian cực đại. Hãy chụp một bức ảnh check-in ở đây nhé.',
         N'vi-VN-Standard-A'
     ),
     (
         @z4,
         N'vi',
-        N'T?i qu?ng tru?ng trung tâm này, cu?i tu?n hay có múa l?a và bi?u di?n ?o thu?t.',
+        N'Tại quảng trường trung tâm này, cuối tuần hay có múa lửa và biểu diễn ảo thuật.',
         N'vi-VN-Standard-A'
     ),
     (
         @z5,
         N'vi',
-        N'Spotted By Locals cung c?p các món an ngon sau khi d?o ph?.',
+        N'Spotted By Locals cung cấp các món ăn ngon sau khi dạo phố.',
         N'vi-VN-Standard-A'
     ),
     (
         @z6,
         N'vi',
-        N'Boheme Pub có DJ choi nh?c c?c cháy. Hãy ghé vào th? 1 chai bia!',
+        N'Boheme Pub có DJ chơi nhạc cực cháy. Hãy ghé vào thử 1 chai bia!',
         N'vi-VN-Standard-A'
     ),
     (
@@ -581,13 +587,13 @@ VALUES (
     (
         @z11,
         N'vi',
-        N'Universal Pub là noi hay có nh?c Acoustic.',
+        N'Universal Pub là nơi hay có nhạc Acoustic.',
         N'vi-VN-Standard-A'
     ),
     (
         @z12,
         N'vi',
-        N'N?u b?n mê bóng dá, hãy d?ng chân t?i Champion Sports Bar vào cu?i tu?n.',
+        N'Nếu bạn mê bóng đá, hãy dừng chân tại Champion Sports Bar vào cuối tuần.',
         N'vi-VN-Standard-A'
     ),
     (
@@ -605,13 +611,13 @@ VALUES (
     (
         @z15,
         N'vi',
-        N'T? 86 Club b?n có th? ng?i nhìn ra khu công viên c?c k? thoáng.',
+        N'Từ 86 Club bạn có thể ngồi nhìn ra khu công viên cực kỳ thoáng.',
         N'vi-VN-Standard-A'
     ),
     (
         @z16,
         N'vi',
-        N'Le Pub là noi giao thoa van hóa du?ng ph? r?t tuy?t v?i.',
+        N'Le Pub là nơi giao thoa văn hóa đường phố rất tuyệt vời.',
         N'vi-VN-Standard-A'
     ),
     (
@@ -623,22 +629,24 @@ VALUES (
     (
         @z18,
         N'vi',
-        N'Vào Krystal Lounge b?n s? th?y không khí r?t tinh lang nh? nhàng hon.',
+        N'Vào Krystal Lounge bạn sẽ thấy không khí rất tĩnh lặng nhẹ nhàng hơn.',
         N'vi-VN-Standard-A'
     ),
     (
         @z19,
         N'vi',
-        N'B?n mu?n ng?m c?nh u? Nhìn lên ngay, Nubes Rooftop ? trên l?u 6.',
+        N'Bạn muốn ngắm cảnh ư? Nhìn lên ngay, Nubes Rooftop ở trên lầu 6.',
         N'vi-VN-Standard-A'
     ),
     (
         @z20,
         N'en',
-        N'End your night gracefully at Sky Bar 360 with a panoramic view.',        N'en-US-Standard-C'
+        N'End your night gracefully at Sky Bar 360 with a panoramic view.',
+        N'en-US-Standard-C'
     );
 END
--- Ki?m tra k?t qu?
+
+-- Kiểm tra kết quả
 SELECT N'Routes' AS [Table],
     COUNT(*) AS [Count]
 FROM Routes

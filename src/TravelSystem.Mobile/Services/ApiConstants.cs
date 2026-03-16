@@ -4,7 +4,7 @@ public static class ApiConstants
 {
 #if DEBUG
     // Android Emulator: 10.0.2.2 trỏ về localhost của máy host
-    public const string BaseApiUrl = "http://10.0.2.2:5281/";
+    public const string BaseApiUrl = "http://10.0.2.2:5281";
 #else
     // Production: thay bằng URL thật khi deploy
     public const string BaseApiUrl = "https://YOUR_NGROK_URL_HERE.ngrok-free.app/";

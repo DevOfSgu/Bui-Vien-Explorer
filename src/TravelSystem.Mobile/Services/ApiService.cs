@@ -15,8 +15,36 @@ public class ApiService
         _logger = logger;
         _httpClient = new HttpClient
         {
-            BaseAddress = new Uri(ApiConstants.BaseApiUrl)
+            BaseAddress = new Uri(ApiConstants.BaseApiUrl),
+            Timeout = TimeSpan.FromSeconds(8)
         };
+    }
+
+    public async Task<RouteSyncData?> GetRouteSyncDataAsync(string? lastSyncedAt, CancellationToken cancellationToken = default)
+    {
+        var endpoint = string.IsNullOrWhiteSpace(lastSyncedAt)
+            ? $"{ApiConstants.RoutesEndpoint}/sync"
+            : $"{ApiConstants.RoutesEndpoint}/sync?lastSyncedAt={Uri.EscapeDataString(lastSyncedAt)}";
+
+        var response = await _httpClient.GetFromJsonAsync<RouteSyncResponse>(endpoint, cancellationToken);
+        if (response is null || !response.HasUpdates || response.Data is null)
+        {
+            return null;
+        }
+
+        var normalizedRoutes = response.Data.Routes
+            .Select(r =>
+            {
+                r.ImageUrl = NormalizeImageUrl(r.ImageUrl);
+                return r;
+            })
+            .ToList();
+
+        return new RouteSyncData(
+            response.Timestamp,
+            normalizedRoutes,
+            response.Data.Zones,
+            response.Data.Narrations);
     }
 
     public async Task<IReadOnlyList<RouteSummary>> GetRouteSummariesAsync()
@@ -47,7 +75,8 @@ public class ApiService
                     route.Description,
                     stopCount,
                     minutes,
-                    zoneType));
+                    zoneType,
+                    NormalizeImageUrl(route.ImageUrl)));
             }
 
             _logger.LogInformation("[API] Loaded {RouteCount} routes for home screen", results.Count);
@@ -60,12 +89,43 @@ public class ApiService
         }
     }
 
+    private string NormalizeImageUrl(string? imageUrl)
+    {
+        if (string.IsNullOrWhiteSpace(imageUrl))
+        {
+            return string.Empty;
+        }
+
+        imageUrl = imageUrl.Trim().Replace('\\', '/');
+
+        if (Uri.TryCreate(imageUrl, UriKind.Absolute, out var absoluteUri))
+        {
+            if ((absoluteUri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+                || absoluteUri.Host.Equals("127.0.0.1"))
+                && _httpClient.BaseAddress is not null)
+            {
+                var baseUri = _httpClient.BaseAddress;
+                return new UriBuilder(absoluteUri)
+                {
+                    Scheme = baseUri.Scheme,
+                    Host = baseUri.Host,
+                    Port = baseUri.Port
+                }.Uri.ToString();
+            }
+
+            return absoluteUri.ToString();
+        }
+
+        var relativePath = imageUrl.TrimStart('~', '/');
+        return new Uri(_httpClient.BaseAddress!, relativePath).ToString();
+    }
+
     private sealed class ZoneSummaryDto
     {
         public int ZoneType { get; set; }
         public int ActiveTime { get; set; }
     }
-    }
+}
 
 public sealed record RouteSummary(
     int RouteId,
@@ -73,4 +133,25 @@ public sealed record RouteSummary(
     string Description,
     int StopCount,
     int DurationMinutes,
-    int ZoneType);
+    int ZoneType,
+    string ImageUrl);
+
+public sealed record RouteSyncData(
+    DateTime Timestamp,
+    IReadOnlyList<Routes> Routes,
+    IReadOnlyList<Zone> Zones,
+    IReadOnlyList<Narration> Narrations);
+
+public sealed class RouteSyncResponse
+{
+    public bool HasUpdates { get; set; }
+    public DateTime Timestamp { get; set; }
+    public RouteSyncPayload Data { get; set; } = new();
+}
+
+public sealed class RouteSyncPayload
+{
+    public List<Routes> Routes { get; set; } = [];
+    public List<Zone> Zones { get; set; } = [];
+    public List<Narration> Narrations { get; set; } = [];
+}

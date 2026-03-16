@@ -12,6 +12,7 @@ namespace TravelSystem.Shared.Models
 
         public string Name { get; set; }
         public string Description { get; set; }
+        public string ImageUrl { get; set; }
 
         // Tọa độ điểm bắt đầu của tour
         public double StartLatitude { get; set; }
