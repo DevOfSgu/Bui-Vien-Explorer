@@ -2,10 +2,6 @@
 
 namespace TravelSystem.Shared.Models
 {
-    /// <summary>
-    /// Lưu dữ liệu analytics ẩn danh trên thiết bị Mobile, chờ đồng bộ lên Web Server.
-    /// Phục vụ 4 yêu cầu: Tuyến di chuyển, Top POI, Thời gian trung bình, Heatmap.
-    /// </summary>
     [Table("LocalAnalytics")]
     public class LocalAnalytics
     {

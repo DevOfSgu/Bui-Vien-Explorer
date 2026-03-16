@@ -20,7 +20,58 @@ public class ApiService
         };
     }
 
+<<<<<<< HEAD
     public async Task<IReadOnlyList<Zone>?> GetZonesAsync(CancellationToken cancellationToken = default)
+=======
+    public async Task<bool> RegisterAnonymousInstallAsync(Guid sessionId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var payload = new AnonymousInstallRequest
+            {
+                SessionId = sessionId,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var response = await _httpClient.PostAsJsonAsync($"{ApiConstants.AnalyticsEndpoint}/install", payload, cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[API] Failed to register anonymous app install");
+            return false;
+        }
+    }
+
+    public async Task<RouteSyncData?> GetRouteSyncDataAsync(string? lastSyncedAt, CancellationToken cancellationToken = default)
+    {
+        var endpoint = string.IsNullOrWhiteSpace(lastSyncedAt)
+            ? $"{ApiConstants.RoutesEndpoint}/sync"
+            : $"{ApiConstants.RoutesEndpoint}/sync?lastSyncedAt={Uri.EscapeDataString(lastSyncedAt)}";
+
+        var response = await _httpClient.GetFromJsonAsync<RouteSyncResponse>(endpoint, cancellationToken);
+        if (response is null || !response.HasUpdates || response.Data is null)
+        {
+            return null;
+        }
+
+        var normalizedRoutes = response.Data.Routes
+            .Select(r =>
+            {
+                r.ImageUrl = NormalizeImageUrl(r.ImageUrl);
+                return r;
+            })
+            .ToList();
+
+        return new RouteSyncData(
+            response.Timestamp,
+            normalizedRoutes,
+            response.Data.Zones,
+            response.Data.Narrations);
+    }
+
+    public async Task<IReadOnlyList<RouteSummary>> GetRouteSummariesAsync()
+>>>>>>> ad4c67a23af7236728f0c13bdf9c7f329fdd0da9
     {
         try
         {
@@ -92,5 +143,11 @@ public class ApiService
     {
         public int ZoneType { get; set; }
         public int ActiveTime { get; set; }
+    }
+
+    private sealed class AnonymousInstallRequest
+    {
+        public Guid SessionId { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 }
