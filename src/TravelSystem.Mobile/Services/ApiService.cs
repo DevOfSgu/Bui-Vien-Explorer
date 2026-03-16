@@ -100,6 +100,22 @@ public class ApiService
 
         if (Uri.TryCreate(imageUrl, UriKind.Absolute, out var absoluteUri))
         {
+            if (absoluteUri.Scheme == Uri.UriSchemeFile)
+            {
+                if (_httpClient.BaseAddress is null)
+                {
+                    return string.Empty;
+                }
+
+                var filePath = absoluteUri.LocalPath.Replace('\\', '/').TrimStart('/');
+                return new Uri(_httpClient.BaseAddress, filePath).ToString();
+            }
+
+            if (absoluteUri.Scheme != Uri.UriSchemeHttp && absoluteUri.Scheme != Uri.UriSchemeHttps)
+            {
+                return string.Empty;
+            }
+
             if ((absoluteUri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
                 || absoluteUri.Host.Equals("127.0.0.1"))
                 && _httpClient.BaseAddress is not null)
@@ -114,6 +130,11 @@ public class ApiService
             }
 
             return absoluteUri.ToString();
+        }
+
+        if (_httpClient.BaseAddress is null)
+        {
+            return imageUrl;
         }
 
         var relativePath = imageUrl.TrimStart('~', '/');

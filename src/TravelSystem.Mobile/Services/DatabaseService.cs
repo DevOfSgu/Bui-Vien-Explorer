@@ -200,6 +200,21 @@ public class DatabaseService
 
         if (Uri.TryCreate(imageUrl, UriKind.Absolute, out var absoluteUri))
         {
+            if (absoluteUri.Scheme == Uri.UriSchemeFile)
+            {
+                var filePath = absoluteUri.LocalPath.Replace('\\', '/').TrimStart('/');
+                var normalizedBaseUrl = ApiConstants.BaseApiUrl.EndsWith('/')
+                    ? ApiConstants.BaseApiUrl
+                    : $"{ApiConstants.BaseApiUrl}/";
+
+                return new Uri(new Uri(normalizedBaseUrl), filePath).ToString();
+            }
+
+            if (absoluteUri.Scheme != Uri.UriSchemeHttp && absoluteUri.Scheme != Uri.UriSchemeHttps)
+            {
+                return string.Empty;
+            }
+
             return absoluteUri.ToString();
         }
 
