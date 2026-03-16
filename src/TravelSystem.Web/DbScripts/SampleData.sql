@@ -3,7 +3,10 @@
 -- ============================================================
 -- Xóa data cũ (nếu bảng tồn tại)
 IF OBJECT_ID('GuestFavorites','U') IS NOT NULL DELETE FROM GuestFavorites;
+IF OBJECT_ID('TourZones','U') IS NOT NULL DELETE FROM TourZones;
+IF OBJECT_ID('Tours','U') IS NOT NULL DELETE FROM Tours;
 IF OBJECT_ID('AppSettings','U') IS NOT NULL DELETE FROM AppSettings;
+
 IF OBJECT_ID('ShopHours','U') IS NOT NULL DELETE FROM ShopHours;
 IF OBJECT_ID('Narrations','U') IS NOT NULL DELETE FROM Narrations;
 IF OBJECT_ID('Analytics','U') IS NOT NULL DELETE FROM Analytics;
@@ -18,8 +21,10 @@ IF OBJECT_ID('Shops','U') IS NOT NULL DELETE FROM Shops;
 IF OBJECT_ID('ShopHours','U') IS NOT NULL DBCC CHECKIDENT ('ShopHours', RESEED, 0);
 IF OBJECT_ID('Shops','U') IS NOT NULL DBCC CHECKIDENT ('Shops', RESEED, 0);
 IF OBJECT_ID('Zones','U') IS NOT NULL DBCC CHECKIDENT ('Zones', RESEED, 0);
+IF OBJECT_ID('Tours','U') IS NOT NULL DBCC CHECKIDENT ('Tours', RESEED, 0);
 IF OBJECT_ID('Narrations','U') IS NOT NULL DBCC CHECKIDENT ('Narrations', RESEED, 0);
 IF OBJECT_ID('Users','U') IS NOT NULL DBCC CHECKIDENT ('Users', RESEED, 0);
+
 
 
 -- ============================================================
@@ -694,20 +699,42 @@ VALUES (
     );
 END
 
+-- ============================================================
+-- 6. Insert Sample Tours
+-- ============================================================
+INSERT INTO Tours (Name, Description, Duration, ImageUrl)
+VALUES (
+    N'Nightlife & Pub Crawl', 
+    N'Khám phá những quán bar sôi động nhất Bùi Viện về đêm.', 
+    120, 
+    N'https://images.unsplash.com/photo-1514525253361-bee8d41deeb4'
+),
+(
+    N'Street Food & Culture', 
+    N'Hành trình trải nghiệm ẩm thực đường phố và văn hóa địa phương.', 
+    90, 
+    N'https://images.unsplash.com/photo-1504674900247-0877df9cc836'
+);
+
+-- ============================================================
+-- 7. Insert TourZones (Assign zones to tours)
+-- ============================================================
+-- Tour 1: Nightlife (Z1, Z2, Z3, Z6, Z7, Z11)
+INSERT INTO TourZones (TourId, ZoneId, OrderIndex)
+SELECT 1, Id, CASE Id WHEN @z1 THEN 1 WHEN @z2 THEN 2 WHEN @z3 THEN 3 WHEN @z6 THEN 4 WHEN @z7 THEN 5 WHEN @z11 THEN 6 END
+FROM Zones WHERE Id IN (@z1, @z2, @z3, @z6, @z7, @z11);
+
+-- Tour 2: Street Food (Z1, @z5, @z15, @z17, @z20)
+INSERT INTO TourZones (TourId, ZoneId, OrderIndex)
+SELECT 2, Id, CASE Id WHEN @z1 THEN 1 WHEN @z5 THEN 2 WHEN @z15 THEN 3 WHEN @z17 THEN 4 WHEN @z20 THEN 5 END
+FROM Zones WHERE Id IN (@z1, @z5, @z15, @z17, @z20);
+
 -- Kiểm tra kết quả
-SELECT N'Zones' AS [Table],
-    COUNT(*) AS [Count]
-FROM Zones
-UNION ALL
-SELECT N'Narrations',
-    COUNT(*)
-FROM Narrations
-UNION ALL
-SELECT N'Shops',
-    COUNT(*)
-FROM Shops
-UNION ALL
-SELECT N'Users',
-    COUNT(*)
-FROM Users;
+SELECT N'Zones' AS [Table], COUNT(*) AS [Count] FROM Zones
+UNION ALL SELECT N'Narrations', COUNT(*) FROM Narrations
+UNION ALL SELECT N'Shops', COUNT(*) FROM Shops
+UNION ALL SELECT N'Users', COUNT(*) FROM Users
+UNION ALL SELECT N'Tours', COUNT(*) FROM Tours
+UNION ALL SELECT N'TourZones', COUNT(*) FROM TourZones;
+
 

@@ -13,7 +13,10 @@ USE BuiVienExplorerDb;
 -- Thứ tự xóa: bảng con trước, bảng cha sau (tránh lỗi FK)
 -- ============================================================
 IF OBJECT_ID('GuestFavorites', 'U') IS NOT NULL DROP TABLE GuestFavorites;
+IF OBJECT_ID('TourZones', 'U') IS NOT NULL DROP TABLE TourZones;
+IF OBJECT_ID('Tours', 'U') IS NOT NULL DROP TABLE Tours;
 IF OBJECT_ID('Analytics', 'U') IS NOT NULL DROP TABLE Analytics;
+
 IF OBJECT_ID('Narrations', 'U') IS NOT NULL DROP TABLE Narrations;
 IF OBJECT_ID('AudioFiles', 'U') IS NOT NULL DROP TABLE AudioFiles;
 IF OBJECT_ID('Zones', 'U') IS NOT NULL DROP TABLE Zones;
@@ -146,13 +149,41 @@ CREATE TABLE GuestFavorites (
     CONSTRAINT UQ_GuestFav UNIQUE (GuestId, ZoneId)
 );
 -- ============================================================
--- 8. Indexes (Tối ưu truy vấn báo cáo)
+-- 8. Tours (Thông tin các Tour tham quan)
+-- ============================================================
+CREATE TABLE Tours (
+    Id INT IDENTITY(1, 1) PRIMARY KEY,
+    Name NVARCHAR(200) NOT NULL,
+    Description NVARCHAR(MAX),
+    ImageUrl NVARCHAR(500),
+    Duration INT DEFAULT 0, -- Thời lượng dự kiến (phút)
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE()
+);
+
+-- ============================================================
+-- 9. TourZones (Bảng trung gian N-N: Gắn POI vào Tour)
+-- ============================================================
+CREATE TABLE TourZones (
+    TourId INT NOT NULL,
+    ZoneId INT NOT NULL,
+    OrderIndex INT DEFAULT 0, -- Thứ tự trong Tour này
+    CONSTRAINT PK_TourZones PRIMARY KEY (TourId, ZoneId),
+    CONSTRAINT FK_TourZones_Tours FOREIGN KEY (TourId) REFERENCES Tours(Id) ON DELETE CASCADE,
+    CONSTRAINT FK_TourZones_Zones FOREIGN KEY (ZoneId) REFERENCES Zones(Id) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- 10. Indexes (Tối ưu truy vấn báo cáo)
 -- ============================================================
 CREATE INDEX IDX_Analytics_Zone ON Analytics(ZoneId, ActionType);
 CREATE INDEX IDX_Analytics_Location ON Analytics(Latitude, Longitude);
 CREATE INDEX IDX_Analytics_Session ON Analytics(SessionId, CreatedAt);
 CREATE INDEX IX_GuestFav_GuestId ON GuestFavorites(GuestId);
 CREATE INDEX IX_GuestFav_ZoneId  ON GuestFavorites(ZoneId);
+CREATE INDEX IX_TourZones_Tour   ON TourZones(TourId);
+CREATE INDEX IX_TourZones_Zone   ON TourZones(ZoneId);
+
 
 -- ============================================================
 -- 9. AppSettings (Cài đặt hệ thống)

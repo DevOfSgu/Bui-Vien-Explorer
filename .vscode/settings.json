@@ -22,5 +22,6 @@
             "username": "sa",
             "password": "Admin@12345"
         }
-    ]
+    ],
+    "postman.settings.dotenv-detection-notification-visibility": false
 }

@@ -33,7 +33,8 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             // 2. Top địa điểm được nghe nhiều nhất
             var topZonesIds = playActions
                 .Where(a => a.ZoneId.HasValue)
-                .GroupBy(a => a.ZoneId.Value)
+                .GroupBy(a => a.ZoneId!.Value)
+
                 .OrderByDescending(g => g.Count())
                 .Take(5)
                 .Select(g => g.Key)
@@ -43,7 +44,8 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             
             var topList = playActions
                 .Where(a => a.ZoneId.HasValue && topZones.ContainsKey(a.ZoneId.Value))
-                .GroupBy(a => a.ZoneId.Value)
+                .GroupBy(a => a.ZoneId!.Value)
+
                 .OrderByDescending(g => g.Count())
                 .Take(5)
                 .Select(g => new { Name = topZones[g.Key], Count = g.Count() })

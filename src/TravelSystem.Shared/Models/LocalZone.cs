@@ -8,12 +8,14 @@ namespace TravelSystem.Shared.Models
         public int Id { get; set; }
 
         [Indexed]
-        public string ZoneId { get; set; } // UUID từ server
+        public string ZoneId { get; set; } = string.Empty; // UUID từ server
 
 
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public string ImageUrl { get; set; } // Ảnh minh họa POI
+
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string ImageUrl { get; set; } = string.Empty; // Ảnh minh họa POI
+
 
         // Dữ liệu quan trọng cho Geofencing
         public double Latitude { get; set; }
@@ -28,6 +30,7 @@ namespace TravelSystem.Shared.Models
         public int ActiveTime { get; set; } = 0;   // 0: Cả ngày, 1: Ban ngày, 2: Ban đêm
 
         // Để Mobile biết khi nào cần sync lại từ server
-        public string UpdatedAt { get; set; } // ISO datetime từ server
+        public string UpdatedAt { get; set; } = string.Empty; // ISO datetime từ server
+
     }
 }

@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using TravelSystem.Web.Data;
 
+// Load environment variables from .env file
+DotNetEnv.Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.

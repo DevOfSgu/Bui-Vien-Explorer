@@ -12,6 +12,9 @@ public class AppDbContext : DbContext
     public DbSet<Analytics> Analytics { get; set; }
     public DbSet<GuestFavorite> GuestFavorites { get; set; }
     public DbSet<ShopHour> ShopHours { get; set; }
+    public DbSet<Tour> Tours { get; set; }
+    public DbSet<TourZone> TourZones { get; set; }
+
 
     // store global configuration items keyed by string
     public DbSet<TravelSystem.Shared.Models.AppSetting> AppSettings { get; set; }
@@ -33,5 +36,20 @@ public class AppDbContext : DbContext
         // AppSetting uses string key
         modelBuilder.Entity<TravelSystem.Shared.Models.AppSetting>()
             .HasKey(s => s.Key);
+
+        // TourZone N-N (Composite Key)
+        modelBuilder.Entity<TourZone>()
+            .HasKey(tz => new { tz.TourId, tz.ZoneId });
+
+        modelBuilder.Entity<TourZone>()
+            .HasOne(tz => tz.Tour)
+            .WithMany(t => t.TourZones)
+            .HasForeignKey(tz => tz.TourId);
+
+        modelBuilder.Entity<TourZone>()
+            .HasOne(tz => tz.Zone)
+            .WithMany()
+            .HasForeignKey(tz => tz.ZoneId);
     }
+
 }

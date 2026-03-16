@@ -3,6 +3,8 @@
     ViewData["Title"] = "Edit POI";
 }
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
 <div class="header-actions">
     <div class="d-flex align-items-center gap-3">
         <a asp-action="Index" class="btn btn-outline-secondary" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
@@ -55,6 +57,13 @@
                         <option value="">-- No Vendor / Generic Landmark --</option>
                     </select>
                 </div>
+
+                <!-- Interactive Map Section -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Map Preview & Location Picker</label>
+                    <div id="leafletMap" style="height: 400px; width: 100%; border-radius: 12px; border: 1px solid #edf2f9; z-index: 1;"></div>
+                    <small class="text-muted">Click on the map to pick a location or drag the marker.</small>
+                </div>
             </div>
 
             <!-- GPS & Map settings right sidebar -->
@@ -64,16 +73,16 @@
                     
                     <div class="mb-3">
                         <label class="form-label text-muted small">Latitude</label>
-                        <input asp-for="Latitude" type="number" step="0.00000001" class="form-control form-control-sm" disabled="@Model.IsLocked" />
+                        <input asp-for="Latitude" type="number" step="0.00000001" class="form-control form-control-sm" disabled="@Model.IsLocked" id="latInput" />
                     </div>
                     <div class="mb-3">
                         <label class="form-label text-muted small">Longitude</label>
-                        <input asp-for="Longitude" type="number" step="0.00000001" class="form-control form-control-sm" disabled="@Model.IsLocked" />
+                        <input asp-for="Longitude" type="number" step="0.00000001" class="form-control form-control-sm" disabled="@Model.IsLocked" id="lngInput" />
                     </div>
                     
                     <div class="mb-3">
                         <label class="form-label text-muted small">Geo-fence Radius (meters)</label>
-                        <input asp-for="Radius" type="number" class="form-control form-control-sm" disabled="@Model.IsLocked" />
+                        <input asp-for="Radius" type="number" class="form-control form-control-sm" disabled="@Model.IsLocked" id="radiusInput" />
                     </div>
 
                     <div class="mb-3">
@@ -110,4 +119,97 @@
         </div>
     </form>
 </div>
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <script>
+        let map;
+        let marker;
+        let circle;
+        const latInput = document.getElementById('latInput');
+        const lngInput = document.getElementById('lngInput');
+        const radiusInput = document.getElementById('radiusInput');
+        const isLocked = @(Model.IsLocked ? "true" : "false");
+
+        function initMap() {
+            const initialLat = parseFloat(latInput.value) || 10.7688;
+            const initialLng = parseFloat(lngInput.value) || 106.6924;
+            const initialRadius = parseInt(radiusInput.value) || 15;
+
+            const pos = [initialLat, initialLng];
+
+            // Initialize Map
+            map = L.map('leafletMap').setView(pos, 18);
+
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 21,
+                maxNativeZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Add Marker
+            marker = L.marker(pos, {
+                draggable: !isLocked,
+                title: "@Model.Name"
+            }).addTo(map);
+
+            // Add Circle
+            circle = L.circle(pos, {
+                radius: initialRadius,
+                color: '#ef4444',
+                fillColor: '#ef4444',
+                fillOpacity: 0.2,
+                weight: 1
+            }).addTo(map);
+
+            if (!isLocked) {
+                // Click map to move marker
+                map.on('click', function(e) {
+                    updatePosition(e.latlng.lat, e.latlng.lng);
+                });
+
+                // Drag marker to update inputs
+                marker.on('dragend', function(e) {
+                    const position = marker.getLatLng();
+                    updatePosition(position.lat, position.lng);
+                });
+
+                // Handle manual input changes
+                latInput.addEventListener('change', updateMapFromInputs);
+                lngInput.addEventListener('change', updateMapFromInputs);
+                
+                // Handle radius change
+                radiusInput.addEventListener('input', () => {
+                    const r = parseInt(radiusInput.value) || 0;
+                    circle.setRadius(r);
+                });
+            }
+        }
+
+        function updatePosition(lat, lng) {
+            const pos = [lat, lng];
+            marker.setLatLng(pos);
+            circle.setLatLng(pos);
+            latInput.value = lat.toFixed(8);
+            lngInput.value = lng.toFixed(8);
+        }
+
+        function updateMapFromInputs() {
+            const lat = parseFloat(latInput.value);
+            const lng = parseFloat(lngInput.value);
+            if (!isNaN(lat) && !isNaN(lng)) {
+                const pos = [lat, lng];
+                marker.setLatLng(pos);
+                circle.setLatLng(pos);
+                map.setView(pos);
+            }
+        }
+
+        // Delay init to ensure DOM is ready
+        setTimeout(initMap, 100);
+    </script>
+}
+
 
