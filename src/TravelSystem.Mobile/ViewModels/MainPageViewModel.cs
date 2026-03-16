@@ -97,6 +97,10 @@ public partial class MainPageViewModel : ObservableObject
         {
             ErrorMessage = "Không có tour để hiển thị.";
         }
+        else
+        {
+            ErrorMessage = string.Empty;
+        }
     }
 }
 
