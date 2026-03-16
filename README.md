@@ -1,6 +1,6 @@
 # Bui Vien Explorer — Travel Guide System
 
-> 🧭 **Hệ thống hướng dẫn du lịch & địa điểm thú vị (POI)** cho Quận 4, TP.HCM. Ứng dụng mobile hỗ trợ GPS, geofencing, phát âm thanh hướng dẫn, yêu thích offline với backend web admin.
+> 🧭 **Hệ thống hướng dẫn du lịch & địa điểm thú vị (POI)** cho phố đi bộ bùi viện, TP.HCM. Ứng dụng mobile hỗ trợ GPS, geofencing, phát âm thanh hướng dẫn, yêu thích offline với backend web admin.
 
 ## 🚀 Tổng Quan Nhanh
 
@@ -733,5 +733,5 @@ Developed by **DevOfSgu** team
 ---
 
 **Bui Vien Explorer**  
-Travel Guide System for District 4, HCMC  
+Travel Guide System for BUI VIEN WALK STREET, HCMC  
 ASP.NET Core + .NET MAUI + SQL Server

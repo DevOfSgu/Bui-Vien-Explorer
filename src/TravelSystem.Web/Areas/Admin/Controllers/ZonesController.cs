@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TravelSystem.Shared.Models;
 using TravelSystem.Web.Data;
 
 namespace TravelSystem.Web.Areas.Admin.Controllers
@@ -16,6 +17,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             _db = db;
         }
 
+        // GET: Admin/Zones
         public async Task<IActionResult> Index(int? routeId, int page = 1)
         {
             const int pageSize = 20;
@@ -53,20 +55,29 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
         {
             ViewBag.Routes = _db.Routes.ToList();
             ViewBag.Shops = _db.Shops.ToList();
-            return View(new TravelSystem.Shared.Models.Zone { RouteId = routeId ?? 0, IsActive = true });
+            return View(new Zone { RouteId = routeId ?? 0, IsActive = true });
         }
 
         // POST: Admin/Zones/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(TravelSystem.Shared.Models.Zone zone)
+        public async Task<IActionResult> Create(Zone zone)
         {
-            zone.CreatedAt = DateTime.UtcNow;
-            zone.UpdatedAt = DateTime.UtcNow;
-            
-            _db.Zones.Add(zone);
-            await _db.SaveChangesAsync();
-            return RedirectToAction(nameof(Index), new { routeId = zone.RouteId });
+            if (ModelState.IsValid)
+            {
+                zone.CreatedAt = DateTime.UtcNow;
+                zone.UpdatedAt = DateTime.UtcNow;
+                zone.IsLocked = false;
+                zone.IsHidden = false;
+
+                _db.Zones.Add(zone);
+                await _db.SaveChangesAsync();
+                return RedirectToAction(nameof(Index), new { routeId = zone.RouteId });
+            }
+
+            ViewBag.Routes = _db.Routes.ToList();
+            ViewBag.Shops = _db.Shops.ToList();
+            return View(zone);
         }
 
         // GET: Admin/Zones/Edit/5
@@ -77,6 +88,11 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             var zone = await _db.Zones.FindAsync(id);
             if (zone == null) return NotFound();
 
+            if (zone.IsLocked)
+            {
+                ModelState.AddModelError("", $"Zone này đang bị khóa. Lý do: {zone.LockReason}");
+            }
+
             ViewBag.Routes = _db.Routes.ToList();
             ViewBag.Shops = _db.Shops.ToList();
             return View(zone);
@@ -85,12 +101,24 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
         // POST: Admin/Zones/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, TravelSystem.Shared.Models.Zone zone)
+        public async Task<IActionResult> Edit(int id, Zone zone)
         {
             if (id != zone.Id) return NotFound();
 
             var dbZone = await _db.Zones.FindAsync(id);
-            if(dbZone != null) {
+            if (dbZone == null) return NotFound();
+
+            // Kiểm tra nếu zone bị khóa
+            if (dbZone.IsLocked)
+            {
+                ModelState.AddModelError("", $"Không thể chỉnh sửa. Zone này đang bị khóa. Lý do: {dbZone.LockReason}");
+                ViewBag.Routes = _db.Routes.ToList();
+                ViewBag.Shops = _db.Shops.ToList();
+                return View(zone);
+            }
+
+            if (ModelState.IsValid)
+            {
                 dbZone.Name = zone.Name;
                 dbZone.Description = zone.Description;
                 dbZone.Latitude = zone.Latitude;
@@ -102,9 +130,91 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 dbZone.IsActive = zone.IsActive;
                 dbZone.UpdatedAt = DateTime.UtcNow;
                 await _db.SaveChangesAsync();
+                return RedirectToAction(nameof(Index), new { routeId = zone.RouteId });
             }
 
-            return RedirectToAction(nameof(Index), new { routeId = zone.RouteId });
+            ViewBag.Routes = _db.Routes.ToList();
+            ViewBag.Shops = _db.Shops.ToList();
+            return View(zone);
+        }
+
+        // POST: Admin/Zones/Delete/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var zone = await _db.Zones.FindAsync(id);
+            if (zone != null)
+            {
+                var routeId = zone.RouteId;
+                _db.Zones.Remove(zone);
+                await _db.SaveChangesAsync();
+                return RedirectToAction(nameof(Index), new { routeId });
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        // POST: Admin/Zones/Lock/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Lock(int id, string reason = "")
+        {
+            var zone = await _db.Zones.FindAsync(id);
+            if (zone != null)
+            {
+                zone.IsLocked = true;
+                zone.LockReason = reason ?? "Lý do không được cung cấp";
+                zone.UpdatedAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index), new { routeId = zone?.RouteId });
+        }
+
+        // POST: Admin/Zones/Unlock/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Unlock(int id)
+        {
+            var zone = await _db.Zones.FindAsync(id);
+            if (zone != null)
+            {
+                zone.IsLocked = false;
+                zone.LockReason = null;
+                zone.UpdatedAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index), new { routeId = zone?.RouteId });
+        }
+
+        // POST: Admin/Zones/Hide/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Hide(int id)
+        {
+            var zone = await _db.Zones.FindAsync(id);
+            if (zone != null)
+            {
+                zone.IsHidden = true;
+                zone.UpdatedAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index), new { routeId = zone?.RouteId });
+        }
+
+        // POST: Admin/Zones/Show/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Show(int id)
+        {
+            var zone = await _db.Zones.FindAsync(id);
+            if (zone != null)
+            {
+                zone.IsHidden = false;
+                zone.UpdatedAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index), new { routeId = zone?.RouteId });
         }
     }
 }
+
