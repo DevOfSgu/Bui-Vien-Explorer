@@ -10,10 +10,10 @@
     /* Reuse styles from Create or put in shared CSS. For brevity, I'll copy the key ones */
     .tour-creator-container {
         display: grid;
-        grid-template-columns: 320px 1fr 320px;
+        grid-template-columns: 320px 1fr 340px;
         gap: 20px;
         height: calc(100vh - 160px);
-        min-height: 600px;
+        min-height: 500px;
     }
 
     .panel-card {
@@ -99,6 +99,25 @@
     .search-input-container { position: relative; margin-bottom: 15px; }
     .search-input-container i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
     .search-input { padding-left: 35px; font-size: 13px; border-radius: 8px; }
+
+    .form-control-lg {
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .input-group-text {
+        border-color: #e2e8f0;
+        background-color: #f8fafc;
+    }
+
+    .input-group .form-control {
+        border-color: #e2e8f0;
+    }
+
+    .input-group .form-control:focus {
+        border-color: #ef4444;
+        box-shadow: none;
+    }
 </style>
 
 <form asp-action="Edit" method="post" id="tourForm">
@@ -148,47 +167,35 @@
         </div>
 
         <!-- Middle Panel -->
-        <div class="panel-card" style="background: transparent; border: none;">
-            <div class="row g-4 h-100">
-                <div class="col-12">
-                    <div class="card-custom">
-                        <div class="row">
-                            <div class="col-md-5">
-                                <label class="form-label-custom">Ảnh bìa tour</label>
-                                <div id="imagePreview" class="tour-preview-img" style="@(!string.IsNullOrEmpty(Model.ImageUrl) ? $"background-image: url('{Model.ImageUrl}'); border-style: solid;" : "")">
-                                    <div class="text-center text-muted" id="previewPlaceholder" style="@(!string.IsNullOrEmpty(Model.ImageUrl) ? "display: none;" : "")">
-                                        <i class="fa-solid fa-image fa-2x mb-2"></i>
-                                        <div class="small">Chưa có ảnh</div>
-                                    </div>
-                                </div>
-                                <input asp-for="ImageUrl" class="form-control form-control-sm" placeholder="URL hình ảnh..." id="imageUrlInput" />
-                            </div>
-                            <div class="col-md-7">
-                                <div class="mb-3">
-                                    <label class="form-label-custom">Tên tour</label>
-                                    <input asp-for="Name" class="form-control" required />
-                                </div>
-                                <div class="mb-4">
-                                    <label class="form-label-custom">Mô tả ngắn</label>
-                                    <textarea asp-for="Description" class="form-control" rows="4"></textarea>
-                                </div>
-                                <div class="row align-items-center">
-                                    <div class="col-auto"><label class="form-label-custom mb-0">Thời lượng</label></div>
-                                    <div class="col" style="max-width: 150px;">
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text bg-white border-end-0"><i class="fa-regular fa-clock"></i></span>
-                                            <input asp-for="Duration" type="number" class="form-control border-start-0" />
-                                            <span class="input-group-text bg-white border-start-0 text-muted small">phút</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+        <div class="panel-card" style="padding: 25px;">
+            <div class="mb-4">
+                <label class="form-label-custom">Ảnh bìa tour</label>
+                <div id="imagePreview" class="tour-preview-img" style="@(!string.IsNullOrEmpty(Model.ImageUrl) ? $"background-image: url('{Model.ImageUrl}'); border-style: solid;" : "")">
+                    <div class="text-center text-muted" id="previewPlaceholder" style="@(!string.IsNullOrEmpty(Model.ImageUrl) ? "display: none;" : "")">
+                        <i class="fa-solid fa-image fa-2x mb-2"></i>
+                        <div class="small">Chưa có ảnh</div>
                     </div>
                 </div>
-                <div class="col-12">
-                    <div class="card-custom h-100" style="padding:0; overflow:hidden; min-height: 250px;">
-                        <div id="itineraryMap" style="height: 100%; min-height: 250px; background-color: #f1f5f9; z-index: 1;"></div>
+                <input asp-for="ImageUrl" class="form-control form-control-sm" placeholder="URL hình ảnh..." id="imageUrlInput" />
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label-custom">Tên tour</label>
+                <input asp-for="Name" class="form-control form-control-lg" required />
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label-custom">Mô tả hành trình</label>
+                <textarea asp-for="Description" class="form-control" rows="8"></textarea>
+            </div>
+
+            <div class="row g-3 align-items-center mb-4">
+                <div class="col-auto"><label class="form-label-custom mb-0">Thời lượng dự kiến</label></div>
+                <div class="col" style="max-width: 200px;">
+                    <div class="input-group shadow-sm">
+                        <span class="input-group-text bg-light"><i class="fa-regular fa-clock text-muted"></i></span>
+                        <input asp-for="Duration" type="number" class="form-control text-center fw-bold" style="height: 42px;" />
+                        <span class="input-group-text bg-white text-muted small">phút</span>
                     </div>
                 </div>
             </div>
@@ -225,25 +232,11 @@
 </form>
 
 @section Scripts {
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
         const itineraryContainer = document.getElementById('sortableItinerary');
         const emptyItinerary = document.getElementById('emptyItinerary');
         const poiCountBadge = document.getElementById('poiCount');
-        let map;
-
-        function initMap() {
-            map = L.map('itineraryMap').setView([10.7688, 106.6924], 16);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 21,
-                maxNativeZoom: 19,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
-        }
-
-        // Initialize map
-        setTimeout(initMap, 100);
 
         new Sortable(itineraryContainer, { animation: 150, ghostClass: 'ghost-item', onSort: updateNumbers });
 
