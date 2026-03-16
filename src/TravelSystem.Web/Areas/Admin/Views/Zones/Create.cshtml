@@ -86,7 +86,11 @@
                 <button type="submit" class="btn btn-primary-custom w-100 py-2 mt-2">
                     <i class="fa-solid fa-check me-2"></i> Save Changes
                 </button>
+                <a asp-action="Index" asp-route-routeId="@Model.RouteId" class="btn btn-outline-secondary w-100 py-2 mt-2">
+                    <i class="fa-solid fa-xmark me-2"></i> Cancel
+                </a>
             </div>
         </div>
     </form>
 </div>
+

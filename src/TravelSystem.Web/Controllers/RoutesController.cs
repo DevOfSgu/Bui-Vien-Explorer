@@ -16,12 +16,12 @@ public class RoutesController : ControllerBase
     }
 
     // GET /api/routes
-    // Lấy danh sách tất cả routes đang active
+    // Lấy danh sách tất cả routes đang active (loại bỏ routes bị ẩn)
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
         var routes = await _db.Routes
-            .Where(r => r.IsActive)
+            .Where(r => r.IsActive && !r.IsHidden)
             .OrderBy(r => r.Id)
             .ToListAsync();
         return Ok(routes);
@@ -33,10 +33,10 @@ public class RoutesController : ControllerBase
     public async Task<IActionResult> GetById(int id)
     {
         var route = await _db.Routes.FindAsync(id);
-        if (route == null) return NotFound(new { message = $"Route {id} không tồn tại." });
+        if (route == null || route.IsHidden) return NotFound(new { message = $"Route {id} không tồn tại." });
 
         var zones = await _db.Zones
-            .Where(z => z.RouteId == id && z.IsActive)
+            .Where(z => z.RouteId == id && z.IsActive && !z.IsHidden)
             .OrderBy(z => z.OrderIndex)
             .ToListAsync();
 
@@ -82,8 +82,8 @@ public class RoutesController : ControllerBase
         }
 
         // Nếu là lần đầu tiên tải app (lastSyncedAt = null) HOẶC có bản cập nhật mới, trả về toàn bộ để Mobile lưu
-        var routes = await _db.Routes.Where(r => r.IsActive).ToListAsync();
-        var zones = await _db.Zones.Where(z => z.IsActive).ToListAsync();
+        var routes = await _db.Routes.Where(r => r.IsActive && !r.IsHidden).ToListAsync();
+        var zones = await _db.Zones.Where(z => z.IsActive && !z.IsHidden).ToListAsync();
         var narrations = await _db.Narrations.ToListAsync();
 
         return Ok(new

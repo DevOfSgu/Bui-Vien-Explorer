@@ -56,7 +56,7 @@
             <tbody>
                 @foreach (var item in Model)
                 {
-                    <tr>
+                    <tr style="@(item.IsHidden ? "opacity: 0.6; background-color: #f5f5f5;" : "")">
                         <td class="text-muted">Z-@item.Id.ToString("000")</td>
                         <td>
                             @if(item.ZoneType == 0) {
@@ -76,6 +76,22 @@
                             <small class="text-muted">
                                 @(item.ZoneType == 0 ? "Bars & Clubs" : item.ZoneType == 1 ? "Restaurants/Cafes" : "Landmarks")
                             </small>
+                            @if(item.IsLocked)
+                            {
+                                <div style="margin-top: 4px;">
+                                    <span class="badge-soft" style="background-color: #fee2e2; color: #dc2626; font-size: 11px;">
+                                        <i class="fa-solid fa-lock me-1"></i>Locked
+                                    </span>
+                                </div>
+                            }
+                            @if(item.IsHidden)
+                            {
+                                <div style="margin-top: 4px;">
+                                    <span class="badge-soft" style="background-color: #f3f4f6; color: #6b7280; font-size: 11px;">
+                                        <i class="fa-solid fa-eye-slash me-1"></i>Hidden
+                                    </span>
+                                </div>
+                            }
                         </td>
                         <td><small class="text-muted" style="font-family: monospace;">@item.Latitude.ToString("0.0000")° N, @item.Longitude.ToString("0.0000")° E</small></td>
                         <td>
@@ -91,14 +107,81 @@
                                 <span class="badge-soft badge-gray">0 Guides</span>
                             }
                         </td>
-                        <td>
-                            <div class="d-flex gap-2">
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" style="border-radius: 6px;">
-                                    <i class="fa-solid fa-pen"></i> Edit
-                                </a>
-                                <a asp-controller="Narrations" asp-action="Index" asp-route-zoneId="@item.Id" class="btn btn-sm btn-outline-danger" style="border-radius: 6px;">
+                        <td style="min-width: 400px;">
+                            <div class="d-flex gap-1 flex-wrap">
+                                <!-- Scripts -->
+                                <a asp-controller="Narrations" asp-action="Index" asp-route-zoneId="@item.Id" class="btn btn-sm btn-outline-danger" style="border-radius: 6px; white-space: nowrap;">
                                     <i class="fa-solid fa-headphones me-1"></i> Scripts
                                 </a>
+
+                                <!-- Edit -->
+                                @if(!item.IsLocked)
+                                {
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" style="border-radius: 6px; white-space: nowrap;">
+                                        <i class="fa-solid fa-pen"></i> Edit
+                                    </a>
+                                }
+
+                                <!-- Delete -->
+                                @if(!item.IsLocked)
+                                {
+                                    <form method="post" asp-action="Delete" asp-route-id="@item.Id" style="display: inline;" onsubmit="return confirm('Bạn chắc chắn muốn xóa zone này?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" style="border-radius: 6px; white-space: nowrap;">
+                                            <i class="fa-solid fa-trash me-1"></i> Delete
+                                        </button>
+                                    </form>
+                                }
+
+                                <!-- Lock/Unlock -->
+                                @if(!item.IsLocked)
+                                {
+                                    <div class="dropdown" style="display: inline-block;">
+                                        <button class="btn btn-sm btn-outline-warning dropdown-toggle" type="button" data-bs-toggle="dropdown" style="border-radius: 6px; white-space: nowrap;">
+                                            <i class="fa-solid fa-ban me-1"></i> Lock
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <form method="post" asp-action="Lock" asp-route-id="@item.Id" style="display: inline;">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="reason" value="Có vấn đề khi chỉnh sửa">
+                                                    <button type="submit" class="dropdown-item">
+                                                        <i class="fa-solid fa-exclamation-triangle me-2"></i> Lock: Issues
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <form method="post" asp-action="Unlock" asp-route-id="@item.Id" style="display: inline;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-success" style="border-radius: 6px; white-space: nowrap;">
+                                            <i class="fa-solid fa-lock-open me-1"></i> Unlock
+                                        </button>
+                                    </form>
+                                }
+
+                                <!-- Hide/Show -->
+                                @if(!item.IsHidden)
+                                {
+                                    <form method="post" asp-action="Hide" asp-route-id="@item.Id" style="display: inline;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary" style="border-radius: 6px; white-space: nowrap;">
+                                            <i class="fa-solid fa-eye-slash me-1"></i> Hide
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form method="post" asp-action="Show" asp-route-id="@item.Id" style="display: inline;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-info" style="border-radius: 6px; white-space: nowrap;">
+                                            <i class="fa-solid fa-eye me-1"></i> Show
+                                        </button>
+                                    </form>
+                                }
                             </div>
                         </td>
                     </tr>
