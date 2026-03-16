@@ -34,12 +34,11 @@ public partial class MainPageViewModel : ObservableObject
     [RelayCommand]
     private async Task LoadData()
     {
-        if (IsLoading) return;
-
         try
         {
             IsLoading = true;
             ErrorMessage = string.Empty;
+
 
             Debug.WriteLine("[MAIN_VM] Initializing local database...");
             await _databaseService.InitializeAsync();
