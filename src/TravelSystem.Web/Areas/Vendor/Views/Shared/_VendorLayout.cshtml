@@ -42,11 +42,9 @@
         }
 
         .sidebar-brand-icon {
-            /* background-color: #ef4444;
-            color: #ffffff; */
-            width: 65px;
-            height: 65px;
-            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -57,13 +55,13 @@
         .sidebar-brand-text h5 {
             margin: 0;
             font-weight: 700;
-            font-size: 15px;
+            font-size: 16px;
             color: #111827;
         }
 
         .sidebar-brand-text span {
             font-size: 12px;
-            color: #6b7280;
+            color: #888;
             font-weight: 500;
         }
 
@@ -268,14 +266,15 @@
 
     <!-- Sidebar -->
     <div id="sidebar">
-        <div class="sidebar-brand">
-            <div class="sidebar-brand-icon">
-                <img src="~/icons/logo.png" alt="Bùi Viện Explorer" style="width:65px;height:65px;object-fit:contain;border-radius:8px;" />
+        <a class="sidebar-brand" asp-area="Vendor" asp-controller="Dashboard" asp-action="Index">
+            <div class="sidebar-brand-icon" style="padding:0; overflow:hidden;">
+                <img src="~/icons/logo.png" alt="Logo" style="width:65px;height:65px;border-radius:10px;object-fit:cover;" />
             </div>
             <div class="sidebar-brand-text">
                 <h5>Bùi Viện Explorer</h5>
+                <span>Vendor Dashboard</span>
             </div>
-        </div>
+        </a>
 
         <ul class="nav flex-column mt-2">
             <li class="nav-item">
@@ -322,11 +321,6 @@
 
     <!-- Content Wrapper -->
     <div id="content-wrapper">
-        <!-- Main Content -->
-        <div class="main-content">
-            @RenderBody()
-        </div>
-
         <!-- Main Content -->
         <div class="main-content">
             @RenderBody()
