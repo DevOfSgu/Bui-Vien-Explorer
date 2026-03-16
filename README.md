@@ -1,6 +1,6 @@
 # Bui Vien Explorer — Travel Guide System
 
-> 🧭 **Hệ thống hướng dẫn du lịch & địa điểm thú vị (POI)** cho Quận 4, TP.HCM. Ứng dụng mobile hỗ trợ GPS, geofencing, phát âm thanh hướng dẫn, yêu thích offline với backend web admin.
+> 🧭 **Hệ thống hướng dẫn du lịch & địa điểm thú vị (POI)** cho phố đi bộ bùi viện, TP.HCM. Ứng dụng mobile hỗ trợ GPS, geofencing, phát âm thanh hướng dẫn, yêu thích offline với backend web admin.
 
 ## 🚀 Tổng Quan Nhanh
 
