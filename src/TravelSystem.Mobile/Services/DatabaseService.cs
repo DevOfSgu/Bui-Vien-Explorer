@@ -183,9 +183,31 @@ public class DatabaseService
                 stopCount,
                 minutes,
                 zoneType,
-                route.ImageUrl ?? string.Empty));
+                NormalizeImageUrl(route.ImageUrl)));
         }
 
         return result;
+    }
+
+    private static string NormalizeImageUrl(string? imageUrl)
+    {
+        if (string.IsNullOrWhiteSpace(imageUrl))
+        {
+            return string.Empty;
+        }
+
+        imageUrl = imageUrl.Trim().Replace('\\', '/');
+
+        if (Uri.TryCreate(imageUrl, UriKind.Absolute, out var absoluteUri))
+        {
+            return absoluteUri.ToString();
+        }
+
+        var relativePath = imageUrl.TrimStart('~', '/');
+        var baseUrl = ApiConstants.BaseApiUrl.EndsWith('/')
+            ? ApiConstants.BaseApiUrl
+            : $"{ApiConstants.BaseApiUrl}/";
+
+        return new Uri(new Uri(baseUrl), relativePath).ToString();
     }
 }
