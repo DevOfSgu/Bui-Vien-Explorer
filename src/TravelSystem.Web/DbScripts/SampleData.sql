@@ -203,9 +203,10 @@ VALUES (
         N'Khám phá phố đi bộ Bùi Viện từ đầu đến cuối.',
         10.76968,
         106.69156,
-        NULL,
+        'images/routes/route-1.jpg',
         1
     );
+
 
 DECLARE @routeId INT = CAST(SCOPE_IDENTITY() AS INT);
 
