@@ -141,76 +141,11 @@
         }
 
         .topbar {
-            height: 70px;
-            background-color: #ffffff;
-            border-bottom: 1px solid #edf2f9;
-            padding: 0 30px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .search-bar {
-            background-color: #f1f5f9;
-            border: none;
-            border-radius: 8px;
-            padding: 8px 15px 8px 40px;
-            width: 300px;
-            font-size: 14px;
-        }
-
-        .search-container {
-            position: relative;
-        }
-
-        .search-container i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #94a3b8;
-        }
-
-        .topbar-icons {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .notification-btn {
-            color: #64748b;
-            position: relative;
-            background: none;
-            border: none;
-            font-size: 18px;
-        }
-
-        .notification-badge {
-            background-color: #ef4444;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            position: absolute;
-            top: 0;
-            right: 0;
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-        }
-
-        .user-profile img {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            background-color: #fcd34d;
+            display: none;
         }
 
         .main-content {
-            padding: 30px;
+            padding: 20px;
             flex-grow: 1;
         }
 
@@ -363,35 +298,33 @@
             </li>
         </ul>
 
-        <div class="sidebar-user">
-            <img src="https://ui-avatars.com/api/?name=Alex+Sahara&background=fed7aa&color=c2410c&rounded=true&bold=true" alt="Profile">
-            <div class="sidebar-user-info">
-                <p>Alex Sahara</p>
-                <small>Store Manager</small>
+        <div class="sidebar-footer border-top mt-auto p-3">
+            <div class="d-flex justify-content-center mb-2">
+                <button class="notification-btn position-relative p-2 border-0 bg-transparent text-muted hover-text-danger transition-all">
+                    <i class="fa-regular fa-bell fs-5"></i>
+                    <span class="notification-badge" style="width: 8px; height: 8px; top: 8px; right: 8px; background-color: #ef4444; position: absolute; border-radius: 50%;"></span>
+                </button>
             </div>
-            <a asp-area="Admin" asp-controller="Auth" asp-action="Logout" class="text-muted" style="font-size: 16px;">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i>
-            </a>
+
+            <div class="d-flex align-items-center justify-content-between bg-light p-2 rounded-3 shadow-sm" style="background-color: #f8fafc !important;">
+                <div class="d-flex align-items-center gap-2 overflow-hidden">
+                    <img src="https://ui-avatars.com/api/?name=Alex+Sahara&background=fed7aa&color=c2410c&rounded=true&bold=true" alt="User" style="width: 32px; height: 32px; border-radius: 50%;">
+                    <div class="overflow-hidden">
+                        <div class="fw-bold small text-dark text-truncate" style="font-size: 12px;">Alex Sahara</div>
+                    </div>
+                </div>
+                <a asp-area="Admin" asp-controller="Auth" asp-action="Logout" class="btn btn-sm btn-outline-danger border-0 p-1 px-2" title="Đăng xuất">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </a>
+            </div>
         </div>
     </div>
 
     <!-- Content Wrapper -->
     <div id="content-wrapper">
-        <!-- Topbar -->
-        <div class="topbar">
-            <!-- Using Page Title from View, or search bar depending on context -->
-            <div id="topbar-left-content" class="d-flex align-items-center w-100">
-                <h4 class="fw-bold mb-0 text-dark" style="font-size: 20px;">@ViewData["Title"]</h4>
-            </div>
-            
-            <div class="topbar-icons ms-auto">
-                <button class="notification-btn me-3">
-                    <i class="fa-solid fa-bell text-secondary"></i>
-                    <span class="notification-badge border border-white border-2"></span>
-                </button>
-                
-                <img src="https://ui-avatars.com/api/?name=Alex+Sahara&background=e5e7eb&color=9ca3af&rounded=true&bold=true" alt="Profile" class="rounded-circle" width="40" height="40">
-            </div>
+        <!-- Main Content -->
+        <div class="main-content">
+            @RenderBody()
         </div>
 
         <!-- Main Content -->
