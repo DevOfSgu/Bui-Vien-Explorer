@@ -19,9 +19,9 @@ IF OBJECT_ID('AudioFiles', 'U') IS NOT NULL DROP TABLE AudioFiles;
 IF OBJECT_ID('Zones', 'U') IS NOT NULL DROP TABLE Zones;
 IF OBJECT_ID('Users', 'U') IS NOT NULL DROP TABLE Users;
 IF OBJECT_ID('ShopHours', 'U') IS NOT NULL DROP TABLE ShopHours;
-IF OBJECT_ID('Routes', 'U') IS NOT NULL DROP TABLE Routes;
 IF OBJECT_ID('Shops', 'U') IS NOT NULL DROP TABLE Shops;
 IF OBJECT_ID('AppSettings', 'U') IS NOT NULL DROP TABLE AppSettings;
+
 -- ============================================================
 -- 1. Shops (Cần tạo trước vì Users và Zones tham chiếu đến nó)
 -- ============================================================
@@ -46,22 +46,9 @@ CREATE TABLE ShopHours (
     CONSTRAINT FK_ShopHours_Shops FOREIGN KEY (ShopId) REFERENCES Shops(Id) ON DELETE CASCADE
 );
 -- ============================================================
--- 2. Routes (Tuyến đường tour)
+-- 2. Shops (Cần tạo trước vì Users và Zones tham chiếu đến nó)
 -- ============================================================
-CREATE TABLE Routes (
-    Id INT IDENTITY(1, 1) PRIMARY KEY,
-    Name NVARCHAR(100) NOT NULL,
-    Description NVARCHAR(500),
-    StartLatitude DECIMAL(10, 8),
-    StartLongitude DECIMAL(11, 8),
-    ImageUrl NVARCHAR(255),
-    IsActive BIT DEFAULT 1,
-    IsLocked BIT DEFAULT 0,
-    IsHidden BIT DEFAULT 0,
-    LockReason NVARCHAR(500),
-    CreatedAt DATETIME DEFAULT GETDATE(),
-    UpdatedAt DATETIME DEFAULT GETDATE()
-);
+
 -- ============================================================
 -- 3. Users (Quản trị viên & Vendor)
 -- ============================================================
@@ -83,8 +70,8 @@ CREATE TABLE Users (
 -- ============================================================
 CREATE TABLE Zones (
     Id INT IDENTITY(1, 1) PRIMARY KEY,
-    RouteId INT NOT NULL,
     ShopId INT NULL,
+
     Name NVARCHAR(100) NOT NULL,
     Description NVARCHAR(1000),
     ImageUrl NVARCHAR(500),
@@ -104,7 +91,6 @@ CREATE TABLE Zones (
     -- 0:All, 1:Day, 2:Night
     CreatedAt DATETIME DEFAULT GETDATE(),
     UpdatedAt DATETIME DEFAULT GETDATE(),
-    CONSTRAINT FK_Zones_Routes FOREIGN KEY (RouteId) REFERENCES Routes(Id) ON DELETE CASCADE,
     CONSTRAINT FK_Zones_Shops FOREIGN KEY (ShopId) REFERENCES Shops(Id)
 );
 -- ============================================================
@@ -134,8 +120,8 @@ CREATE TABLE Analytics (
     Id INT IDENTITY(1, 1) PRIMARY KEY,
     ZoneId INT NULL,
     -- Null khi ActionType = 'LocationPing'
-    RouteId INT NULL,
     SessionId UNIQUEIDENTIFIER NOT NULL,
+
     -- UUID ẩn danh tạo từ Mobile
     Latitude DECIMAL(10, 8),
     -- Cần cho Heatmap
@@ -146,8 +132,7 @@ CREATE TABLE Analytics (
     DwellTimeSeconds INT DEFAULT 0,
     -- Thời gian ở lại POI (giây)
     CreatedAt DATETIME DEFAULT GETDATE(),
-    CONSTRAINT FK_Analytics_Zones FOREIGN KEY (ZoneId) REFERENCES Zones(Id),
-    CONSTRAINT FK_Analytics_Routes FOREIGN KEY (RouteId) REFERENCES Routes(Id)
+    CONSTRAINT FK_Analytics_Zones FOREIGN KEY (ZoneId) REFERENCES Zones(Id)
 );
 -- ============================================================
 -- 7. GuestFavorites (Zones yêu thích của guest không đăng nhập)

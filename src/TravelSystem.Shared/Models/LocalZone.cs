@@ -1,4 +1,4 @@
-﻿using SQLite;
+using SQLite;
 
 namespace TravelSystem.Shared.Models
 {
@@ -10,8 +10,6 @@ namespace TravelSystem.Shared.Models
         [Indexed]
         public string ZoneId { get; set; } // UUID từ server
 
-        [Indexed]
-        public string RouteId { get; set; } // Khóa ngoại liên kết với Route
 
         public string Name { get; set; }
         public string Description { get; set; }

@@ -40,10 +40,11 @@
             Route="MainPage" />
 
         <ShellContent
-            Title="Saved"
+            Title="Yêu thích"
             Icon="favourite.png"
             ContentTemplate="{DataTemplate views:SavedPage}"
             Route="SavedPage" />
+
 
         <ShellContent
             Title="Settings"

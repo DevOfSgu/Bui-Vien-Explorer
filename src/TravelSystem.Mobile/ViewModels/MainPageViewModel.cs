@@ -12,13 +12,13 @@ public partial class MainPageViewModel : ObservableObject
     private readonly ApiService _apiService;
     private readonly DatabaseService _databaseService;
 
-    public ObservableCollection<RouteCardItem> RouteCards { get; } = [];
+    public ObservableCollection<ZoneCardItem> ZoneCards { get; } = [];
 
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string _errorMessage = string.Empty;
 
     public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
-    public string ToursAvailableText => $"{RouteCards.Count} tours available";
+    public string ZonesAvailableText => $"{ZoneCards.Count} địa điểm có sẵn";
 
     partial void OnErrorMessageChanged(string value)
     {
@@ -39,32 +39,34 @@ public partial class MainPageViewModel : ObservableObject
             IsLoading = true;
             ErrorMessage = string.Empty;
 
-            Debug.WriteLine("[MAIN_VM] Loading zones from server...");
+            var guestId = await _apiService.EnsureGuestIdAsync();
+            Debug.WriteLine($"[MAIN_VM] Loading for Guest: {guestId}");
+
             var zones = await _apiService.GetZonesAsync();
+            var favorites = await _apiService.GetFavoritesAsync(guestId);
+            var favoriteIds = favorites?.Select(f => f.ZoneId).ToHashSet() ?? [];
             
-            RouteCards.Clear();
+            ZoneCards.Clear();
             if (zones != null && zones.Count > 0)
             {
                 foreach (var zone in zones)
                 {
-                    RouteCards.Add(new RouteCardItem
+                    ZoneCards.Add(new ZoneCardItem
                     {
                         Id = zone.Id,
                         Name = zone.Name ?? string.Empty,
                         Description = zone.Description ?? string.Empty,
-                        StopCount = 1,
-                        DurationMinutes = zone.ActiveTime > 0 ? zone.ActiveTime : 8,
-                        ImageUrl = string.Empty
+                        ImageUrl = zone.ImageUrl ?? string.Empty,
+                        IsFavorite = favoriteIds.Contains(zone.Id)
                     });
                 }
-                Debug.WriteLine($"[MAIN_VM] Loaded {zones.Count} zones from server.");
             }
             else
             {
-                ErrorMessage = "Không có zone để hiển thị.";
+                ErrorMessage = "Không có địa điểm nào được tìm thấy.";
             }
 
-            OnPropertyChanged(nameof(ToursAvailableText));
+            OnPropertyChanged(nameof(ZonesAvailableText));
         }
         catch (Exception ex)
         {
@@ -77,16 +79,42 @@ public partial class MainPageViewModel : ObservableObject
         }
     }
 
+    [RelayCommand]
+    private async Task ToggleFavorite(ZoneCardItem item)
+    {
+        if (item == null) return;
+
+        var guestId = await _apiService.EnsureGuestIdAsync();
+        bool success;
+
+        if (item.IsFavorite)
+        {
+            success = await _apiService.RemoveFavoriteAsync(guestId, item.Id);
+            if (success) item.IsFavorite = false;
+        }
+        else
+        {
+            success = await _apiService.AddFavoriteAsync(guestId, item.Id);
+            if (success) item.IsFavorite = true;
+        }
+    }
+
 }
 
-public sealed class RouteCardItem
+public partial class ZoneCardItem : ObservableObject
 {
     public int Id { get; init; }
     public string Name { get; init; } = string.Empty;
     public string Description { get; init; } = string.Empty;
-    public int StopCount { get; set; }
-    public int DurationMinutes { get; set; }
     public string ImageUrl { get; init; } = string.Empty;
     public string IconGlyph { get; init; } = "📍";
     public Color IconBackgroundColor { get; init; } = Color.FromArgb("#FFE9E9");
+    
+    [ObservableProperty] private bool _isFavorite;
+
+    // Fallback labels for UI
+    public string StopsText => "1 điểm dừng";
+    public string MinutesText => "8 phút";
 }
+
+

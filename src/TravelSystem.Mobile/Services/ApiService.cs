@@ -20,9 +20,80 @@ public class ApiService
         };
     }
 
-<<<<<<< HEAD
     public async Task<IReadOnlyList<Zone>?> GetZonesAsync(CancellationToken cancellationToken = default)
-=======
+    {
+        try
+        {
+            Debug.WriteLine($"[API] Loading zones from {_httpClient.BaseAddress}{ApiConstants.ZonesEndpoint}");
+            var zones = await _httpClient.GetFromJsonAsync<List<Zone>>(ApiConstants.ZonesEndpoint, cancellationToken) ?? [];
+            _logger.LogInformation("[API] Loaded {ZoneCount} zones", zones.Count);
+            return zones;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[API] Error while loading zones");
+            return null;
+        }
+    }
+
+    private const string GuestIdKey = "current_guest_id";
+
+    public async Task<string> EnsureGuestIdAsync()
+    {
+        var guestId = Preferences.Default.Get<string>(GuestIdKey, null);
+        if (string.IsNullOrEmpty(guestId))
+        {
+            guestId = Guid.NewGuid().ToString();
+            Preferences.Default.Set(GuestIdKey, guestId);
+            
+            // Register install if needed
+            await RegisterAnonymousInstallAsync(Guid.Parse(guestId));
+        }
+        return guestId;
+    }
+
+    public async Task<IReadOnlyList<FavoriteDto>?> GetFavoritesAsync(string guestId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var favorites = await _httpClient.GetFromJsonAsync<List<FavoriteDto>>($"api/favorites/{guestId}", cancellationToken);
+            return favorites;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[API] Error while loading favorites");
+            return null;
+        }
+    }
+
+    public async Task<bool> AddFavoriteAsync(string guestId, int zoneId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/favorites", new { GuestId = guestId, ZoneId = zoneId }, cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[API] Error while adding favorite");
+            return false;
+        }
+    }
+
+    public async Task<bool> RemoveFavoriteAsync(string guestId, int zoneId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.DeleteAsync($"api/favorites/{guestId}/{zoneId}", cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[API] Error while removing favorite");
+            return false;
+        }
+    }
+
     public async Task<bool> RegisterAnonymousInstallAsync(Guid sessionId, CancellationToken cancellationToken = default)
     {
         try
@@ -43,49 +114,6 @@ public class ApiService
         }
     }
 
-    public async Task<RouteSyncData?> GetRouteSyncDataAsync(string? lastSyncedAt, CancellationToken cancellationToken = default)
-    {
-        var endpoint = string.IsNullOrWhiteSpace(lastSyncedAt)
-            ? $"{ApiConstants.RoutesEndpoint}/sync"
-            : $"{ApiConstants.RoutesEndpoint}/sync?lastSyncedAt={Uri.EscapeDataString(lastSyncedAt)}";
-
-        var response = await _httpClient.GetFromJsonAsync<RouteSyncResponse>(endpoint, cancellationToken);
-        if (response is null || !response.HasUpdates || response.Data is null)
-        {
-            return null;
-        }
-
-        var normalizedRoutes = response.Data.Routes
-            .Select(r =>
-            {
-                r.ImageUrl = NormalizeImageUrl(r.ImageUrl);
-                return r;
-            })
-            .ToList();
-
-        return new RouteSyncData(
-            response.Timestamp,
-            normalizedRoutes,
-            response.Data.Zones,
-            response.Data.Narrations);
-    }
-
-    public async Task<IReadOnlyList<RouteSummary>> GetRouteSummariesAsync()
->>>>>>> ad4c67a23af7236728f0c13bdf9c7f329fdd0da9
-    {
-        try
-        {
-            Debug.WriteLine($"[API] Loading zones from {_httpClient.BaseAddress}{ApiConstants.ZonesEndpoint}");
-            var zones = await _httpClient.GetFromJsonAsync<List<Zone>>(ApiConstants.ZonesEndpoint, cancellationToken) ?? [];
-            _logger.LogInformation("[API] Loaded {ZoneCount} zones", zones.Count);
-            return zones;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[API] Error while loading zones");
-            throw;
-        }
-    }
 
     private string NormalizeImageUrl(string? imageUrl)
     {
@@ -151,3 +179,22 @@ public class ApiService
         public DateTime CreatedAt { get; set; }
     }
 }
+
+public class FavoriteDto
+{
+    public int Id { get; set; }
+    public string GuestId { get; set; }
+    public int ZoneId { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public FavoriteZoneDto Zone { get; set; }
+}
+
+public class FavoriteZoneDto
+{
+    public string Name { get; set; }
+    public string Description { get; set; }
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+    public int? ShopId { get; set; }
+}
+

@@ -9,18 +9,18 @@ IF OBJECT_ID('Narrations','U') IS NOT NULL DELETE FROM Narrations;
 IF OBJECT_ID('Analytics','U') IS NOT NULL DELETE FROM Analytics;
 IF OBJECT_ID('Zones','U') IS NOT NULL DELETE FROM Zones;
 IF OBJECT_ID('Users','U') IS NOT NULL DELETE FROM Users;
-IF OBJECT_ID('Routes','U') IS NOT NULL DELETE FROM Routes;
 IF OBJECT_ID('Shops','U') IS NOT NULL DELETE FROM Shops;
+
 
 -- Reset Identity counters
 -- AppSettings dùng Key (string) làm PK, không có identity -- không cần RESEED
 
 IF OBJECT_ID('ShopHours','U') IS NOT NULL DBCC CHECKIDENT ('ShopHours', RESEED, 0);
 IF OBJECT_ID('Shops','U') IS NOT NULL DBCC CHECKIDENT ('Shops', RESEED, 0);
-IF OBJECT_ID('Routes','U') IS NOT NULL DBCC CHECKIDENT ('Routes', RESEED, 0);
 IF OBJECT_ID('Zones','U') IS NOT NULL DBCC CHECKIDENT ('Zones', RESEED, 0);
 IF OBJECT_ID('Narrations','U') IS NOT NULL DBCC CHECKIDENT ('Narrations', RESEED, 0);
 IF OBJECT_ID('Users','U') IS NOT NULL DBCC CHECKIDENT ('Users', RESEED, 0);
+
 
 -- ============================================================
 -- 1. Insert 20 Shops
@@ -188,39 +188,14 @@ VALUES (N'admin', N'123456', N'Admin User', N'admin@buivienexplorer.com', 0, NUL
     (N'vendor18', N'123456', N'Vendor 18', N'vendor18@example.com', 1, 18, 1);
 
 -- ============================================================
--- 3. Insert 1 Route
+-- 3. (Routes removed)
 -- ============================================================
-INSERT INTO Routes (
-        Name,
-        Description,
-        StartLatitude,
-        StartLongitude,
-        ImageUrl,
-        IsActive,
-        IsLocked,
-        IsHidden,
-        LockReason
-    )
-VALUES (
-        N'Bùi Viện Walking Tour',
-        N'Khám phá phố đi bộ Bùi Viện từ đầu đến cuối.',
-        10.76968,
-        106.69156,
-        'images/routes/route-1.jpg',
-        1,
-        0,
-        0,
-        NULL
-    );
 
-
-DECLARE @routeId INT = CAST(SCOPE_IDENTITY() AS INT);
 
 -- ============================================================
 -- 4. Insert 20 Zones
 -- ============================================================
 INSERT INTO Zones (
-        RouteId,
         ShopId,
         Name,
         Description,
@@ -235,9 +210,10 @@ INSERT INTO Zones (
         IsHidden,
         LockReason
     )
+
 VALUES (
-        @routeId,
         NULL,
+
         N'Cổng chào Bùi Viện',
         N'Nơi đón khách tham quan chính thức của toàn phố.',
         10.76968,
@@ -252,8 +228,8 @@ VALUES (
         NULL
     ),
     (
-        @routeId,
         1,
+
         N'The Hideout Bar',
         N'Quán bar lâu đời.',
         10.76945,
@@ -268,8 +244,8 @@ VALUES (
         NULL
     ),
     (
-        @routeId,
         2,
+
         N'Crazy Buffalo Bar',
         N'Biểu tượng nổi tiếng với mô hình trâu rừng.',
         10.76930,
@@ -284,8 +260,8 @@ VALUES (
         NULL
     ),
     (
-        @routeId,
         NULL,
+
         N'Quảng trường giữa',
         N'Nơi hay có múa lửa nghệ thuật.',
         10.76910,
@@ -300,8 +276,8 @@ VALUES (
         NULL
     ),
     (
-        @routeId,
         3,
+
         N'Spotted By Locals',
         N'Nhà hàng có không khí lãng mạn.',
         10.76890,
@@ -316,8 +292,8 @@ VALUES (
         NULL
     ),
     (
-        @routeId,
         4,
+
         N'Boheme Pub',
         N'Điểm đến cho sinh viên quẩy banh nóc.',
         10.76895,
@@ -332,8 +308,8 @@ VALUES (
         NULL
     ),
     (
-        @routeId,
         5,
+
         N'Sahara Beer Club',
         N'Trải nghiệm bia hơi và nhạc DJ.',
         10.76890,
@@ -348,8 +324,8 @@ VALUES (
         NULL
     ),
     (
-        @routeId,
         6,
+
         N'Miss Saigon',
         N'Phong cách sang trọng với âm nhạc hiện đại.',
         10.76885,
@@ -364,8 +340,8 @@ VALUES (
         NULL
     ),
     (
-        @routeId,
         7,
+
         N'Ocean Club',
         N'Nổi bật với thiết kế xanh mát nhiệt đới.',
         10.76880,
@@ -380,8 +356,8 @@ VALUES (
         NULL
     ),
     (
-        @routeId,
         8,
+
         N'Donkey Bar',
         N'Không gian nhỏ, ấm cúng.',
         10.76875,
@@ -396,8 +372,8 @@ VALUES (
         NULL
     ),
     (
-        @routeId,
         9,
+
         N'Universal Pub',
         N'Nhạc sống Tây ba lô yêu thích.',
         10.76870,
@@ -412,8 +388,8 @@ VALUES (
         NULL
     ),
     (
-        @routeId,
         10,
+
         N'Champion Sports Bar',
         N'Nơi xem bóng đá ngoại hạng Anh tốt nhất.',
         10.76865,
@@ -428,8 +404,8 @@ VALUES (
         NULL
     ),
     (
-        @routeId,
         11,
+
         N'Hair of the Dog',
         N'Sôi động thâu đêm.',
         10.76860,
@@ -444,8 +420,8 @@ VALUES (
         NULL
     ),
     (
-        @routeId,
         12,
+
         N'Republic Club',
         N'Sang trọng đẳng cấp.',
         10.76855,
@@ -460,8 +436,8 @@ VALUES (
         NULL
     ),
     (
-        @routeId,
         13,
+
         N'86 Club',
         N'Góc phố nhìn ra công viên 23/9.',
         10.76850,
@@ -476,8 +452,8 @@ VALUES (
         NULL
     ),
     (
-        @routeId,
         14,
+
         N'Le Pub',
         N'Khách Tây hay ngồi vỉa hè.',
         10.76845,
@@ -492,8 +468,8 @@ VALUES (
         NULL
     ),
     (
-        @routeId,
         15,
+
         N'Asiana Food Town',
         N'Khu ẩm thực đa quốc gia.',
         10.76840,
@@ -508,8 +484,8 @@ VALUES (
         NULL
     ),
     (
-        @routeId,
         16,
+
         N'Krystal Lounge',
         N'Thư giãn thưởng thức Shisha.',
         10.76835,
@@ -524,8 +500,8 @@ VALUES (
         NULL
     ),
     (
-        @routeId,
         17,
+
         N'Nubes Rooftop',
         N'Từ tầng thượng bạn có thể ngắm Landmark 81.',
         10.76830,
@@ -540,8 +516,8 @@ VALUES (
         NULL
     ),
     (
-        @routeId,
         18,
+
         N'Sky Bar 360',
         N'Nhạc House, chill.',
         10.76825,
@@ -719,12 +695,8 @@ VALUES (
 END
 
 -- Kiểm tra kết quả
-SELECT N'Routes' AS [Table],
+SELECT N'Zones' AS [Table],
     COUNT(*) AS [Count]
-FROM Routes
-UNION ALL
-SELECT N'Zones',
-    COUNT(*)
 FROM Zones
 UNION ALL
 SELECT N'Narrations',
@@ -738,3 +710,4 @@ UNION ALL
 SELECT N'Users',
     COUNT(*)
 FROM Users;
+

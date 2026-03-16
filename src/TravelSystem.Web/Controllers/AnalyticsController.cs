@@ -40,8 +40,8 @@ public class AnalyticsController : ControllerBase
             Longitude = 0,
             DwellTimeSeconds = 0,
             CreatedAt = request.CreatedAt == default ? DateTime.UtcNow : request.CreatedAt,
-            ZoneId = null,
-            RouteId = null
+            ZoneId = null
+
         });
 
         await _db.SaveChangesAsync();

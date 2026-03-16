@@ -30,7 +30,9 @@ public static class MauiProgram
 
 		// Register ViewModels
 		builder.Services.AddSingleton<ViewModels.MainPageViewModel>();
+		builder.Services.AddSingleton<ViewModels.SavedPageViewModel>();
 		builder.Services.AddTransient<ViewModels.LanguageSelectionViewModel>();
+
 
 		// Register Pages
 		builder.Services.AddTransient<MainPage>();

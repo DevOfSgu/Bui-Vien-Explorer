@@ -1,13 +1,95 @@
-<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TravelSystem.Mobile.ViewModels"
+             xmlns:converters="clr-namespace:TravelSystem.Mobile.Converters"
              x:Class="TravelSystem.Mobile.Views.SavedPage"
-             BackgroundColor="#F3F4F6">
-    <Grid>
-        <Label Text="Saved tours"
-               FontSize="18"
-               TextColor="#64748B"
-               HorizontalOptions="Center"
-               VerticalOptions="Center" />
-    </Grid>
+             BackgroundColor="#F3F4F6"
+             Title="Địa điểm đã lưu"
+             x:DataType="vm:SavedPageViewModel">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:FavoriteIconConverter x:Key="FavoriteIconConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+
+    <ContentPage.Behaviors>
+        <!-- In a real app, we'd use an EventToCommandBehavior from Toolkit to trigger LoadFavorites on Appearing -->
+    </ContentPage.Behaviors>
+
+    <RefreshView Command="{Binding LoadFavoritesCommand}" IsRefreshing="{Binding IsLoading}">
+        <Grid RowDefinitions="Auto,*">
+            
+            <VerticalStackLayout Padding="22,18,22,10" Spacing="2">
+                <Label Text="Yêu thích"
+                       FontSize="32"
+                       FontFamily="SpaceGroteskBold"
+                       FontAttributes="Bold"
+                       TextColor="#1F2937" />
+                <Label Text="Danh sách các địa điểm bạn đã lưu"
+                       FontSize="14"
+                       TextColor="#98A2B3" />
+            </VerticalStackLayout>
+
+            <ScrollView Grid.Row="1">
+                <VerticalStackLayout Padding="22,0,22,20">
+                    
+                    <VerticalStackLayout IsVisible="{Binding IsEmpty}" 
+                                         VerticalOptions="Center" 
+                                         HorizontalOptions="Center" 
+                                         Padding="0,100,0,0"
+                                         Spacing="15">
+                        <Label Text="❤️" FontSize="60" HorizontalOptions="Center" />
+                        <Label Text="{Binding EmptyStateMessage}"
+                               FontSize="16"
+                               TextColor="#98A2B3"
+                               HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+
+                    <CollectionView ItemsSource="{Binding FavoriteZones}" SelectionMode="None">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Vertical" ItemSpacing="14" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ZoneCardItem">
+                                <Border BackgroundColor="White"
+                                        Stroke="#ECEEF2"
+                                        StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 22">
+                                    <Grid Padding="16" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="15">
+                                        <Border WidthRequest="50" HeightRequest="50"
+                                                BackgroundColor="{Binding IconBackgroundColor}"
+                                                StrokeThickness="0"
+                                                StrokeShape="RoundRectangle 12">
+                                            <Label Text="{Binding IconGlyph}" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center" />
+                                        </Border>
+
+                                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                                            <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" TextColor="#1F2937" />
+                                            <Label Text="{Binding Description}" FontSize="13" TextColor="#98A2B3" MaxLines="1" LineBreakMode="TailTruncation" />
+                                        </VerticalStackLayout>
+
+                                        <HorizontalStackLayout Grid.Column="2" Spacing="10" VerticalOptions="Center">
+                                            <Button Text="❤️"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SavedPageViewModel}}, Path=RemoveFavoriteCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    BackgroundColor="Transparent"
+                                                    BorderWidth="0"
+                                                    FontSize="22"
+                                                    Padding="0" />
+                                            
+                                            <Label Text="›" FontSize="24" TextColor="#C2C8D0" VerticalOptions="Center" />
+                                        </HorizontalStackLayout>
+
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </ScrollView>
+        </Grid>
+    </RefreshView>
 </ContentPage>
+

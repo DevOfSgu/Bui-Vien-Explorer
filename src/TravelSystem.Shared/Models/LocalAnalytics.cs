@@ -1,4 +1,4 @@
-﻿using SQLite;
+using SQLite;
 
 namespace TravelSystem.Shared.Models
 {
@@ -11,9 +11,9 @@ namespace TravelSystem.Shared.Models
         // UUID ẩn danh, sinh 1 lần khi cài app để theo dõi 1 "chuyến đi"
         public string SessionId { get; set; } = string.Empty;
 
-        // FK đến Zone và Route (lưu dạng string ID từ server)
+        // FK đến Zone (lưu dạng string ID từ server)
         public string ZoneId { get; set; } = string.Empty;   // Nullable: rỗng khi ActionType = "LocationPing"
-        public string RouteId { get; set; } = string.Empty;
+
 
         // Cần cho Heatmap vị trí người dùng
         public double Latitude { get; set; }

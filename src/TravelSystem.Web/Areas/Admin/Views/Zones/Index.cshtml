@@ -7,15 +7,9 @@
 
 <div class="header-actions">
     <div class="d-flex align-items-center gap-3">
-        @if (ViewBag.SelectedRouteId != null)
-        {
-            <a asp-action="Index" asp-controller="Routes" class="btn btn-outline-secondary" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                <i class="fa-solid fa-arrow-left"></i>
-            </a>
-        }
         <div class="page-title">Zones Management</div>
     </div>
-    <a asp-action="Create" asp-route-routeId="@ViewBag.SelectedRouteId" class="btn btn-primary-custom text-decoration-none">
+    <a asp-action="Create" class="btn btn-primary-custom text-decoration-none">
         <i class="fa-solid fa-plus me-2"></i> Add New Zone
     </a>
 </div>
@@ -204,7 +198,7 @@
         <nav>
             <ul class="pagination pagination-sm mb-0">
                 <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                    <a class="page-link" asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-routeId="@ViewBag.SelectedRouteId" style="border-color: #edf2f9; color: #94a3b8;">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(currentPage - 1)" style="border-color: #edf2f9; color: #94a3b8;">
                         <i class="fa-solid fa-chevron-left"></i>
                     </a>
                 </li>
@@ -213,18 +207,18 @@
                     if (p == currentPage)
                     {
                         <li class="page-item active" style="--bs-pagination-active-bg: #ef4444; --bs-pagination-active-border-color: #ef4444;">
-                            <a class="page-link" asp-action="Index" asp-route-page="@p" asp-route-routeId="@ViewBag.SelectedRouteId">@p</a>
+                            <a class="page-link" asp-action="Index" asp-route-page="@p">@p</a>
                         </li>
                     }
                     else
                     {
                         <li class="page-item">
-                            <a class="page-link" asp-action="Index" asp-route-page="@p" asp-route-routeId="@ViewBag.SelectedRouteId" style="border-color: #edf2f9; color: #64748b;">@p</a>
+                            <a class="page-link" asp-action="Index" asp-route-page="@p" style="border-color: #edf2f9; color: #64748b;">@p</a>
                         </li>
                     }
                 }
                 <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                    <a class="page-link" asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-routeId="@ViewBag.SelectedRouteId" style="border-color: #edf2f9; color: #64748b;">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(currentPage + 1)" style="border-color: #edf2f9; color: #64748b;">
                         <i class="fa-solid fa-chevron-right"></i>
                     </a>
                 </li>
