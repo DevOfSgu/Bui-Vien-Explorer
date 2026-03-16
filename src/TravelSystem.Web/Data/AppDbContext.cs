@@ -50,6 +50,17 @@ public class AppDbContext : DbContext
             .HasOne(tz => tz.Zone)
             .WithMany()
             .HasForeignKey(tz => tz.ZoneId);
+
+        // Configure Decimal Precision for Maps
+        modelBuilder.Entity<Zone>()
+            .Property(z => z.Latitude).HasPrecision(18, 15);
+        modelBuilder.Entity<Zone>()
+            .Property(z => z.Longitude).HasPrecision(18, 15);
+
+        modelBuilder.Entity<Analytics>()
+            .Property(a => a.Latitude).HasPrecision(18, 15);
+        modelBuilder.Entity<Analytics>()
+            .Property(a => a.Longitude).HasPrecision(18, 15);
     }
 
 }
