@@ -20,6 +20,26 @@ public class ApiService
         };
     }
 
+    public async Task<bool> RegisterAnonymousInstallAsync(Guid sessionId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var payload = new AnonymousInstallRequest
+            {
+                SessionId = sessionId,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var response = await _httpClient.PostAsJsonAsync($"{ApiConstants.AnalyticsEndpoint}/install", payload, cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[API] Failed to register anonymous app install");
+            return false;
+        }
+    }
+
     public async Task<RouteSyncData?> GetRouteSyncDataAsync(string? lastSyncedAt, CancellationToken cancellationToken = default)
     {
         var endpoint = string.IsNullOrWhiteSpace(lastSyncedAt)
@@ -145,6 +165,12 @@ public class ApiService
     {
         public int ZoneType { get; set; }
         public int ActiveTime { get; set; }
+    }
+
+    private sealed class AnonymousInstallRequest
+    {
+        public Guid SessionId { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 }
 

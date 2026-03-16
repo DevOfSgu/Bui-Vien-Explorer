@@ -488,6 +488,107 @@ VALUES (
     );
 
 -- ============================================================
+-- 4a. Insert thêm 1 Route + 5 Zones (Bùi Viện Food Tour)
+-- ============================================================
+INSERT INTO Routes (
+        Name,
+        Description,
+        StartLatitude,
+        StartLongitude,
+        ImageUrl,
+        IsActive
+    )
+VALUES (
+        N'Bùi Viện Food Tour',
+        N'Food tour khám phá các điểm ăn uống đặc trưng tại Bùi Viện.',
+        10.76910,
+        106.69180,
+        '/images/routes/route-food-tour.jpg',
+        1
+    );
+
+DECLARE @foodRouteId INT = CAST(SCOPE_IDENTITY() AS INT);
+
+INSERT INTO Zones (
+        RouteId,
+        ShopId,
+        Name,
+        Description,
+        Latitude,
+        Longitude,
+        Radius,
+        OrderIndex,
+        ZoneType,
+        IsActive,
+        ActiveTime
+    )
+VALUES (
+        @foodRouteId,
+        NULL,
+        N'Điểm ăn 1 - Bánh Mì Đêm 24h',
+        N'Bắt đầu food tour với bánh mì nóng giòn đặc trưng.',
+        10.76905,
+        106.69190,
+        18,
+        1,
+        1,
+        1,
+        4
+    ),
+    (
+        @foodRouteId,
+        NULL,
+        N'Điểm ăn 2 - Xiên Nướng Vỉa Hè',
+        N'Khu xiên nướng đông khách về đêm.',
+        10.76895,
+        106.69205,
+        18,
+        2,
+        1,
+        1,
+        5
+    ),
+    (
+        @foodRouteId,
+        NULL,
+        N'Điểm ăn 3 - Hải Sản Chảo Lửa',
+        N'Thưởng thức hải sản nóng tại khu ẩm thực trung tâm.',
+        10.76882,
+        106.69218,
+        20,
+        3,
+        1,
+        1,
+        6
+    ),
+    (
+        @foodRouteId,
+        NULL,
+        N'Điểm ăn 4 - Tráng Miệng Chè Lạnh',
+        N'Kết hợp món ngọt và đồ uống giải nhiệt.',
+        10.76870,
+        106.69230,
+        18,
+        4,
+        1,
+        1,
+        4
+    ),
+    (
+        @foodRouteId,
+        NULL,
+        N'Điểm ăn 5 - Kết Tour Food Court 23/9',
+        N'Điểm kết thúc food tour với nhiều lựa chọn địa phương.',
+        10.76858,
+        106.69242,
+        22,
+        5,
+        1,
+        1,
+        5
+    );
+
+-- ============================================================
 -- 5. Insert 20 Narrations (Gán cho 20 Zones, random ngôn ngữ)
 -- ============================================================
 -- capture the first 20 zone ids in variables so we don't assume they start at 1
