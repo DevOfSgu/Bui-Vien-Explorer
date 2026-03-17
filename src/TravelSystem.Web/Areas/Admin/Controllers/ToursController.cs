@@ -11,10 +11,12 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
     public class ToursController : Controller
     {
         private readonly AppDbContext _db;
+        private readonly IWebHostEnvironment _env;
 
-        public ToursController(AppDbContext db)
+        public ToursController(AppDbContext db, IWebHostEnvironment env)
         {
             _db = db;
+            _env = env;
         }
 
         // GET: Admin/Tours
@@ -37,10 +39,16 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
         // POST: Admin/Tours/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Tour tour, int[] selectedZoneIds)
+        public async Task<IActionResult> Create(Tour tour, int[] selectedZoneIds, IFormFile? imageFile)
         {
             if (ModelState.IsValid)
             {
+                // Handle Image Upload
+                if (imageFile != null)
+                {
+                    tour.ImageUrl = await Helpers.FileStorageHelper.SaveImageAsync(imageFile, _env.WebRootPath, "tours");
+                }
+
                 tour.CreatedAt = DateTime.UtcNow;
                 tour.UpdatedAt = DateTime.UtcNow;
                 _db.Tours.Add(tour);
@@ -95,9 +103,19 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 var dbTour = await _db.Tours.FindAsync(id);
                 if (dbTour == null) return NotFound();
 
+                // Handle Image Upload
+                if (imageFile != null)
+                {
+                    // Delete old image if exists
+                    if (!string.IsNullOrEmpty(dbTour.ImageUrl))
+                    {
+                        Helpers.FileStorageHelper.DeleteImage(dbTour.ImageUrl, _env.WebRootPath);
+                    }
+                    dbTour.ImageUrl = await Helpers.FileStorageHelper.SaveImageAsync(imageFile, _env.WebRootPath, "tours");
+                }
+
                 dbTour.Name = tour.Name;
                 dbTour.Description = tour.Description;
-                dbTour.ImageUrl = tour.ImageUrl;
                 dbTour.Duration = tour.Duration;
                 dbTour.UpdatedAt = DateTime.UtcNow;
 
