@@ -318,7 +318,14 @@
                 <div class="d-flex flex-column align-items-center mt-2">
                     <div class="position-relative" style="cursor: pointer;" onclick="document.getElementById('logoInput').click();">
                         <div class="upload-box upload-logo" id="logoPreview">
-                            <i class="fa-solid fa-store" style="font-size: 30px; color: #94a3b8;"></i>
+                            @if (!string.IsNullOrEmpty(shop.ImageUrl))
+                            {
+                                <img src="@shop.ImageUrl" class="upload-logo" style="margin-bottom: 0; object-fit: cover;" alt="Logo" />
+                            }
+                            else
+                            {
+                                <i class="fa-solid fa-store" style="font-size: 30px; color: #94a3b8;"></i>
+                            }
                         </div>
                         <div class="upload-icon-overlay">
                             <i class="fa-solid fa-cloud-arrow-up"></i>
