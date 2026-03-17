@@ -44,10 +44,10 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             return View(zones);
         }
 
-        // GET: Admin/Zones/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
             ViewBag.Shops = _db.Shops.ToList();
+            ViewBag.ExistingZones = await _db.Zones.Where(z => z.IsActive).ToListAsync();
             return View(new Zone { IsActive = true });
         }
 
@@ -118,6 +118,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 dbZone.ShopId = zone.ShopId;
                 dbZone.OrderIndex = zone.OrderIndex;
                 dbZone.IsActive = zone.IsActive;
+                dbZone.IsMain = zone.IsMain;
                 dbZone.UpdatedAt = DateTime.UtcNow;
                 await _db.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));

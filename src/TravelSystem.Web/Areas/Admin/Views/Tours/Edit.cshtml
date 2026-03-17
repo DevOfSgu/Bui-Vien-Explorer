@@ -99,25 +99,6 @@
     .search-input-container { position: relative; margin-bottom: 15px; }
     .search-input-container i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
     .search-input { padding-left: 35px; font-size: 13px; border-radius: 8px; }
-
-    .form-control-lg {
-        font-weight: 700;
-        color: #1e293b;
-    }
-
-    .input-group-text {
-        border-color: #e2e8f0;
-        background-color: #f8fafc;
-    }
-
-    .input-group .form-control {
-        border-color: #e2e8f0;
-    }
-
-    .input-group .form-control:focus {
-        border-color: #ef4444;
-        box-shadow: none;
-    }
 </style>
 
 <form asp-action="Edit" method="post" id="tourForm">
@@ -189,13 +170,13 @@
                 <textarea asp-for="Description" class="form-control" rows="8"></textarea>
             </div>
 
-            <div class="row g-3 align-items-center mb-4">
+            <div class="row align-items-center mb-4">
                 <div class="col-auto"><label class="form-label-custom mb-0">Thời lượng dự kiến</label></div>
-                <div class="col" style="max-width: 200px;">
-                    <div class="input-group shadow-sm">
-                        <span class="input-group-text bg-light"><i class="fa-regular fa-clock text-muted"></i></span>
-                        <input asp-for="Duration" type="number" class="form-control text-center fw-bold" style="height: 42px;" />
-                        <span class="input-group-text bg-white text-muted small">phút</span>
+                <div class="col" style="max-width: 180px;">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-regular fa-clock"></i></span>
+                        <input asp-for="Duration" type="number" class="form-control border-start-0" />
+                        <span class="input-group-text bg-white border-start-0 text-muted">phút</span>
                     </div>
                 </div>
             </div>

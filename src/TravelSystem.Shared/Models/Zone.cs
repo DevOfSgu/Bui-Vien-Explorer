@@ -14,6 +14,7 @@ public class Zone
     public int ZoneType { get; set; }
     public int? ShopId { get; set; }
     public bool IsActive { get; set; }
+    public bool IsMain { get; set; } = false;    // Điểm chính (Main) - 1, Điểm phụ (Sub) - 0
     public bool IsLocked { get; set; } = false;  // Khóa chỉnh sửa
     public bool IsHidden { get; set; } = false;  // Ẩn khỏi ứng dụng
     public string? LockReason { get; set; }      // Lý do khóa
