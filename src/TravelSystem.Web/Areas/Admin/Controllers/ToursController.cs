@@ -94,7 +94,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
         // POST: Admin/Tours/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Tour tour, int[] selectedZoneIds)
+        public async Task<IActionResult> Edit(int id, Tour tour, int[] selectedZoneIds, IFormFile? imageFile)
         {
             if (id != tour.Id) return NotFound();
 

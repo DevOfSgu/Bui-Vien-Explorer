@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TravelSystem.Shared.Models;
 
 namespace TravelSystem.Web.Areas.Vendor.Controllers
