@@ -14,20 +14,21 @@
     </div>
 </div>
 
-<div class="card-custom">
+<div class="card-custom mb-4">
     @if (Model.IsLocked)
     {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
             <strong><i class="fa-solid fa-lock me-2"></i>Cảnh báo: Zone này đang bị khóa</strong>
             <p class="mb-0 mt-2">Lý do: <strong>@Model.LockReason</strong></p>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
 
-    <form asp-action="Edit" method="post">
+    <form asp-action="Edit" method="post" enctype="multipart/form-data">
         <input type="hidden" asp-for="Id" />
         <div class="row">
-            <div class="col-md-8">
+            <!-- Left Panel: All Inputs -->
+            <div class="col-md-4">
                 <div class="mb-4">
                     <label class="form-label fw-bold">Name</label>
                     <input asp-for="Name" class="form-control" disabled="@Model.IsLocked" required />
@@ -38,17 +39,35 @@
                     <textarea asp-for="Description" class="form-control" rows="4" disabled="@Model.IsLocked"></textarea>
                 </div>
 
-                <div class="row mb-4">
-                    <div class="col-md-6">
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Cover Image</label>
+                    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                    {
+                        <div class="mb-2">
+                            <img src="@Model.ImageUrl" class="rounded border" style="width: 100%; height: 120px; object-fit: cover;" />
+                        </div>
+                    }
+                    <input type="file" name="imageFile" class="form-control" accept="image/*" disabled="@Model.IsLocked" />
+                    <small class="text-muted">Upload a new photo to replace the current one.</small>
+                    <input type="hidden" asp-for="ImageUrl" />
+                </div>
 
-                        <label class="form-label fw-bold">Category (Type)</label>
-                        <select asp-for="ZoneType" class="form-select" disabled="@Model.IsLocked">
-                            <option value="0">Bars & Clubs</option>
-                            <option value="1">Restaurants & Cafes</option>
-                            <option value="2">Shopping</option>
-                            <option value="3">Landmark/Street</option>
-                        </select>
-                    </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Category (Type)</label>
+                    <select asp-for="ZoneType" class="form-select" disabled="@Model.IsLocked">
+                        <option value="0">Bars & Clubs</option>
+                        <option value="1">Restaurants & Cafes</option>
+                        <option value="2">Shopping</option>
+                        <option value="3">Landmark/Street</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Point Classification</label>
+                    <select asp-for="IsMain" class="form-select" id="isMainSelect" disabled="@Model.IsLocked">
+                        <option value="true">Main Point (Điểm chính)</option>
+                        <option value="false">Secondary Point (Điểm phụ)</option>
+                    </select>
                 </div>
 
                 <div class="mb-4">
@@ -58,16 +77,6 @@
                     </select>
                 </div>
 
-                <!-- Interactive Map Section -->
-                <div class="mb-4">
-                    <label class="form-label fw-bold">Map Preview & Location Picker</label>
-                    <div id="leafletMap" style="height: 400px; width: 100%; border-radius: 12px; border: 1px solid #edf2f9; z-index: 1;"></div>
-                    <small class="text-muted">Click on the map to pick a location or drag the marker.</small>
-                </div>
-            </div>
-
-            <!-- GPS & Map settings right sidebar -->
-            <div class="col-md-4">
                 <div class="p-3 mb-4 rounded" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
                     <h6 class="fw-bold mb-3"><i class="fa-solid fa-location-dot text-danger me-2"></i> Location Settings</h6>
                     
@@ -90,108 +99,155 @@
                         <input asp-for="OrderIndex" type="number" class="form-control form-control-sm" disabled="@Model.IsLocked" />
                     </div>
 
-
-                    <div class="form-check form-switch mt-4">
+                    <div class="form-check form-switch mt-3">
                         <input class="form-check-input" type="checkbox" asp-for="IsActive" disabled="@Model.IsLocked">
                         <label class="form-check-label fw-bold">Active Station</label>
                     </div>
-
-                    @if (Model.IsLocked)
-                    {
-                        <div class="alert alert-warning mt-3 p-2">
-                            <small><i class="fa-solid fa-lock me-1"></i>Zone locked - cannot edit fields</small></div>
-                    }
                 </div>
 
                 @if (!Model.IsLocked)
                 {
-                    <button type="submit" class="btn btn-primary-custom w-100 py-2 mt-2">
+                    <button type="submit" class="btn btn-primary-custom w-100 py-2 mb-2">
                         <i class="fa-solid fa-floppy-disk me-2"></i> Update Zone
                     </button>
                 }
                 else
                 {
-                    <button type="submit" class="btn btn-primary-custom w-100 py-2 mt-2" disabled>
+                    <button type="button" class="btn btn-primary-custom w-100 py-2 mb-2" disabled>
                         <i class="fa-solid fa-lock me-2"></i> Locked - Cannot Save
                     </button>
                 }
+                <a asp-action="Index" class="btn btn-outline-secondary w-100 py-2">
+                    Cancel
+                </a>
+            </div>
+
+            <!-- Right Panel: Big Map -->
+            <div class="col-md-8 d-flex flex-column">
+                <div class="position-relative d-flex flex-column" style="flex: 1; min-height: 600px;">
+                    <label class="form-label fw-bold">Map Preview & Location Picker</label>
+                    <div id="leafletMap" style="flex: 1; width: 100%; border-radius: 12px; border: 1px solid #edf2f9; z-index: 1;"></div>
+                    
+                    <div class="map-legend">
+                        <div class="legend-item">
+                            <div class="dot" style="background: #1e3a8a;"></div>
+                            <span>Existing Main Point</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="dot" style="background: #f59e0b;"></div>
+                            <span>Existing Secondary Point</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="dot" style="background: #10b981;"></div>
+                            <span>Current Selection (Green)</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="height: 10px;"></div> <!-- Small spacing matching the bottom margin of the left column -->
             </div>
         </div>
     </form>
 </div>
+
+<style>
+    /* Same styles as Create */
+    .map-legend {
+        position: absolute; bottom: 40px; right: 20px; background: white; padding: 12px 15px;
+        border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 1000; font-size: 11px;
+        border: 1px solid #edf2f9; pointer-events: none;
+    }
+    .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .legend-item:last-child { margin-bottom: 0; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .marker-pin {
+        width: 30px; height: 30px; border-radius: 50% 50% 50% 0;
+        position: absolute; transform: rotate(-45deg);
+        left: 50%; top: 50%; margin: -15px 0 0 -15px;
+        display: flex; align-items: center; justify-content: center;
+        border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .marker-pin i { transform: rotate(45deg); color: white; font-size: 12px; }
+</style>
 
 @section Scripts {
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     
     <script>
         let map;
-        let marker;
-        let circle;
+        let pickerMarker;
+        let pickerCircle;
         const latInput = document.getElementById('latInput');
         const lngInput = document.getElementById('lngInput');
         const radiusInput = document.getElementById('radiusInput');
         const isLocked = @(Model.IsLocked ? "true" : "false");
+        
+        const createMarkerIcon = (color, icon = 'fa-location-dot') => {
+            return L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div class="marker-pin" style="background: ${color};"><i class="fa-solid ${icon}"></i></div>`,
+                iconSize: [30, 42],
+                iconAnchor: [15, 42]
+            });
+        };
+
+        const icons = {
+            main: createMarkerIcon('#1e3a8a', 'fa-star'),
+            sub: createMarkerIcon('#f59e0b', 'fa-location-dot'),
+            picker: createMarkerIcon('#10b981', 'fa-circle-dot')
+        };
+
+        const existingZones = @Html.Raw(Json.Serialize(ViewBag.ExistingZones));
 
         function initMap() {
+            if (!latInput || !lngInput || !radiusInput) return;
+
             const initialLat = parseFloat(latInput.value) || 10.7688;
             const initialLng = parseFloat(lngInput.value) || 106.6924;
             const initialRadius = parseInt(radiusInput.value) || 15;
-
             const pos = [initialLat, initialLng];
 
-            // Initialize Map
             map = L.map('leafletMap').setView(pos, 18);
-
-            // Add OpenStreetMap tiles
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 21,
-                maxNativeZoom: 19,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                maxNativeZoom: 19
             }).addTo(map);
 
-            // Add Marker
-            marker = L.marker(pos, {
-                draggable: !isLocked,
-                title: "@Model.Name"
-            }).addTo(map);
+            if (existingZones) {
+                existingZones.forEach(z => {
+                    const icon = z.isMain ? icons.main : icons.sub;
+                    L.marker([z.latitude, z.longitude], { icon: icon })
+                     .bindPopup(`<b>${z.name}</b><br>${z.isMain ? 'Main Point' : 'Sub Point'}`)
+                     .addTo(map);
+                });
+            }
 
-            // Add Circle
-            circle = L.circle(pos, {
+            pickerMarker = L.marker(pos, { draggable: !isLocked, icon: icons.picker }).addTo(map);
+            pickerCircle = L.circle(pos, {
                 radius: initialRadius,
-                color: '#ef4444',
-                fillColor: '#ef4444',
-                fillOpacity: 0.2,
+                color: '#10b981',
+                fillColor: '#10b981',
+                fillOpacity: 0.15,
                 weight: 1
             }).addTo(map);
 
             if (!isLocked) {
-                // Click map to move marker
-                map.on('click', function(e) {
-                    updatePosition(e.latlng.lat, e.latlng.lng);
+                map.on('click', (e) => updatePosition(e.latlng.lat, e.latlng.lng));
+                pickerMarker.on('dragend', () => {
+                    const p = pickerMarker.getLatLng();
+                    updatePosition(p.lat, p.lng);
                 });
 
-                // Drag marker to update inputs
-                marker.on('dragend', function(e) {
-                    const position = marker.getLatLng();
-                    updatePosition(position.lat, position.lng);
-                });
-
-                // Handle manual input changes
                 latInput.addEventListener('change', updateMapFromInputs);
                 lngInput.addEventListener('change', updateMapFromInputs);
-                
-                // Handle radius change
                 radiusInput.addEventListener('input', () => {
-                    const r = parseInt(radiusInput.value) || 0;
-                    circle.setRadius(r);
+                    pickerCircle.setRadius(parseInt(radiusInput.value) || 0);
                 });
             }
         }
 
         function updatePosition(lat, lng) {
-            const pos = [lat, lng];
-            marker.setLatLng(pos);
-            circle.setLatLng(pos);
+            pickerMarker.setLatLng([lat, lng]);
+            pickerCircle.setLatLng([lat, lng]);
             latInput.value = lat.toFixed(8);
             lngInput.value = lng.toFixed(8);
         }
@@ -200,16 +256,11 @@
             const lat = parseFloat(latInput.value);
             const lng = parseFloat(lngInput.value);
             if (!isNaN(lat) && !isNaN(lng)) {
-                const pos = [lat, lng];
-                marker.setLatLng(pos);
-                circle.setLatLng(pos);
-                map.setView(pos);
+                updatePosition(lat, lng);
+                map.panTo([lat, lng]);
             }
         }
 
-        // Delay init to ensure DOM is ready
         setTimeout(initMap, 100);
     </script>
 }
-
-

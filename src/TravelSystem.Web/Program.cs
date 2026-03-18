@@ -33,6 +33,32 @@ builder.Services.AddAuthentication()
         options.Cookie.Name = "VendorAuthCookie";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
     });
+// 1. Initial Database Schema Patches (Direct SQL)
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (!string.IsNullOrEmpty(connectionString))
+{
+    using var connection = new Microsoft.Data.SqlClient.SqlConnection(connectionString);
+    try
+    {
+        connection.Open();
+        var sql = @"
+            IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Zones')
+            BEGIN
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Zones') AND name = 'IsMain')
+                BEGIN
+                    ALTER TABLE Zones ADD IsMain BIT NOT NULL DEFAULT 0;
+                END
+            END";
+        using var command = new Microsoft.Data.SqlClient.SqlCommand(sql, connection);
+        command.ExecuteNonQuery();
+        Console.WriteLine("Database Patch: Zones.IsMain verified/added.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Database Patch Error: {ex.Message}");
+    }
+}
+
 var app = builder.Build();
 
 // Schema patches intentionally removed: Shops no longer include Description/Radius

@@ -11,10 +11,12 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
     public class ZonesController : Controller
     {
         private readonly AppDbContext _db;
+        private readonly IWebHostEnvironment _env;
 
-        public ZonesController(AppDbContext db)
+        public ZonesController(AppDbContext db, IWebHostEnvironment env)
         {
             _db = db;
+            _env = env;
         }
 
         // GET: Admin/Zones
@@ -44,20 +46,26 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             return View(zones);
         }
 
-        // GET: Admin/Zones/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
             ViewBag.Shops = _db.Shops.ToList();
+            ViewBag.ExistingZones = await _db.Zones.Where(z => z.IsActive).ToListAsync();
             return View(new Zone { IsActive = true });
         }
 
         // POST: Admin/Zones/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Zone zone)
+        public async Task<IActionResult> Create(Zone zone, IFormFile? imageFile)
         {
             if (ModelState.IsValid)
             {
+                // Handle Image Upload
+                if (imageFile != null)
+                {
+                    zone.ImageUrl = await Helpers.FileStorageHelper.SaveImageAsync(imageFile, _env.WebRootPath, "zones");
+                }
+
                 zone.CreatedAt = DateTime.UtcNow;
                 zone.UpdatedAt = DateTime.UtcNow;
                 zone.IsLocked = false;
@@ -92,7 +100,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
         // POST: Admin/Zones/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Zone zone)
+        public async Task<IActionResult> Edit(int id, Zone zone, IFormFile? imageFile)
         {
             if (id != zone.Id) return NotFound();
 
@@ -109,6 +117,17 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
 
             if (ModelState.IsValid)
             {
+                // Handle Image Upload
+                if (imageFile != null)
+                {
+                    // Delete old image if exists
+                    if (!string.IsNullOrEmpty(dbZone.ImageUrl))
+                    {
+                        Helpers.FileStorageHelper.DeleteImage(dbZone.ImageUrl, _env.WebRootPath);
+                    }
+                    dbZone.ImageUrl = await Helpers.FileStorageHelper.SaveImageAsync(imageFile, _env.WebRootPath, "zones");
+                }
+
                 dbZone.Name = zone.Name;
                 dbZone.Description = zone.Description;
                 dbZone.Latitude = zone.Latitude;
@@ -118,6 +137,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 dbZone.ShopId = zone.ShopId;
                 dbZone.OrderIndex = zone.OrderIndex;
                 dbZone.IsActive = zone.IsActive;
+                dbZone.IsMain = zone.IsMain;
                 dbZone.UpdatedAt = DateTime.UtcNow;
                 await _db.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
