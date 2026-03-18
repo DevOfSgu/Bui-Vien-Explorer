@@ -11,6 +11,14 @@ public partial class LanguageSelectionPage : ContentPage
         InitializeComponent();
         ViewModel = viewModel;
         BindingContext = viewModel;
+
+        Shell.SetTabBarIsVisible(this, false);
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        Shell.SetTabBarIsVisible(this, false);
     }
 
     private void OnLanguageSelected(object sender, TappedEventArgs e)

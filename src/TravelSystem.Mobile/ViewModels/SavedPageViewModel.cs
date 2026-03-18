@@ -56,6 +56,7 @@ public partial class SavedPageViewModel : ObservableObject
             IsLoading = false;
             OnPropertyChanged(nameof(IsEmpty));
         }
+    }
     [RelayCommand]
     private async Task RemoveFavorite(ZoneCardItem item)
     {

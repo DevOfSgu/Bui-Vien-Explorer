@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="TravelSystem.Mobile.Views.TourDetailPage"
+             BackgroundColor="#F3F4F6"
+             Title="{Binding TourName}"
+             Shell.TabBarIsVisible="False">
+
+    <Grid RowDefinitions="3.2*,2.8*">
+        <Grid Grid.Row="0">
+            <ContentView x:Name="MapHost" />
+
+            <Button Text="Focus Bùi Viện"
+                    Clicked="OnFocusBuiVienClicked"
+                    HorizontalOptions="End"
+                    VerticalOptions="Start"
+                    Margin="12"
+                    Padding="14,8"
+                    BackgroundColor="#FFFFFF"
+                    TextColor="#1F2937"
+                    FontSize="12"
+                    CornerRadius="16"
+                    Shadow="{x:Null}" />
+        </Grid>
+
+        <Border Grid.Row="1"
+                BackgroundColor="White"
+                StrokeThickness="0"
+                StrokeShape="RoundRectangle 28,28,0,0"
+                Padding="18,14,18,12">
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Tour Stops"
+                       FontFamily="SpaceGroteskBold"
+                       FontAttributes="Bold"
+                       FontSize="24"
+                       TextColor="#1F2937" />
+
+                <CollectionView ItemsSource="{Binding PoiStops}" SelectionMode="None">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="10"
+                                    Stroke="#EBEEF3"
+                                    StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 14"
+                                    BackgroundColor="#FFFFFF">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="#E9F8EE" />
+                                        <Setter Property="Stroke" Value="#43A047" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                    <Grid WidthRequest="50" HeightRequest="50">
+                                        <Border StrokeThickness="0" BackgroundColor="#F3F4F6" StrokeShape="RoundRectangle 25">
+                                            <Image Source="{Binding ImageUrl}" Aspect="AspectFill" />
+                                        </Border>
+                                    </Grid>
+
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                        <Label Text="{Binding OrderIndex, StringFormat='{0}. '}"
+                                               FontSize="12"
+                                               TextColor="#16A34A"
+                                               FontAttributes="Bold" />
+                                        <Label Text="{Binding Name}" FontSize="16" FontAttributes="Bold" TextColor="#1F2937" />
+                                        <Label Text="{Binding DistanceText}" FontSize="12" TextColor="#98A2B3" />
+                                    </VerticalStackLayout>
+
+                                    <HorizontalStackLayout Grid.Column="2" Spacing="10" VerticalOptions="Center">
+                                        <ImageButton Source="favourite.svg"
+                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ToggleFavoriteCommand}"
+                                                     CommandParameter="{Binding .}"
+                                                     BackgroundColor="Transparent"
+                                                     BorderWidth="0"
+                                                     WidthRequest="15"
+                                                     HeightRequest="15"
+                                                     Padding="0">
+                                            <ImageButton.Triggers>
+                                                <DataTrigger TargetType="ImageButton" Binding="{Binding IsFavorite}" Value="True">
+                                                    <Setter Property="Source" Value="favourited.svg" />
+                                                </DataTrigger>
+                                            </ImageButton.Triggers>
+                                        </ImageButton>
+                                    </HorizontalStackLayout>
+                                </Grid>
+
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectStopCommand}"
+                                                          CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+        </Border>
+
+        <Grid Grid.RowSpan="2"
+              BackgroundColor="#66000000"
+              IsVisible="{Binding IsLoading}">
+            <VerticalStackLayout Spacing="10"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center">
+                <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                   Color="White"
+                                   WidthRequest="40"
+                                   HeightRequest="40" />
+                <Label Text="Đang tải chi tiết tour..."
+                       TextColor="White"
+                       FontSize="14"
+                       HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+
+</ContentPage>

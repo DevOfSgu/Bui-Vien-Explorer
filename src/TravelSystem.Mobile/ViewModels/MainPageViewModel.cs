@@ -4,6 +4,7 @@ using Microsoft.Maui.Graphics;
 using System.Diagnostics;
 using System.Collections.ObjectModel;
 using TravelSystem.Mobile.Services;
+using TravelSystem.Mobile.Views;
 
 namespace TravelSystem.Mobile.ViewModels;
 
@@ -11,14 +12,22 @@ public partial class MainPageViewModel : ObservableObject
 {
     private readonly ApiService _apiService;
     private readonly DatabaseService _databaseService;
+    private readonly SemaphoreSlim _navigationLock = new(1, 1);
 
     public ObservableCollection<ZoneCardItem> ZoneCards { get; } = [];
 
     [ObservableProperty] private bool _isLoading;
+    private bool _navigatingToDetail;
     [ObservableProperty] private string _errorMessage = string.Empty;
 
     public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
-    public string ZonesAvailableText => $"{ZoneCards.Count} địa điểm có sẵn";
+    public string ZonesAvailableText => $"{ZoneCards.Count} tour có sẵn";
+
+    public bool NavigatingToDetail
+    {
+        get => _navigatingToDetail;
+        set => SetProperty(ref _navigatingToDetail, value);
+    }
 
     partial void OnErrorMessageChanged(string value)
     {
@@ -39,31 +48,29 @@ public partial class MainPageViewModel : ObservableObject
             IsLoading = true;
             ErrorMessage = string.Empty;
 
-            var guestId = await _apiService.EnsureGuestIdAsync();
-            Debug.WriteLine($"[MAIN_VM] Loading for Guest: {guestId}");
-
-            var zones = await _apiService.GetZonesAsync();
-            var favorites = await _apiService.GetFavoritesAsync(guestId);
-            var favoriteIds = favorites?.Select(f => f.ZoneId).ToHashSet() ?? [];
+            var tours = await _apiService.GetToursAsync();
             
             ZoneCards.Clear();
-            if (zones != null && zones.Count > 0)
+            if (tours != null && tours.Count > 0)
             {
-                foreach (var zone in zones)
+                foreach (var tour in tours)
                 {
                     ZoneCards.Add(new ZoneCardItem
                     {
-                        Id = zone.Id,
-                        Name = zone.Name ?? string.Empty,
-                        Description = zone.Description ?? string.Empty,
-                        ImageUrl = zone.ImageUrl ?? string.Empty,
-                        IsFavorite = favoriteIds.Contains(zone.Id)
+                        Id = tour.Id,
+                        Name = tour.Name,
+                        Description = tour.Description ?? string.Empty,
+                        ImageUrl = tour.ImageUrl ?? string.Empty,
+                        StopsText = $"{tour.StopsCount} điểm dừng",
+                        MinutesText = $"{tour.Duration} phút",
+
+                        IsFavorite = false
                     });
                 }
             }
             else
             {
-                ErrorMessage = "Không có địa điểm nào được tìm thấy.";
+                ErrorMessage = "Không có tour nào được tìm thấy.";
             }
 
             OnPropertyChanged(nameof(ZonesAvailableText));
@@ -80,23 +87,30 @@ public partial class MainPageViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task ToggleFavorite(ZoneCardItem item)
+    private async Task OpenTourDetails(ZoneCardItem item)
     {
         if (item == null) return;
 
-        var guestId = await _apiService.EnsureGuestIdAsync();
-        bool success;
+        if (!await _navigationLock.WaitAsync(0))
+            return;
 
-        if (item.IsFavorite)
+        try
         {
-            success = await _apiService.RemoveFavoriteAsync(guestId, item.Id);
-            if (success) item.IsFavorite = false;
+            NavigatingToDetail = true;
+            await Task.Delay(120);
+            var route = $"{nameof(TourDetailPage)}?tourId={item.Id}&tourName={Uri.EscapeDataString(item.Name)}";
+            await Shell.Current.GoToAsync(route);
         }
-        else
+        finally
         {
-            success = await _apiService.AddFavoriteAsync(guestId, item.Id);
-            if (success) item.IsFavorite = true;
+            NavigatingToDetail = false;
+            _navigationLock.Release();
         }
+    }
+
+    private Task ToggleFavorite(ZoneCardItem item, CancellationToken c)
+    {
+        return Task.CompletedTask;
     }
 
 }
@@ -109,12 +123,11 @@ public partial class ZoneCardItem : ObservableObject
     public string ImageUrl { get; init; } = string.Empty;
     public string IconGlyph { get; init; } = "📍";
     public Color IconBackgroundColor { get; init; } = Color.FromArgb("#FFE9E9");
+    public bool CanToggleFavorite { get; init; } = true;
+    public string StopsText { get; init; } = "1 điểm dừng";
+    public string MinutesText { get; init; } = "8 phút";
     
     [ObservableProperty] private bool _isFavorite;
-
-    // Fallback labels for UI
-    public string StopsText => "1 điểm dừng";
-    public string MinutesText => "8 phút";
 }
 
 

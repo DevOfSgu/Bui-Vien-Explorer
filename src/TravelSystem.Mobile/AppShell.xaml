@@ -14,22 +14,24 @@
     Title="Bùi Viện Explorer">
 
     <Shell.TitleView>
-        <Grid ColumnDefinitions="Auto,*,Auto" Padding="10,5" HeightRequest="60" VerticalOptions="Center">
+        <HorizontalStackLayout Spacing="10"
+                               Padding="10,5"
+                               HeightRequest="60"
+                               HorizontalOptions="Start"
+                               VerticalOptions="Center">
             <Image Source="logoapp.png"
                    WidthRequest="40"
                    HeightRequest="40"
                    Aspect="AspectFit"
-                   HorizontalOptions="Center"
-                   VerticalOptions="Center"/>
-            <Label Grid.Column="1"
-                   Text="Bùi Viện Explorer"
+                   VerticalOptions="Center" />
+            <Label Text="Bùi Viện Explorer"
+                   TextColor="#111827"
+                   LineBreakMode="NoWrap"
                    FontSize="20"
                    FontFamily="SpaceGroteskBold"
                    FontAttributes="Bold"
-                   Margin="10,0,0,0"
                    VerticalOptions="Center" />
-
-        </Grid>
+        </HorizontalStackLayout>
     </Shell.TitleView>
 
     <TabBar Route="MainTabs">

@@ -51,6 +51,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+app.MapControllers();
 
 // Route for Areas (Admin & Vendor)
 app.MapControllerRoute(

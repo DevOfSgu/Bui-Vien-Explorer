@@ -2,113 +2,116 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:TravelSystem.Mobile.ViewModels"
-             xmlns:converters="clr-namespace:TravelSystem.Mobile.Converters"
              x:Class="TravelSystem.Mobile.Views.MainPage"
 
              BackgroundColor="#F3F4F6"
              x:DataType="vm:MainPageViewModel">
 
-    <ContentPage.Resources>
-        <ResourceDictionary>
-            <converters:FavoriteIconConverter x:Key="FavoriteIconConverter" />
-        </ResourceDictionary>
-    </ContentPage.Resources>
+    <Grid>
+        <RefreshView Command="{Binding LoadDataCommand}" IsRefreshing="{Binding IsLoading}">
+            <CollectionView ItemsSource="{Binding ZoneCards}"
+                            SelectionMode="None"
+                            Margin="22,18,22,18"
+                            VerticalScrollBarVisibility="Never">
+            <CollectionView.Header>
+                <VerticalStackLayout Spacing="14" Margin="0,0,0,14">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Khám phá Bùi Viện"
+                               FontSize="32"
+                               FontFamily="SpaceGroteskBold"
+                               FontAttributes="Bold"
+                               TextColor="#1F2937" />
+                        <Label Text="{Binding ZonesAvailableText}"
+                               FontSize="14"
+                               TextColor="#98A2B3" />
+                    </VerticalStackLayout>
 
-
-    <RefreshView Command="{Binding LoadDataCommand}" IsRefreshing="{Binding IsLoading}">
-        <ScrollView>
-            <VerticalStackLayout Padding="22,18,22,18" Spacing="14">
-
-                <VerticalStackLayout Spacing="2">
-                    <Label Text="Khám phá Bùi Viện"
-                           FontSize="32"
-                           FontFamily="SpaceGroteskBold"
-                           FontAttributes="Bold"
-                           TextColor="#1F2937" />
-                    <Label Text="{Binding ZonesAvailableText}"
-                           FontSize="14"
-                           TextColor="#98A2B3" />
+                    <Label Text="{Binding ErrorMessage}"
+                           IsVisible="{Binding HasError}"
+                           TextColor="#C62828"
+                           FontSize="13"
+                           Margin="0,2,0,6" />
                 </VerticalStackLayout>
+            </CollectionView.Header>
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="14" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:ZoneCardItem">
 
+                    <Border BackgroundColor="White"
+                            Stroke="#ECEEF2"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 22">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainPageViewModel}}, Path=OpenTourDetailsCommand}"
+                                                  CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                        <Border.Shadow>
+                            <Shadow Brush="#1A000000" Radius="12" Opacity="0.12" Offset="0,5" />
+                        </Border.Shadow>
 
-                <ActivityIndicator IsVisible="{Binding IsLoading}"
-                                   IsRunning="{Binding IsLoading}"
-                                   Color="#FF4B4B"
-                                   Margin="0,4,0,0" />
+                        <Grid RowDefinitions="170,Auto">
+                            <Grid>
+                                <Image Source="{Binding ImageUrl}" Aspect="AspectFill" />
+                                <Border BackgroundColor="#22000000" StrokeThickness="0" />
+                            </Grid>
 
-                <Label Text="{Binding ErrorMessage}"
-                       IsVisible="{Binding HasError}"
-                       TextColor="#C62828"
-                       FontSize="13"
-                       Margin="0,2,0,6" />
+                            <Grid Grid.Row="1"
+                                  Padding="16,14"
+                                  ColumnDefinitions="*,Auto"
+                                  RowDefinitions="Auto,Auto"
+                                  RowSpacing="8">
+                                <Label Text="{Binding Name}"
+                                       FontSize="24"
+                                       FontFamily="SpaceGroteskBold"
+                                       FontAttributes="Bold"
+                                       TextColor="#1F2937" />
 
-                <CollectionView ItemsSource="{Binding ZoneCards}" SelectionMode="None">
-                    <CollectionView.ItemsLayout>
-                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="14" />
-                    </CollectionView.ItemsLayout>
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="vm:ZoneCardItem">
+                                <HorizontalStackLayout Grid.Column="1" Spacing="15" VerticalOptions="Center">
+                                    
+                                    <Label Text="›"
+                                           FontSize="30"
+                                           TextColor="#C2C8D0"
+                                           VerticalOptions="Center" />
+                                </HorizontalStackLayout>
 
-                            <Border BackgroundColor="White"
-                                    Stroke="#ECEEF2"
-                                    StrokeThickness="1"
-                                    StrokeShape="RoundRectangle 22">
-                                <Border.Shadow>
-                                    <Shadow Brush="#1A000000" Radius="12" Opacity="0.12" Offset="0,5" />
-                                </Border.Shadow>
+                                <HorizontalStackLayout Grid.Row="1" Spacing="10">
+                                    <Label Text="📍" FontSize="12" TextColor="#98A2B3" />
+                                    <Label Text="{Binding StopsText}"
+                                           FontSize="13"
+                                           TextColor="#98A2B3" />
+                                    <Label Text="•" FontSize="14" TextColor="#98A2B3" />
+                                    <Label Text="{Binding MinutesText, StringFormat='~{0}'}"
+                                           FontSize="13"
+                                           TextColor="#98A2B3" />
+                                </HorizontalStackLayout>
+                            </Grid>
 
-                                <Grid RowDefinitions="170,Auto">
-                                    <Grid>
-                                        <Image Source="{Binding ImageUrl}" Aspect="AspectFill" />
-                                        <Border BackgroundColor="#22000000" StrokeThickness="0" />
-                                    </Grid>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
 
-                                    <Grid Grid.Row="1"
-                                          Padding="16,14"
-                                          ColumnDefinitions="*,Auto"
-                                          RowDefinitions="Auto,Auto"
-                                          RowSpacing="8">
-                                        <Label Text="{Binding Name}"
-                                               FontSize="24"
-                                               FontFamily="SpaceGroteskBold"
-                                               FontAttributes="Bold"
-                                               TextColor="#1F2937" />
-
-                                        <HorizontalStackLayout Grid.Column="1" Spacing="15" VerticalOptions="Center">
-                                            <Button Text="{Binding IsFavorite, Converter={StaticResource FavoriteIconConverter}, ConverterParameter='❤️|🤍'}"
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainPageViewModel}}, Path=ToggleFavoriteCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    BackgroundColor="Transparent"
-                                                    BorderWidth="0"
-                                                    FontSize="22"
-                                                    Padding="0" />
-                                            
-                                            <Label Text="›"
-                                                   FontSize="30"
-                                                   TextColor="#C2C8D0"
-                                                   VerticalOptions="Center" />
-                                        </HorizontalStackLayout>
-
-                                        <HorizontalStackLayout Grid.Row="1" Spacing="10">
-                                            <Label Text="📍" FontSize="12" TextColor="#98A2B3" />
-                                            <Label Text="{Binding StopsText}"
-                                                   FontSize="13"
-                                                   TextColor="#98A2B3" />
-                                            <Label Text="•" FontSize="14" TextColor="#98A2B3" />
-                                            <Label Text="{Binding MinutesText, StringFormat='~{0}'}"
-                                                   FontSize="13"
-                                                   TextColor="#98A2B3" />
-                                        </HorizontalStackLayout>
-                                    </Grid>
-
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-
+        <Grid x:Name="DetailLoadingOverlay"
+              BackgroundColor="#66000000"
+              IsVisible="False"
+              Opacity="0">
+            <VerticalStackLayout Spacing="10"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center">
+                <ActivityIndicator IsRunning="{Binding NavigatingToDetail}"
+                                   Color="White"
+                                   WidthRequest="40"
+                                   HeightRequest="40" />
+                <Label Text="Đang mở chi tiết tour..."
+                       TextColor="White"
+                       FontSize="14"
+                       HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
-        </ScrollView>
-    </RefreshView>
+        </Grid>
+    </Grid>
 
 </ContentPage>

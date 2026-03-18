@@ -28,5 +28,7 @@
 	</array>
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>
+ <key>NSLocationWhenInUseUsageDescription</key>
+	<string>Ứng dụng cần vị trí để hiển thị bạn trên bản đồ và tính khoảng cách đến POI.</string>
 </dict>
 </plist>

@@ -3,11 +3,20 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="TravelSystem.Mobile.Views.SettingsPage"
              BackgroundColor="#F3F4F6">
-    <Grid>
-        <Label Text="Settings"
-               FontSize="18"
-               TextColor="#64748B"
-               HorizontalOptions="Center"
-               VerticalOptions="Center" />
+    <Grid Padding="20,24">
+        <VerticalStackLayout Spacing="10">
+            <Label Text="Settings"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   TextColor="#1F2937" />
+
+            <Label Text="Bản dev Android device đang dùng adb reverse về API local."
+                   FontSize="13"
+                   TextColor="#64748B" />
+
+            <Label Text="Lệnh: adb reverse tcp:5281 tcp:5281"
+                   FontSize="12"
+                   TextColor="#0F172A" />
+        </VerticalStackLayout>
     </Grid>
 </ContentPage>
