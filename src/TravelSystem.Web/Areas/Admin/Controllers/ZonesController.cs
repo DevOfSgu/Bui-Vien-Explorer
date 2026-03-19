@@ -155,9 +155,14 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             var zone = await _db.Zones.FindAsync(id);
             if (zone != null)
             {
+                // Delete physical image file
+                if (!string.IsNullOrEmpty(zone.ImageUrl))
+                {
+                    Helpers.FileStorageHelper.DeleteImage(zone.ImageUrl, _env.WebRootPath);
+                }
+
                 _db.Zones.Remove(zone);
                 await _db.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
             }
             return RedirectToAction(nameof(Index));
         }
