@@ -383,7 +383,15 @@
             updateNumbers();
         }
 
+        function updateNumbers() {
+            const items = itineraryContainer.querySelectorAll('.itinerary-item');
+            items.forEach((item, index) => {
+                item.querySelector('.zone-number').innerText = index + 1;
+            });
 
+            const count = items.length;
+            poiCountBadge.innerText = `${count} điểm`;
+            emptyItinerary.style.display = count > 0 ? 'none' : 'block';
         }
 
         function previewImage(input) {

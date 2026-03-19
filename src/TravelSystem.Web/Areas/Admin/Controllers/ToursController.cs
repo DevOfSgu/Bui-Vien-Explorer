@@ -152,6 +152,12 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             var tour = await _db.Tours.FindAsync(id);
             if (tour != null)
             {
+                // Delete physical image file
+                if (!string.IsNullOrEmpty(tour.ImageUrl))
+                {
+                    Helpers.FileStorageHelper.DeleteImage(tour.ImageUrl, _env.WebRootPath);
+                }
+
                 _db.Tours.Remove(tour);
                 await _db.SaveChangesAsync();
             }
