@@ -81,6 +81,31 @@ public class ApiService
     {
         try
         {
+            if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
+            {
+                var stops = await FetchTourStopsFromServerAsync(tourId, cancellationToken);
+                if (stops is not null)
+                {
+                    _tourStopsCache[tourId] = stops;
+                    await SaveCachedListAsync(TourStopsCacheKey(tourId), stops);
+                    _logger.LogInformation("[API] Fetched tour {TourId} stops from server: {StopCount}", tourId, stops.Count);
+                    return stops;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[API] Error fetching stops for tour {TourId} from server, falling back to cache", tourId);
+        }
+
+        try
+        {
+            if (_tourStopsCache.TryGetValue(tourId, out var cachedStops) && cachedStops.Count > 0)
+            {
+                _logger.LogInformation("[API][CACHE] Tour {TourId} stops from memory cache: {StopCount}", tourId, cachedStops.Count);
+                return cachedStops;
+            }
+
             var sqliteCachedStops = await LoadCachedListAsync<TourStopDto>(TourStopsCacheKey(tourId));
             if (sqliteCachedStops is { Count: > 0 })
             {
@@ -89,40 +114,12 @@ public class ApiService
                 return sqliteCachedStops;
             }
 
-            if (_tourStopsCache.TryGetValue(tourId, out var cachedStops) && cachedStops.Count > 0)
-            {
-                _logger.LogInformation("[API][CACHE] Tour {TourId} stops from memory cache: {StopCount}", tourId, cachedStops.Count);
-                return cachedStops;
-            }
-
             _logger.LogWarning("[API] No local cached stops found for tour {TourId}", tourId);
             return [];
         }
-        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
-        {
-            _logger.LogWarning(ex, "[API] Timeout while loading stops for tour {TourId}", tourId);
-            var sqliteCachedStops = await LoadCachedListAsync<TourStopDto>(TourStopsCacheKey(tourId));
-            if (sqliteCachedStops is { Count: > 0 })
-            {
-                return sqliteCachedStops;
-            }
-
-            if (_tourStopsCache.TryGetValue(tourId, out var cachedStops))
-            {
-                return cachedStops;
-            }
-
-            return null;
-        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[API] Error while loading stops for tour {TourId}", tourId);
-            var sqliteCachedStops = await LoadCachedListAsync<TourStopDto>(TourStopsCacheKey(tourId));
-            if (sqliteCachedStops is { Count: > 0 })
-            {
-                return sqliteCachedStops;
-            }
-
+            _logger.LogError(ex, "[API] Error while loading stops for tour {TourId} from cache", tourId);
             if (_tourStopsCache.TryGetValue(tourId, out var cachedStops))
             {
                 return cachedStops;
@@ -134,6 +131,26 @@ public class ApiService
 
     public async Task<IReadOnlyList<TourSummaryDto>?> GetToursAsync(CancellationToken cancellationToken = default)
     {
+        try
+        {
+            if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
+            {
+                var toursUri = BuildUri(ApiConstants.ToursEndpoint);
+                var tours = await _httpClient.GetFromJsonAsync<List<TourSummaryDto>>(toursUri, cancellationToken);
+                if (tours is not null)
+                {
+                    await SaveCachedListAsync(ToursCacheKey, tours);
+                    _toursMemoryCache = tours;
+                    _logger.LogInformation("[API] Fetched tours from server: {TourCount}", tours.Count);
+                    return tours;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[API] Error fetching tours from server, falling back to cache");
+        }
+
         try
         {
             if (_toursMemoryCache is { Count: > 0 })
@@ -155,7 +172,7 @@ public class ApiService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[API] Error while loading tours");
+            _logger.LogError(ex, "[API] Error while loading tours from cache");
             return _toursMemoryCache ?? await LoadCachedListAsync<TourSummaryDto>(ToursCacheKey);
         }
     }
