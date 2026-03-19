@@ -13,12 +13,14 @@ USE BuiVienExplorerDb;
 -- Thứ tự xóa: bảng con trước, bảng cha sau (tránh lỗi FK)
 -- ============================================================
 IF OBJECT_ID('GuestFavorites', 'U') IS NOT NULL DROP TABLE GuestFavorites;
+IF OBJECT_ID('TourZones', 'U') IS NOT NULL DROP TABLE TourZones;
+IF OBJECT_ID('Tours', 'U') IS NOT NULL DROP TABLE Tours;
 IF OBJECT_ID('Analytics', 'U') IS NOT NULL DROP TABLE Analytics;
+
 IF OBJECT_ID('Narrations', 'U') IS NOT NULL DROP TABLE Narrations;
 IF OBJECT_ID('AudioFiles', 'U') IS NOT NULL DROP TABLE AudioFiles;
 IF OBJECT_ID('Zones', 'U') IS NOT NULL DROP TABLE Zones;
 IF OBJECT_ID('Users', 'U') IS NOT NULL DROP TABLE Users;
-IF OBJECT_ID('Routes', 'U') IS NOT NULL DROP TABLE Routes;
 IF OBJECT_ID('ShopHours', 'U') IS NOT NULL DROP TABLE ShopHours;
 IF OBJECT_ID('Shops', 'U') IS NOT NULL DROP TABLE Shops;
 IF OBJECT_ID('AppSettings', 'U') IS NOT NULL DROP TABLE AppSettings;
@@ -47,19 +49,9 @@ CREATE TABLE ShopHours (
     CONSTRAINT FK_ShopHours_Shops FOREIGN KEY (ShopId) REFERENCES Shops(Id) ON DELETE CASCADE
 );
 -- ============================================================
--- 2. Routes (Tuyến đường tour)
+-- 2. Shops (Cần tạo trước vì Users và Zones tham chiếu đến nó)
 -- ============================================================
-CREATE TABLE Routes (
-    Id INT IDENTITY(1, 1) PRIMARY KEY,
-    Name NVARCHAR(100) NOT NULL,
-    Description NVARCHAR(500),
-    StartLatitude DECIMAL(10, 8),
-    StartLongitude DECIMAL(11, 8),
-    ImageUrl NVARCHAR(255),
-    IsActive BIT DEFAULT 1,
-    CreatedAt DATETIME DEFAULT GETDATE(),
-    UpdatedAt DATETIME DEFAULT GETDATE()
-);
+
 -- ============================================================
 -- 3. Users (Quản trị viên & Vendor)
 -- ============================================================
@@ -81,8 +73,8 @@ CREATE TABLE Users (
 -- ============================================================
 CREATE TABLE Zones (
     Id INT IDENTITY(1, 1) PRIMARY KEY,
-    RouteId INT NOT NULL,
     ShopId INT NULL,
+
     Name NVARCHAR(100) NOT NULL,
     Description NVARCHAR(1000),
     ImageUrl NVARCHAR(500),
@@ -95,11 +87,13 @@ CREATE TABLE Zones (
     ZoneType INT DEFAULT 0,
     -- 0:Bar, 1:Restaurant, 2:Landmark...
     IsActive BIT DEFAULT 1,
+    IsLocked BIT DEFAULT 0,
+    IsHidden BIT DEFAULT 0,
+    LockReason NVARCHAR(500),
     ActiveTime INT DEFAULT 0,
     -- 0:All, 1:Day, 2:Night
     CreatedAt DATETIME DEFAULT GETDATE(),
     UpdatedAt DATETIME DEFAULT GETDATE(),
-    CONSTRAINT FK_Zones_Routes FOREIGN KEY (RouteId) REFERENCES Routes(Id) ON DELETE CASCADE,
     CONSTRAINT FK_Zones_Shops FOREIGN KEY (ShopId) REFERENCES Shops(Id)
 );
 -- ============================================================
@@ -129,8 +123,8 @@ CREATE TABLE Analytics (
     Id INT IDENTITY(1, 1) PRIMARY KEY,
     ZoneId INT NULL,
     -- Null khi ActionType = 'LocationPing'
-    RouteId INT NULL,
     SessionId UNIQUEIDENTIFIER NOT NULL,
+
     -- UUID ẩn danh tạo từ Mobile
     Latitude DECIMAL(10, 8),
     -- Cần cho Heatmap
@@ -141,8 +135,7 @@ CREATE TABLE Analytics (
     DwellTimeSeconds INT DEFAULT 0,
     -- Thời gian ở lại POI (giây)
     CreatedAt DATETIME DEFAULT GETDATE(),
-    CONSTRAINT FK_Analytics_Zones FOREIGN KEY (ZoneId) REFERENCES Zones(Id),
-    CONSTRAINT FK_Analytics_Routes FOREIGN KEY (RouteId) REFERENCES Routes(Id)
+    CONSTRAINT FK_Analytics_Zones FOREIGN KEY (ZoneId) REFERENCES Zones(Id)
 );
 -- ============================================================
 -- 7. GuestFavorites (Zones yêu thích của guest không đăng nhập)
@@ -156,13 +149,41 @@ CREATE TABLE GuestFavorites (
     CONSTRAINT UQ_GuestFav UNIQUE (GuestId, ZoneId)
 );
 -- ============================================================
--- 8. Indexes (Tối ưu truy vấn báo cáo)
+-- 8. Tours (Thông tin các Tour tham quan)
+-- ============================================================
+CREATE TABLE Tours (
+    Id INT IDENTITY(1, 1) PRIMARY KEY,
+    Name NVARCHAR(200) NOT NULL,
+    Description NVARCHAR(MAX),
+    ImageUrl NVARCHAR(500),
+    Duration INT DEFAULT 0, -- Thời lượng dự kiến (phút)
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE()
+);
+
+-- ============================================================
+-- 9. TourZones (Bảng trung gian N-N: Gắn POI vào Tour)
+-- ============================================================
+CREATE TABLE TourZones (
+    TourId INT NOT NULL,
+    ZoneId INT NOT NULL,
+    OrderIndex INT DEFAULT 0, -- Thứ tự trong Tour này
+    CONSTRAINT PK_TourZones PRIMARY KEY (TourId, ZoneId),
+    CONSTRAINT FK_TourZones_Tours FOREIGN KEY (TourId) REFERENCES Tours(Id) ON DELETE CASCADE,
+    CONSTRAINT FK_TourZones_Zones FOREIGN KEY (ZoneId) REFERENCES Zones(Id) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- 10. Indexes (Tối ưu truy vấn báo cáo)
 -- ============================================================
 CREATE INDEX IDX_Analytics_Zone ON Analytics(ZoneId, ActionType);
 CREATE INDEX IDX_Analytics_Location ON Analytics(Latitude, Longitude);
 CREATE INDEX IDX_Analytics_Session ON Analytics(SessionId, CreatedAt);
 CREATE INDEX IX_GuestFav_GuestId ON GuestFavorites(GuestId);
 CREATE INDEX IX_GuestFav_ZoneId  ON GuestFavorites(ZoneId);
+CREATE INDEX IX_TourZones_Tour   ON TourZones(TourId);
+CREATE INDEX IX_TourZones_Zone   ON TourZones(ZoneId);
+
 
 -- ============================================================
 -- 9. AppSettings (Cài đặt hệ thống)

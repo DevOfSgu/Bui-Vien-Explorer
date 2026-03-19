@@ -15,18 +15,23 @@ public class DatabaseService
 
     public DatabaseService(SqliteConnectionFactory factory)
     {
-        _dbPath = Path.Combine(FileSystem.AppDataDirectory, "travelsystem_offline.db3");
+        _dbPath = Path.Combine(FileSystem.AppDataDirectory, "BuiVienExplorer.db3");
         _connection = factory.CreateConnection(_dbPath);
     }
 
     private bool _isInitialized = false;
+    private readonly SemaphoreSlim _initLock = new(1, 1);
 
     public async Task InitializeAsync()
     {
         if (_isInitialized) return;
 
+        await _initLock.WaitAsync();
+
         try
         {
+            if (_isInitialized) return;
+
 #if DEBUG
             // Xóa file db cũ nếu đang dev và cần reset schema
             if (DEV_RESET_DATABASE && File.Exists(_dbPath))
@@ -37,16 +42,15 @@ public class DatabaseService
             }
 #endif
             await _connection.CreateTablesAsync<
-                LocalRoute,
                 LocalZone,
                 LocalNarration,
                 LocalAnalytics,
                 AppSetting>();
 
-            var localRouteColumns = await _connection.GetTableInfoAsync(nameof(LocalRoute));
-            if (!localRouteColumns.Any(c => c.Name.Equals(nameof(LocalRoute.ImageUrl), StringComparison.OrdinalIgnoreCase)))
+            var localZoneColumns = await _connection.GetTableInfoAsync(nameof(LocalZone));
+            if (!localZoneColumns.Any(c => c.Name.Equals(nameof(LocalZone.ImageUrl), StringComparison.OrdinalIgnoreCase)))
             {
-                await _connection.ExecuteAsync($"ALTER TABLE {nameof(LocalRoute)} ADD COLUMN {nameof(LocalRoute.ImageUrl)} TEXT");
+                await _connection.ExecuteAsync($"ALTER TABLE {nameof(LocalZone)} ADD COLUMN {nameof(LocalZone.ImageUrl)} TEXT");
             }
 
             _isInitialized = true;
@@ -56,30 +60,49 @@ public class DatabaseService
         {
             Console.WriteLine($"❌ Database init failed: {ex.Message}");
         }
+        finally
+        {
+            _initLock.Release();
+        }
     }
 
     // LẤY CÀI ĐẶT
     public async Task<string> GetSettingAsync(string key, string defaultValue = "")
     {
-        await InitializeAsync();
-        var setting = await _connection.Table<AppSetting>().FirstOrDefaultAsync(s => s.Key == key);
-        return setting?.Value ?? defaultValue;
+        try
+        {
+            await InitializeAsync();
+            var setting = await _connection.Table<AppSetting>().FirstOrDefaultAsync(s => s.Key == key);
+            return setting?.Value ?? defaultValue;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠️ GetSettingAsync failed ({key}): {ex.Message}");
+            return defaultValue;
+        }
     }
 
     // LƯU CÀI ĐẶT
     public async Task SetSettingAsync(string key, string value)
     {
-        await InitializeAsync();
-        var setting = await _connection.Table<AppSetting>().FirstOrDefaultAsync(s => s.Key == key);
-        if (setting == null)
+        try
         {
-            await _connection.InsertAsync(new AppSetting { Key = key, Value = value, UpdatedAt = DateTime.UtcNow });
+            await InitializeAsync();
+            var setting = await _connection.Table<AppSetting>().FirstOrDefaultAsync(s => s.Key == key);
+            if (setting == null)
+            {
+                await _connection.InsertAsync(new AppSetting { Key = key, Value = value, UpdatedAt = DateTime.UtcNow });
+            }
+            else
+            {
+                setting.Value = value;
+                setting.UpdatedAt = DateTime.UtcNow;
+                await _connection.UpdateAsync(setting);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            setting.Value = value;
-            setting.UpdatedAt = DateTime.UtcNow;
-            await _connection.UpdateAsync(setting);
+            Console.WriteLine($"⚠️ SetSettingAsync failed ({key}): {ex.Message}");
         }
     }
 
@@ -98,9 +121,7 @@ public class DatabaseService
             if (absoluteUri.Scheme == Uri.UriSchemeFile)
             {
                 var filePath = absoluteUri.LocalPath.Replace('\\', '/').TrimStart('/');
-                var normalizedBaseUrl = ApiConstants.BaseApiUrl.EndsWith('/')
-                    ? ApiConstants.BaseApiUrl
-                    : $"{ApiConstants.BaseApiUrl}/";
+                var normalizedBaseUrl = ApiConstants.GetBaseApiUrl();
 
                 return new Uri(new Uri(normalizedBaseUrl), filePath).ToString();
             }
@@ -114,9 +135,7 @@ public class DatabaseService
         }
 
         var relativePath = imageUrl.TrimStart('~', '/');
-        var baseUrl = ApiConstants.BaseApiUrl.EndsWith('/')
-            ? ApiConstants.BaseApiUrl
-            : $"{ApiConstants.BaseApiUrl}/";
+        var baseUrl = ApiConstants.GetBaseApiUrl();
 
         return new Uri(new Uri(baseUrl), relativePath).ToString();
     }

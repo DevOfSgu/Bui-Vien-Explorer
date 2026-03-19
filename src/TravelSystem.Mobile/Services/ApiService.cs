@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Net.Http.Json;
+using System.Collections.Concurrent;
+using System.Text.Json;
 using TravelSystem.Shared.Models;
 
 namespace TravelSystem.Mobile.Services;
@@ -9,23 +11,199 @@ public class ApiService
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<ApiService> _logger;
+    private readonly DatabaseService _dbService;
+    private readonly ConcurrentDictionary<int, IReadOnlyList<TourStopDto>> _tourStopsCache = new();
+    private IReadOnlyList<TourSummaryDto>? _toursMemoryCache;
+    private static readonly TimeSpan TourStopsRequestTimeout = TimeSpan.FromSeconds(3);
+    private static readonly JsonSerializerOptions CacheJsonOptions = new() { PropertyNameCaseInsensitive = true };
+    private const string ToursCacheKey = "cache_tours_v1";
 
-    public ApiService(ILogger<ApiService> logger)
+    public ApiService(ILogger<ApiService> logger, DatabaseService dbService)
     {
         _logger = logger;
+        _dbService = dbService;
         _httpClient = new HttpClient
         {
-            BaseAddress = new Uri(ApiConstants.BaseApiUrl),
             Timeout = TimeSpan.FromSeconds(8)
         };
+    }
+
+    private Uri GetBaseUri() => new(ApiConstants.GetBaseApiUrl(), UriKind.Absolute);
+    private Uri BuildUri(string relativePath) => new(GetBaseUri(), relativePath);
+    private static string TourStopsCacheKey(int tourId) => $"cache_tour_stops_{tourId}_v1";
+
+    private async Task<IReadOnlyList<T>?> LoadCachedListAsync<T>(string key)
+    {
+        try
+        {
+            var json = await _dbService.GetSettingAsync(key, string.Empty);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return null;
+            }
+
+            return JsonSerializer.Deserialize<List<T>>(json, CacheJsonOptions);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private async Task SaveCachedListAsync<T>(string key, IReadOnlyList<T> items)
+    {
+        try
+        {
+            var json = JsonSerializer.Serialize(items, CacheJsonOptions);
+            await _dbService.SetSettingAsync(key, json);
+        }
+        catch
+        {
+        }
+    }
+
+    private async Task<IReadOnlyList<TourStopDto>?> FetchTourStopsFromServerAsync(int tourId, CancellationToken cancellationToken)
+    {
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(TourStopsRequestTimeout);
+
+        var stopsUri = BuildUri($"{ApiConstants.ToursEndpoint}/{tourId}/stops");
+        var stops = await _httpClient.GetFromJsonAsync<List<TourStopDto>>(stopsUri, timeoutCts.Token) ?? [];
+        foreach (var stop in stops)
+        {
+            stop.ImageUrl = NormalizeImageUrl(stop.ImageUrl);
+        }
+
+        return stops;
+    }
+
+    public async Task<IReadOnlyList<TourStopDto>?> GetTourStopsAsync(int tourId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var sqliteCachedStops = await LoadCachedListAsync<TourStopDto>(TourStopsCacheKey(tourId));
+            if (sqliteCachedStops is { Count: > 0 })
+            {
+                _tourStopsCache[tourId] = sqliteCachedStops;
+                _logger.LogInformation("[API][CACHE] Tour {TourId} stops from SQLite cache: {StopCount}", tourId, sqliteCachedStops.Count);
+                return sqliteCachedStops;
+            }
+
+            if (_tourStopsCache.TryGetValue(tourId, out var cachedStops) && cachedStops.Count > 0)
+            {
+                _logger.LogInformation("[API][CACHE] Tour {TourId} stops from memory cache: {StopCount}", tourId, cachedStops.Count);
+                return cachedStops;
+            }
+
+            _logger.LogWarning("[API] No local cached stops found for tour {TourId}", tourId);
+            return [];
+        }
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogWarning(ex, "[API] Timeout while loading stops for tour {TourId}", tourId);
+            var sqliteCachedStops = await LoadCachedListAsync<TourStopDto>(TourStopsCacheKey(tourId));
+            if (sqliteCachedStops is { Count: > 0 })
+            {
+                return sqliteCachedStops;
+            }
+
+            if (_tourStopsCache.TryGetValue(tourId, out var cachedStops))
+            {
+                return cachedStops;
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[API] Error while loading stops for tour {TourId}", tourId);
+            var sqliteCachedStops = await LoadCachedListAsync<TourStopDto>(TourStopsCacheKey(tourId));
+            if (sqliteCachedStops is { Count: > 0 })
+            {
+                return sqliteCachedStops;
+            }
+
+            if (_tourStopsCache.TryGetValue(tourId, out var cachedStops))
+            {
+                return cachedStops;
+            }
+
+            return null;
+        }
+    }
+
+    public async Task<IReadOnlyList<TourSummaryDto>?> GetToursAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (_toursMemoryCache is { Count: > 0 })
+            {
+                _logger.LogInformation("[API][CACHE] Tours from memory cache: {TourCount}", _toursMemoryCache.Count);
+                return _toursMemoryCache;
+            }
+
+            var sqliteCachedTours = await LoadCachedListAsync<TourSummaryDto>(ToursCacheKey);
+            if (sqliteCachedTours is { Count: > 0 })
+            {
+                _toursMemoryCache = sqliteCachedTours;
+                _logger.LogInformation("[API][CACHE] Tours from SQLite cache: {TourCount}", sqliteCachedTours.Count);
+                return sqliteCachedTours;
+            }
+
+            _logger.LogWarning("[API] No local cached tours found");
+            return [];
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[API] Error while loading tours");
+            return _toursMemoryCache ?? await LoadCachedListAsync<TourSummaryDto>(ToursCacheKey);
+        }
+    }
+
+    public async Task SyncCoreDataFromServerIfOnlineAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("[API][SYNC] Startup sync begin");
+            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+            {
+                _logger.LogInformation("[API][SYNC] Skipped: no internet");
+                return;
+            }
+
+            var toursUri = BuildUri(ApiConstants.ToursEndpoint);
+            var tours = await _httpClient.GetFromJsonAsync<List<TourSummaryDto>>(toursUri, cancellationToken) ?? [];
+            await SaveCachedListAsync(ToursCacheKey, tours);
+            _toursMemoryCache = tours;
+            _logger.LogInformation("[API][SYNC] Tours synced: {TourCount}", tours.Count);
+
+            foreach (var tour in tours)
+            {
+                if (cancellationToken.IsCancellationRequested) break;
+                var stops = await FetchTourStopsFromServerAsync(tour.Id, cancellationToken);
+                if (stops is { Count: > 0 })
+                {
+                    _tourStopsCache[tour.Id] = stops;
+                    await SaveCachedListAsync(TourStopsCacheKey(tour.Id), stops);
+                    _logger.LogInformation("[API][SYNC] Tour {TourId} stops synced: {StopCount}", tour.Id, stops.Count);
+                }
+            }
+
+            _logger.LogInformation("[API][SYNC] Startup sync end");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[API] Startup sync skipped/failed");
+        }
     }
 
     public async Task<IReadOnlyList<Zone>?> GetZonesAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            Debug.WriteLine($"[API] Loading zones from {_httpClient.BaseAddress}{ApiConstants.ZonesEndpoint}");
-            var zones = await _httpClient.GetFromJsonAsync<List<Zone>>(ApiConstants.ZonesEndpoint, cancellationToken) ?? [];
+            var zonesUri = BuildUri(ApiConstants.ZonesEndpoint);
+            Debug.WriteLine($"[API] Loading zones from {zonesUri}");
+            var zones = await _httpClient.GetFromJsonAsync<List<Zone>>(zonesUri, cancellationToken) ?? [];
             _logger.LogInformation("[API] Loaded {ZoneCount} zones", zones.Count);
             return zones;
         }
@@ -56,7 +234,7 @@ public class ApiService
     {
         try
         {
-            var favorites = await _httpClient.GetFromJsonAsync<List<FavoriteDto>>($"api/favorites/{guestId}", cancellationToken);
+            var favorites = await _httpClient.GetFromJsonAsync<List<FavoriteDto>>(BuildUri($"api/favorites/{guestId}"), cancellationToken);
             return favorites;
         }
         catch (Exception ex)
@@ -70,7 +248,7 @@ public class ApiService
     {
         try
         {
-            var response = await _httpClient.PostAsJsonAsync("api/favorites", new { GuestId = guestId, ZoneId = zoneId }, cancellationToken);
+            var response = await _httpClient.PostAsJsonAsync(BuildUri("api/favorites"), new { GuestId = guestId, ZoneId = zoneId }, cancellationToken);
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)
@@ -84,7 +262,7 @@ public class ApiService
     {
         try
         {
-            var response = await _httpClient.DeleteAsync($"api/favorites/{guestId}/{zoneId}", cancellationToken);
+            var response = await _httpClient.DeleteAsync(BuildUri($"api/favorites/{guestId}/{zoneId}"), cancellationToken);
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)
@@ -104,7 +282,7 @@ public class ApiService
                 CreatedAt = DateTime.UtcNow
             };
 
-            var response = await _httpClient.PostAsJsonAsync($"{ApiConstants.AnalyticsEndpoint}/install", payload, cancellationToken);
+            var response = await _httpClient.PostAsJsonAsync(BuildUri($"{ApiConstants.AnalyticsEndpoint}/install"), payload, cancellationToken);
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)
@@ -128,13 +306,14 @@ public class ApiService
         {
             if (absoluteUri.Scheme == Uri.UriSchemeFile)
             {
-                if (_httpClient.BaseAddress is null)
+                var baseUri = GetBaseUri();
+                if (baseUri is null)
                 {
                     return string.Empty;
                 }
 
                 var filePath = absoluteUri.LocalPath.Replace('\\', '/').TrimStart('/');
-                return new Uri(_httpClient.BaseAddress, filePath).ToString();
+                return new Uri(baseUri, filePath).ToString();
             }
 
             if (absoluteUri.Scheme != Uri.UriSchemeHttp && absoluteUri.Scheme != Uri.UriSchemeHttps)
@@ -144,9 +323,9 @@ public class ApiService
 
             if ((absoluteUri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
                 || absoluteUri.Host.Equals("127.0.0.1"))
-                && _httpClient.BaseAddress is not null)
+                )
             {
-                var baseUri = _httpClient.BaseAddress;
+                var baseUri = GetBaseUri();
                 return new UriBuilder(absoluteUri)
                 {
                     Scheme = baseUri.Scheme,
@@ -158,13 +337,8 @@ public class ApiService
             return absoluteUri.ToString();
         }
 
-        if (_httpClient.BaseAddress is null)
-        {
-            return imageUrl;
-        }
-
         var relativePath = imageUrl.TrimStart('~', '/');
-        return new Uri(_httpClient.BaseAddress!, relativePath).ToString();
+        return new Uri(GetBaseUri(), relativePath).ToString();
     }
 
     private sealed class ZoneSummaryDto
@@ -196,5 +370,26 @@ public class FavoriteZoneDto
     public double Latitude { get; set; }
     public double Longitude { get; set; }
     public int? ShopId { get; set; }
+}
+
+public class TourSummaryDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string? ImageUrl { get; set; }
+    public int Duration { get; set; }
+    public int StopsCount { get; set; }
+}
+
+public class TourStopDto
+{
+    public int ZoneId { get; set; }
+    public int OrderIndex { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string? ImageUrl { get; set; }
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
 }
 

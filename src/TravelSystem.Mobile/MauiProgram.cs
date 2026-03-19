@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using SkiaSharp.Views.Maui.Controls.Hosting;
 using TravelSystem.Mobile.Views;
 
 namespace TravelSystem.Mobile;
@@ -10,6 +11,7 @@ public static class MauiProgram
 		var builder = MauiApp.CreateBuilder();
 		builder
 			.UseMauiApp<App>()
+            .UseSkiaSharp()
 			.ConfigureFonts(fonts =>
 			{
                 fonts.AddFont("SpaceGrotesk-Bold.ttf", "SpaceGroteskBold");
@@ -31,6 +33,7 @@ public static class MauiProgram
 		// Register ViewModels
 		builder.Services.AddSingleton<ViewModels.MainPageViewModel>();
 		builder.Services.AddSingleton<ViewModels.SavedPageViewModel>();
+        builder.Services.AddSingleton<ViewModels.TourDetailViewModel>();
 		builder.Services.AddTransient<ViewModels.LanguageSelectionViewModel>();
 
 
@@ -38,6 +41,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<MainPage>();
 		builder.Services.AddTransient<AppShell>();
         builder.Services.AddTransient<SavedPage>();
+        builder.Services.AddSingleton<TourDetailPage>();
 		builder.Services.AddTransient<SettingsPage>();
         builder.Services.AddTransient<LanguageSelectionPage>();
 

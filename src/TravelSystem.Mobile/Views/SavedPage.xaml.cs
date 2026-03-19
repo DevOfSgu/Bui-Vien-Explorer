@@ -1,3 +1,5 @@
+using TravelSystem.Mobile.ViewModels;
+
 namespace TravelSystem.Mobile.Views;
 
 public partial class SavedPage : ContentPage

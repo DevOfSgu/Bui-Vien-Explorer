@@ -2,23 +2,29 @@
 -- SAMPLE DATA - Bùi Viện Explorer (Đã mở rộng 20 record/bảng)
 -- ============================================================
 -- Xóa data cũ (nếu bảng tồn tại)
+IF OBJECT_ID('GuestFavorites','U') IS NOT NULL DELETE FROM GuestFavorites;
+IF OBJECT_ID('TourZones','U') IS NOT NULL DELETE FROM TourZones;
+IF OBJECT_ID('Tours','U') IS NOT NULL DELETE FROM Tours;
 IF OBJECT_ID('AppSettings','U') IS NOT NULL DELETE FROM AppSettings;
+
 IF OBJECT_ID('ShopHours','U') IS NOT NULL DELETE FROM ShopHours;
 IF OBJECT_ID('Narrations','U') IS NOT NULL DELETE FROM Narrations;
 IF OBJECT_ID('Analytics','U') IS NOT NULL DELETE FROM Analytics;
 IF OBJECT_ID('Zones','U') IS NOT NULL DELETE FROM Zones;
 IF OBJECT_ID('Users','U') IS NOT NULL DELETE FROM Users;
-IF OBJECT_ID('Routes','U') IS NOT NULL DELETE FROM Routes;
 IF OBJECT_ID('Shops','U') IS NOT NULL DELETE FROM Shops;
 
 -- Reset Identity counters
-IF OBJECT_ID('AppSettings','U') IS NOT NULL DBCC CHECKIDENT ('AppSettings', RESEED, 0);
+-- AppSettings dùng Key (string) làm PK, không có identity -- không cần RESEED
+
 IF OBJECT_ID('ShopHours','U') IS NOT NULL DBCC CHECKIDENT ('ShopHours', RESEED, 0);
 IF OBJECT_ID('Shops','U') IS NOT NULL DBCC CHECKIDENT ('Shops', RESEED, 0);
-IF OBJECT_ID('Routes','U') IS NOT NULL DBCC CHECKIDENT ('Routes', RESEED, 0);
 IF OBJECT_ID('Zones','U') IS NOT NULL DBCC CHECKIDENT ('Zones', RESEED, 0);
+IF OBJECT_ID('Tours','U') IS NOT NULL DBCC CHECKIDENT ('Tours', RESEED, 0);
 IF OBJECT_ID('Narrations','U') IS NOT NULL DBCC CHECKIDENT ('Narrations', RESEED, 0);
 IF OBJECT_ID('Users','U') IS NOT NULL DBCC CHECKIDENT ('Users', RESEED, 0);
+
+
 
 -- ============================================================
 -- 1. Insert 20 Shops
@@ -156,9 +162,9 @@ CROSS JOIN (VALUES (1),(2),(3),(4),(5),(6),(7)) v(Number);
 -- ============================================================
 -- 1b. System settings defaults
 -- ============================================================
-INSERT INTO AppSettings([Key],[Value])
-VALUES ('DefaultLanguage','vi'),
-       ('EnableApiSync','1');
+INSERT INTO AppSettings([Key],[Value],[UpdatedAt])
+VALUES ('DefaultLanguage','vi', GETDATE()),
+       ('EnableApiSync','1', GETDATE());
 
 -- ============================================================
 -- 2. Insert 20 Users (2 Admins, 18 Vendors)
@@ -186,35 +192,15 @@ VALUES (N'admin', N'123456', N'Admin User', N'admin@buivienexplorer.com', 0, NUL
     (N'vendor18', N'123456', N'Vendor 18', N'vendor18@example.com', 1, 18, 1);
 
 -- ============================================================
--- 3. Insert 1 Route
+-- 3. (Routes removed)
 -- ============================================================
-INSERT INTO Routes (
-        Name,
-        Description,
-        StartLatitude,
-        StartLongitude,
-        ImageUrl,
-        IsActive
-    )
 
-VALUES (
-        N'Bùi Viện Walking Tour',
-        N'Khám phá phố đi bộ Bùi Viện từ đầu đến cuối.',
-        10.76968,
-        106.69156,
-        '/images/routes/route-1.jpg',
-        1
-    );
-
--- routeId will be queried when needed below
-DECLARE @routeId INT = CAST(SCOPE_IDENTITY() AS INT);
 
 
 -- ============================================================
--- 4. Insert 20 Zones (Mỗi Route gán 1 Zone để đảm bảo có data)
+-- 4. Insert 20 Zones
 -- ============================================================
 INSERT INTO Zones (
-        RouteId,
         ShopId,
         Name,
         Description,
@@ -224,11 +210,15 @@ INSERT INTO Zones (
         OrderIndex,
         ZoneType,
         IsActive,
-        ActiveTime
+        ActiveTime,
+        IsLocked,
+        IsHidden,
+        LockReason
     )
+
 VALUES (
-        @routeId,
         NULL,
+
         N'Cổng chào Bùi Viện',
         N'Nơi đón khách tham quan chính thức của toàn phố.',
         10.76968,
@@ -237,11 +227,14 @@ VALUES (
         1,
         3,
         1,
-        0
+        0,
+        0,
+        0,
+        NULL
     ),
     (
-        @routeId,
         1,
+
         N'The Hideout Bar',
         N'Quán bar lâu đời.',
         10.76945,
@@ -250,11 +243,14 @@ VALUES (
         2,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
-        @routeId,
         2,
+
         N'Crazy Buffalo Bar',
         N'Biểu tượng nổi tiếng với mô hình trâu rừng.',
         10.76930,
@@ -263,11 +259,14 @@ VALUES (
         3,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
-        @routeId,
         NULL,
+
         N'Quảng trường giữa',
         N'Nơi hay có múa lửa nghệ thuật.',
         10.76910,
@@ -276,11 +275,14 @@ VALUES (
         4,
         3,
         1,
-        0
+        0,
+        0,
+        0,
+        NULL
     ),
     (
-        @routeId,
         3,
+
         N'Spotted By Locals',
         N'Nhà hàng có không khí lãng mạn.',
         10.76890,
@@ -289,11 +291,14 @@ VALUES (
         5,
         1,
         1,
-        0
+        0,
+        0,
+        0,
+        NULL
     ),
     (
-        @routeId,
         4,
+
         N'Boheme Pub',
         N'Điểm đến cho sinh viên quẩy banh nóc.',
         10.76895,
@@ -302,11 +307,14 @@ VALUES (
         6,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
-        @routeId,
         5,
+
         N'Sahara Beer Club',
         N'Trải nghiệm bia hơi và nhạc DJ.',
         10.76890,
@@ -315,11 +323,14 @@ VALUES (
         7,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
-        @routeId,
         6,
+
         N'Miss Saigon',
         N'Phong cách sang trọng với âm nhạc hiện đại.',
         10.76885,
@@ -328,11 +339,14 @@ VALUES (
         8,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
-        @routeId,
         7,
+
         N'Ocean Club',
         N'Nổi bật với thiết kế xanh mát nhiệt đới.',
         10.76880,
@@ -341,11 +355,14 @@ VALUES (
         9,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
-        @routeId,
         8,
+
         N'Donkey Bar',
         N'Không gian nhỏ, ấm cúng.',
         10.76875,
@@ -354,11 +371,14 @@ VALUES (
         10,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
-        @routeId,
         9,
+
         N'Universal Pub',
         N'Nhạc sống Tây ba lô yêu thích.',
         10.76870,
@@ -367,11 +387,14 @@ VALUES (
         11,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
-        @routeId,
         10,
+
         N'Champion Sports Bar',
         N'Nơi xem bóng đá ngoại hạng Anh tốt nhất.',
         10.76865,
@@ -380,11 +403,14 @@ VALUES (
         12,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
-        @routeId,
         11,
+
         N'Hair of the Dog',
         N'Sôi động thâu đêm.',
         10.76860,
@@ -393,11 +419,14 @@ VALUES (
         13,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
-        @routeId,
         12,
+
         N'Republic Club',
         N'Sang trọng đẳng cấp.',
         10.76855,
@@ -406,11 +435,14 @@ VALUES (
         14,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
-        @routeId,
         13,
+
         N'86 Club',
         N'Góc phố nhìn ra công viên 23/9.',
         10.76850,
@@ -419,11 +451,14 @@ VALUES (
         15,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
-        @routeId,
         14,
+
         N'Le Pub',
         N'Khách Tây hay ngồi vỉa hè.',
         10.76845,
@@ -432,11 +467,14 @@ VALUES (
         16,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
-        @routeId,
         15,
+
         N'Asiana Food Town',
         N'Khu ẩm thực đa quốc gia.',
         10.76840,
@@ -445,11 +483,14 @@ VALUES (
         17,
         1,
         1,
-        0
+        0,
+        0,
+        0,
+        NULL
     ),
     (
-        @routeId,
         16,
+
         N'Krystal Lounge',
         N'Thư giãn thưởng thức Shisha.',
         10.76835,
@@ -458,11 +499,14 @@ VALUES (
         18,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
-        @routeId,
         17,
+
         N'Nubes Rooftop',
         N'Từ tầng thượng bạn có thể ngắm Landmark 81.',
         10.76830,
@@ -471,11 +515,14 @@ VALUES (
         19,
         0,
         1,
-        2
+        2,
+        0,
+        0,
+        NULL
     ),
     (
-        @routeId,
         18,
+
         N'Sky Bar 360',
         N'Nhạc House, chill.',
         10.76825,
@@ -484,116 +531,19 @@ VALUES (
         20,
         0,
         1,
-        2
-    );
-
--- ============================================================
--- 4a. Insert thêm 1 Route + 5 Zones (Bùi Viện Food Tour)
--- ============================================================
-INSERT INTO Routes (
-        Name,
-        Description,
-        StartLatitude,
-        StartLongitude,
-        ImageUrl,
-        IsActive
-    )
-VALUES (
-        N'Bùi Viện Food Tour',
-        N'Food tour khám phá các điểm ăn uống đặc trưng tại Bùi Viện.',
-        10.76910,
-        106.69180,
-        '/images/routes/route-food-tour.jpg',
-        1
-    );
-
-DECLARE @foodRouteId INT = CAST(SCOPE_IDENTITY() AS INT);
-
-INSERT INTO Zones (
-        RouteId,
-        ShopId,
-        Name,
-        Description,
-        Latitude,
-        Longitude,
-        Radius,
-        OrderIndex,
-        ZoneType,
-        IsActive,
-        ActiveTime
-    )
-VALUES (
-        @foodRouteId,
-        NULL,
-        N'Điểm ăn 1 - Bánh Mì Đêm 24h',
-        N'Bắt đầu food tour với bánh mì nóng giòn đặc trưng.',
-        10.76905,
-        106.69190,
-        18,
-        1,
-        1,
-        1,
-        4
-    ),
-    (
-        @foodRouteId,
-        NULL,
-        N'Điểm ăn 2 - Xiên Nướng Vỉa Hè',
-        N'Khu xiên nướng đông khách về đêm.',
-        10.76895,
-        106.69205,
-        18,
         2,
-        1,
-        1,
-        5
-    ),
-    (
-        @foodRouteId,
-        NULL,
-        N'Điểm ăn 3 - Hải Sản Chảo Lửa',
-        N'Thưởng thức hải sản nóng tại khu ẩm thực trung tâm.',
-        10.76882,
-        106.69218,
-        20,
-        3,
-        1,
-        1,
-        6
-    ),
-    (
-        @foodRouteId,
-        NULL,
-        N'Điểm ăn 4 - Tráng Miệng Chè Lạnh',
-        N'Kết hợp món ngọt và đồ uống giải nhiệt.',
-        10.76870,
-        106.69230,
-        18,
-        4,
-        1,
-        1,
-        4
-    ),
-    (
-        @foodRouteId,
-        NULL,
-        N'Điểm ăn 5 - Kết Tour Food Court 23/9',
-        N'Điểm kết thúc food tour với nhiều lựa chọn địa phương.',
-        10.76858,
-        106.69242,
-        22,
-        5,
-        1,
-        1,
-        5
+        0,
+        0,
+        NULL
     );
 
 -- ============================================================
--- 5. Insert 20 Narrations (Gán cho 20 Zones, random ngôn ngữ)
+-- 5. Insert 20 Narrations
 -- ============================================================
--- capture the first 20 zone ids in variables so we don't assume they start at 1
 DECLARE @z1 INT,@z2 INT,@z3 INT,@z4 INT,@z5 INT,@z6 INT,@z7 INT,@z8 INT,@z9 INT,@z10 INT,
         @z11 INT,@z12 INT,@z13 INT,@z14 INT,@z15 INT,@z16 INT,@z17 INT,@z18 INT,@z19 INT,@z20 INT;
+
+SET ANSI_WARNINGS OFF;
 
 WITH numbered AS (
     SELECT Id, ROW_NUMBER() OVER (ORDER BY Id) AS rn
@@ -622,6 +572,8 @@ SELECT
     @z20 = MAX(CASE WHEN rn = 20 THEN Id END)
 FROM numbered;
 
+SET ANSI_WARNINGS ON;
+
 IF EXISTS (SELECT 1 FROM Zones)
 BEGIN
 INSERT INTO Narrations (ZoneId, Language, Text, VoiceId)
@@ -640,7 +592,7 @@ VALUES (
     (
         @z3,
         N'vi',
-        N'Crazy Buffalo Bar có không gian cực đại. Hãy chụp một bức ảnh check-in ở đây nhé.',
+        N'Crazy Buffalo Bar có không gian cực đại. Hãy chụp một bức ảnh check in ở đây nhé.',
         N'vi-VN-Standard-A'
     ),
     (
@@ -747,24 +699,41 @@ VALUES (
     );
 END
 
+-- ============================================================
+-- 6. Insert Sample Tours
+-- ============================================================
+INSERT INTO Tours (Name, Description, Duration, ImageUrl)
+VALUES (
+    N'Nightlife & Pub Crawl', 
+    N'Khám phá những quán bar sôi động nhất Bùi Viện về đêm.', 
+    120, 
+    N'https://images.unsplash.com/photo-1514525253361-bee8d41deeb4'
+),
+(
+    N'Street Food & Culture', 
+    N'Hành trình trải nghiệm ẩm thực đường phố và văn hóa địa phương.', 
+    90, 
+    N'https://images.unsplash.com/photo-1504674900247-0877df9cc836'
+);
+
+-- ============================================================
+-- 7. Insert TourZones (Assign zones to tours)
+-- ============================================================
+-- Tour 1: Nightlife (Z1, Z2, Z3, Z6, Z7, Z11)
+INSERT INTO TourZones (TourId, ZoneId, OrderIndex)
+SELECT 1, Id, CASE Id WHEN @z1 THEN 1 WHEN @z2 THEN 2 WHEN @z3 THEN 3 WHEN @z6 THEN 4 WHEN @z7 THEN 5 WHEN @z11 THEN 6 END
+FROM Zones WHERE Id IN (@z1, @z2, @z3, @z6, @z7, @z11);
+
+-- Tour 2: Street Food (Z1, @z5, @z15, @z17, @z20)
+INSERT INTO TourZones (TourId, ZoneId, OrderIndex)
+SELECT 2, Id, CASE Id WHEN @z1 THEN 1 WHEN @z5 THEN 2 WHEN @z15 THEN 3 WHEN @z17 THEN 4 WHEN @z20 THEN 5 END
+FROM Zones WHERE Id IN (@z1, @z5, @z15, @z17, @z20);
+
 -- Kiểm tra kết quả
-SELECT N'Routes' AS [Table],
-    COUNT(*) AS [Count]
-FROM Routes
-UNION ALL
-SELECT N'Zones',
-    COUNT(*)
-FROM Zones
-UNION ALL
-SELECT N'Narrations',
-    COUNT(*)
-FROM Narrations
-UNION ALL
-SELECT N'Shops',
-    COUNT(*)
-FROM Shops
-UNION ALL
-SELECT N'Users',
-    COUNT(*)
-FROM Users;
+SELECT N'Zones' AS [Table], COUNT(*) AS [Count] FROM Zones
+UNION ALL SELECT N'Narrations', COUNT(*) FROM Narrations
+UNION ALL SELECT N'Shops', COUNT(*) FROM Shops
+UNION ALL SELECT N'Users', COUNT(*) FROM Users
+UNION ALL SELECT N'Tours', COUNT(*) FROM Tours
+UNION ALL SELECT N'TourZones', COUNT(*) FROM TourZones;
 
