@@ -13,6 +13,11 @@ public partial class LanguageSelectionPage : ContentPage
         BindingContext = viewModel;
 
         Shell.SetTabBarIsVisible(this, false);
+        Shell.SetBackButtonBehavior(this, new BackButtonBehavior   // ← thêm
+        {
+            IsVisible = false,
+            IsEnabled = false
+        });
     }
 
     protected override void OnAppearing()

@@ -41,17 +41,26 @@ public class DatabaseService
                 Console.WriteLine("🗑️ Database cũ đã bị xóa — tạo lại schema mới...");
             }
 #endif
+            // Create core tables (CreateTablesAsync supports up to 4 generic type params)
             await _connection.CreateTablesAsync<
                 LocalZone,
                 LocalNarration,
                 LocalAnalytics,
                 AppSetting>();
 
+            // Create additional tables individually to avoid exceeding generic parameter limits
+            await _connection.CreateTableAsync<LocalFavorite>();
+            await _connection.CreateTableAsync<PendingFavoriteOp>();
+
             var localZoneColumns = await _connection.GetTableInfoAsync(nameof(LocalZone));
             if (!localZoneColumns.Any(c => c.Name.Equals(nameof(LocalZone.ImageUrl), StringComparison.OrdinalIgnoreCase)))
             {
                 await _connection.ExecuteAsync($"ALTER TABLE {nameof(LocalZone)} ADD COLUMN {nameof(LocalZone.ImageUrl)} TEXT");
             }
+
+            // Ensure LocalFavorite table has expected columns (migration path)
+            var localFavColumns = await _connection.GetTableInfoAsync(nameof(TravelSystem.Shared.Models.LocalFavorite));
+            // No schema changes needed now, placeholder for future migrations
 
             _isInitialized = true;
             Console.WriteLine("✅ Bùi Viện Database Initialized!");
@@ -63,6 +72,117 @@ public class DatabaseService
         finally
         {
             _initLock.Release();
+        }
+    }
+
+    // Local favorites helpers
+    public async Task<List<LocalFavorite>> GetLocalFavoritesAsync(string guestId)
+    {
+        try
+        {
+            await InitializeAsync();
+            return await _connection.Table<LocalFavorite>().Where(l => l.GuestId == guestId && l.IsDeleted == 0).ToListAsync();
+        }
+        catch
+        {
+            return new List<LocalFavorite>();
+        }
+    }
+
+    public async Task InsertOrUpdateLocalFavoriteAsync(LocalFavorite fav)
+    {
+        try
+        {
+            await InitializeAsync();
+            var existing = await _connection.Table<LocalFavorite>().FirstOrDefaultAsync(l => l.GuestId == fav.GuestId && l.ZoneId == fav.ZoneId);
+            if (existing == null)
+            {
+                await _connection.InsertAsync(fav);
+            }
+            else
+            {
+                existing.IsDeleted = fav.IsDeleted;
+                existing.UpdatedAt = DateTime.UtcNow;
+                existing.CreatedAt = fav.CreatedAt;
+                await _connection.UpdateAsync(existing);
+            }
+        }
+        catch
+        {
+        }
+    }
+
+    public async Task MarkLocalFavoriteDeletedAsync(string guestId, int zoneId)
+    {
+        try
+        {
+            await InitializeAsync();
+            var existing = await _connection.Table<LocalFavorite>().FirstOrDefaultAsync(l => l.GuestId == guestId && l.ZoneId == zoneId);
+            if (existing != null)
+            {
+                existing.IsDeleted = 1;
+                existing.UpdatedAt = DateTime.UtcNow;
+                await _connection.UpdateAsync(existing);
+            }
+        }
+        catch
+        {
+        }
+    }
+
+    public async Task InsertPendingOpAsync(PendingFavoriteOp op)
+    {
+        try
+        {
+            await InitializeAsync();
+            await _connection.InsertAsync(op);
+        }
+        catch
+        {
+        }
+    }
+
+    public async Task<List<PendingFavoriteOp>> GetPendingOpsAsync()
+    {
+        try
+        {
+            await InitializeAsync();
+            return await _connection.Table<PendingFavoriteOp>().Where(p => p.Processed == 0).OrderBy(p => p.CreatedAt).ToListAsync();
+        }
+        catch
+        {
+            return new List<PendingFavoriteOp>();
+        }
+    }
+
+    public async Task UpdatePendingOpAsync(PendingFavoriteOp op)
+    {
+        try
+        {
+            await InitializeAsync();
+            await _connection.UpdateAsync(op);
+        }
+        catch
+        {
+        }
+    }
+
+    public async Task ReplaceLocalFavoritesForGuestAsync(string guestId, List<LocalFavorite> favorites)
+    {
+        try
+        {
+            await InitializeAsync();
+            await _connection.RunInTransactionAsync(tran =>
+            {
+                tran.Execute($"DELETE FROM {nameof(LocalFavorite)} WHERE GuestId = ?", guestId);
+                foreach (var f in favorites)
+                {
+                    tran.Insert(f);
+                }
+            });
+        }
+        catch
+        {
         }
     }
 
@@ -138,5 +258,25 @@ public class DatabaseService
         var baseUrl = ApiConstants.GetBaseApiUrl();
 
         return new Uri(new Uri(baseUrl), relativePath).ToString();
+    }
+    // Xóa tất cả PendingOp đã processed
+    public async Task CleanupProcessedOpsAsync()
+    {
+        await InitializeAsync();
+        await _connection.ExecuteAsync(
+            "DELETE FROM PendingFavoriteOp WHERE Processed = 1");
+    }
+
+    // Xóa PendingOp trùng (giữ lại op mới nhất cho mỗi GuestId+ZoneId+Operation)
+    public async Task DeduplicatePendingOpsAsync()
+    {
+        await InitializeAsync();
+        await _connection.ExecuteAsync(@"
+        DELETE FROM PendingFavoriteOp 
+        WHERE Id NOT IN (
+            SELECT MAX(Id) FROM PendingFavoriteOp 
+            WHERE Processed = 0
+            GROUP BY GuestId, ZoneId, Operation
+        ) AND Processed = 0");
     }
 }

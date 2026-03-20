@@ -29,6 +29,11 @@ public partial class App : Application
     {
         base.OnStart();
         _ = InitializeAppAsync();
+        Connectivity.Current.ConnectivityChanged += async (s, e) =>
+        {
+            if (e.NetworkAccess == NetworkAccess.Internet)
+                await _apiService.SyncFavoritesIfOnlineAsync();
+        };
     }
 
     private async Task InitializeAppAsync()
@@ -59,10 +64,12 @@ public partial class App : Application
             _ = Task.Run(() => _tourDetailViewModel.WarmUpLocationPermissionAsync());
 
             _ = _apiService.SyncCoreDataFromServerIfOnlineAsync();
+            _ = _apiService.SyncFavoritesIfOnlineAsync();
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[APP] Startup init failed: {ex}");
         }
     }
+
 }

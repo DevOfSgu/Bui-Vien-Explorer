@@ -21,7 +21,7 @@ public class FavoritesController : ControllerBase
     [HttpGet("{guestId}")]
     public async Task<IActionResult> GetByGuest(string guestId)
     {
-        var favorites = await _db.GuestFavorites
+        var rawFavorites = await _db.GuestFavorites
             .Where(f => f.GuestId == guestId)
             .Join(_db.Zones, f => f.ZoneId, z => z.Id, (f, z) => new
             {
@@ -41,6 +41,11 @@ public class FavoritesController : ControllerBase
             .OrderByDescending(f => f.CreatedAt)
             .ToListAsync();
 
+        var favorites = rawFavorites
+            .GroupBy(f => f.ZoneId)
+            .Select(g => g.First())
+            .ToList();
+
         return Ok(favorites);
     }
 
@@ -57,9 +62,19 @@ public class FavoritesController : ControllerBase
         if (!zoneExists)
             return NotFound(new { message = $"Zone {request.ZoneId} không tồn tại." });
 
-        // Kiểm tra đã like rồi chưa (UNIQUE constraint)
-        var alreadyExists = await _db.GuestFavorites
-            .AnyAsync(f => f.GuestId == request.GuestId && f.ZoneId == request.ZoneId);
+        // Kiểm tra đã like rồi chưa, đồng thời dọn dữ liệu trùng nếu có từ trước
+        var existingFavorites = await _db.GuestFavorites
+            .Where(f => f.GuestId == request.GuestId && f.ZoneId == request.ZoneId)
+            .OrderByDescending(f => f.CreatedAt)
+            .ToListAsync();
+
+        if (existingFavorites.Count > 1)
+        {
+            _db.GuestFavorites.RemoveRange(existingFavorites.Skip(1));
+            await _db.SaveChangesAsync();
+        }
+
+        var alreadyExists = existingFavorites.Count > 0;
 
         if (alreadyExists)
             return Ok(new { message = "Đã có trong danh sách yêu thích.", alreadyFavorited = true });
@@ -71,8 +86,16 @@ public class FavoritesController : ControllerBase
             CreatedAt = DateTime.UtcNow
         };
 
-        _db.GuestFavorites.Add(favorite);
-        await _db.SaveChangesAsync();
+        try
+        {
+            _db.GuestFavorites.Add(favorite);
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Trường hợp client gửi đúp gần như đồng thời
+            return Ok(new { message = "Đã có trong danh sách yêu thích.", alreadyFavorited = true });
+        }
 
         return Ok(new { message = "Đã thêm vào yêu thích.", favoriteId = favorite.Id, alreadyFavorited = false });
     }

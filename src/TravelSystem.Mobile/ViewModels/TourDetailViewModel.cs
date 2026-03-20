@@ -10,8 +10,11 @@ namespace TravelSystem.Mobile.ViewModels;
 public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
 {
     private readonly ApiService _apiService;
+    private readonly DatabaseService _dbService;
     private readonly SemaphoreSlim _loadLock = new(1, 1);
     private readonly SemaphoreSlim _permissionLock = new(1, 1);
+    private readonly HashSet<int> _favoritePendingZoneIds = new();
+    private readonly object _favoriteLock = new();
     private CancellationTokenSource? _locationCts;
     private Location? _lastMapRefreshLocation;
     private bool _isForegroundTracking;
@@ -54,9 +57,10 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         Debug.WriteLine($"[TOUR_DETAIL][{DateTime.Now:HH:mm:ss.fff}] {message}");
     }
 
-    public TourDetailViewModel(ApiService apiService)
+    public TourDetailViewModel(ApiService apiService, DatabaseService dbService)
     {
         _apiService = apiService;
+        _dbService = dbService;
         LoadDataCommand = new AsyncRelayCommand(LoadData);
         ToggleFavoriteCommand = new AsyncRelayCommand<PoiStopItem>(ToggleFavorite);
         SelectStopCommand = new RelayCommand<PoiStopItem>(SelectStop);
@@ -128,10 +132,29 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             IsLoading = true;
 
             var stopsTask = _apiService.GetTourStopsAsync(TourId);
+            var guestIdTask = _apiService.EnsureGuestIdAsync();
             Trace("Requested local tour stops");
 
             var stops = await stopsTask;
             Trace($"Stops resolved: {(stops == null ? "null" : stops.Count.ToString())}");
+
+            var favoriteZoneIds = new HashSet<int>();
+            try
+            {
+                var guestId = await guestIdTask;
+                var favorites = await _apiService.GetFavoritesAsync(guestId);
+                if (favorites != null)
+                {
+                    favoriteZoneIds = favorites
+                        .Select(f => f.ZoneId)
+                        .ToHashSet();
+                }
+                Trace($"Favorites resolved: {favoriteZoneIds.Count}");
+            }
+            catch (Exception ex)
+            {
+                Trace($"Favorites resolve failed: {ex.Message}");
+            }
 
             PoiStops.Clear();
             if (stops != null)
@@ -147,7 +170,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
                         ImageUrl = stop.ImageUrl ?? string.Empty,
                         Latitude = stop.Latitude,
                         Longitude = stop.Longitude,
-                        IsFavorite = false
+                        IsFavorite = favoriteZoneIds.Contains(stop.ZoneId)
                     });
                 }
             }
@@ -217,18 +240,102 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     {
         if (stop == null) return;
 
-        var guestId = await _apiService.EnsureGuestIdAsync();
-        bool success;
-
-        if (stop.IsFavorite)
+        lock (_favoriteLock)
         {
-            success = await _apiService.RemoveFavoriteAsync(guestId, stop.ZoneId);
-            if (success) stop.IsFavorite = false;
+            if (!_favoritePendingZoneIds.Add(stop.ZoneId))
+            {
+                return;
+            }
         }
-        else
+        try
         {
-            success = await _apiService.AddFavoriteAsync(guestId, stop.ZoneId);
-            if (success) stop.IsFavorite = true;
+            var guestId = await _apiService.EnsureGuestIdAsync();
+            bool success = false;
+            var before = stop.IsFavorite;
+
+            // Offline-first: enqueue local op when no network
+            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+            {
+                if (stop.IsFavorite)
+                {
+                    // remove locally
+                    await _dbService.MarkLocalFavoriteDeletedAsync(guestId, stop.ZoneId);
+                    await _dbService.InsertPendingOpAsync(new TravelSystem.Shared.Models.PendingFavoriteOp
+                    {
+                        GuestId = guestId,
+                        ZoneId = stop.ZoneId,
+                        Operation = TravelSystem.Shared.Models.FavoriteOperation.Remove,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                    stop.IsFavorite = false;
+                    success = true;
+                }
+                else
+                {
+                    // add locally
+                    await _dbService.InsertOrUpdateLocalFavoriteAsync(new TravelSystem.Shared.Models.LocalFavorite
+                    {
+                        GuestId = guestId,
+                        ZoneId = stop.ZoneId,
+                        CreatedAt = DateTime.UtcNow,
+                        IsDeleted = 0
+                    });
+                    await _dbService.InsertPendingOpAsync(new TravelSystem.Shared.Models.PendingFavoriteOp
+                    {
+                        GuestId = guestId,
+                        ZoneId = stop.ZoneId,
+                        Operation = TravelSystem.Shared.Models.FavoriteOperation.Add,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                    stop.IsFavorite = true;
+                    success = true;
+                }
+            }
+            else
+            {
+                if (stop.IsFavorite)
+                {
+                    success = await _apiService.RemoveFavoriteAsync(guestId, stop.ZoneId);
+                    if (success)
+                    {
+                        stop.IsFavorite = false;
+                        await _dbService.MarkLocalFavoriteDeletedAsync(guestId, stop.ZoneId);
+                    }
+                }
+                else
+                {
+                    success = await _apiService.AddFavoriteAsync(guestId, stop.ZoneId);
+                    if (success)
+                    {
+                        stop.IsFavorite = true;
+                        await _dbService.InsertOrUpdateLocalFavoriteAsync(new TravelSystem.Shared.Models.LocalFavorite
+                        {
+                            GuestId = guestId,
+                            ZoneId = stop.ZoneId,
+                            CreatedAt = DateTime.UtcNow,
+                            IsDeleted = 0
+                        });
+                    }
+                }
+
+                // trigger background sync to reconcile any pending ops
+                _ = Task.Run(() => _apiService.SyncFavoritesIfOnlineAsync());
+            }
+
+            if (!success)
+            {
+                Trace($"ToggleFavorite failed for ZoneId={stop.ZoneId}");
+                return;
+            }
+
+            Trace($"ToggleFavorite success ZoneId={stop.ZoneId}, before={before}, after={stop.IsFavorite}");
+        }
+        finally
+        {
+            lock (_favoriteLock)
+            {
+                _favoritePendingZoneIds.Remove(stop.ZoneId);
+            }
         }
     }
 

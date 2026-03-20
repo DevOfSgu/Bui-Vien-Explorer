@@ -29,7 +29,7 @@ public class ToursController : ControllerBase
                 t.Description,
                 t.ImageUrl,
                 t.Duration,
-                StopsCount = t.TourZones.Count
+                StopsCount = t.TourZones.Count(tz => tz.Zone != null && tz.Zone.IsActive && !tz.Zone.IsHidden)
             })
             .ToListAsync();
 
@@ -47,7 +47,7 @@ public class ToursController : ControllerBase
 
         var stops = await _db.TourZones
             .AsNoTracking()
-            .Where(tz => tz.TourId == id)
+            .Where(tz => tz.TourId == id && tz.Zone != null && tz.Zone.IsActive && !tz.Zone.IsHidden)
             .OrderBy(tz => tz.OrderIndex)
             .Select(tz => new
             {

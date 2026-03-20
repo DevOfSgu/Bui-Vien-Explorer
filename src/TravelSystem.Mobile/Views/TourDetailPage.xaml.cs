@@ -15,13 +15,13 @@ namespace TravelSystem.Mobile.Views;
 
 public partial class TourDetailPage : ContentPage
 {
-    private const double BuiVienLatitude = 10.7677;
-    private const double BuiVienLongitude = 106.6932;
-    private const double MinFocusMeters = 600;
+    private const double BuiVienLatitude = 10.764017;
+    private const double BuiVienLongitude = 106.692527;
+    private const double MinFocusMeters = 550;
 
-    // Mapsui 5: MemoryLayer không có CRS — khai báo đơn giản
+    // Mapsui layers
     private readonly MemoryLayer _routeLayer = new() { Name = "RouteLayer" };
-    private readonly MemoryLayer _poiLayer = new() { Name = "PoiLayer" };
+    private readonly MemoryLayer _poiLayer  = new() { Name = "PoiLayer" };
     private readonly MemoryLayer _userLayer = new() { Name = "UserLayer" };
 
     private readonly TourDetailViewModel _viewModel;
@@ -38,6 +38,16 @@ public partial class TourDetailPage : ContentPage
     private bool _isMapInitialized;
     private Task? _mapInitTask;
     private MRect? _lastViewportExtent;
+    private static readonly List<IFeature> EmptyFeatures = [];
+
+    // ─── Bottom Sheet ────────────────────────────────────────────────────────
+    // 3 snap points (tỉ lệ chiều cao màn hình: 0=top, 1=bottom), tăng dần
+    private static readonly double[] SnapPoints = { 0.10, 0.52, 0.88 };
+
+    private double _sheetSnapY     = 0.52;  // snap hiện tại (bắt đầu ở Half)
+    private double _panStartTransY = 0;     // TranslationY lúc bắt đầu kéo
+    private double _lastPanTotalY  = 0;     // TotalY tích luỹ gesture hiện tại
+    private bool   _isPanning      = false;
 
     public TourDetailPage(TourDetailViewModel viewModel)
     {
@@ -45,6 +55,83 @@ public partial class TourDetailPage : ContentPage
         _viewModel = viewModel;
         BindingContext = _viewModel;
         Shell.SetTabBarIsVisible(this, false);
+    }
+
+    // ─── Bottom Sheet Drag ───────────────────────────────────────────────────
+
+    protected override void OnSizeAllocated(double width, double height)
+    {
+        base.OnSizeAllocated(width, height);
+        if (width <= 0 || height <= 0 || BottomSheet == null) return;
+        if (_isPanning) return; // không reset khi đang kéo
+
+        // WidthProportional: width=1.0 luôn = 100% màn hình → không bị cắt
+        AbsoluteLayout.SetLayoutFlags(BottomSheet, Microsoft.Maui.Layouts.AbsoluteLayoutFlags.WidthProportional);
+        AbsoluteLayout.SetLayoutBounds(BottomSheet, new Rect(0, _sheetSnapY * height, 1.0, height));
+        BottomSheet.TranslationY = 0;
+    }
+
+    private void OnBottomSheetPanUpdated(object? sender, PanUpdatedEventArgs e)
+    {
+        if (BottomSheet == null) return;
+        var pageH = Height;
+        if (pageH <= 0) return;
+
+        switch (e.StatusType)
+        {
+            case GestureStatus.Started:
+                _isPanning      = true;
+                _panStartTransY = BottomSheet.TranslationY;
+                _lastPanTotalY  = 0;
+                break;
+
+            case GestureStatus.Running:
+                if (!_isPanning) break;
+                _lastPanTotalY = e.TotalY;
+
+                var raw      = _panStartTransY + e.TotalY;
+                var baseY    = _sheetSnapY * pageH;
+                var minTrans = SnapPoints[0] * pageH - baseY;      // giới hạn Expanded
+                var maxTrans = SnapPoints[^1] * pageH - baseY;     // giới hạn Collapsed
+                BottomSheet.TranslationY = Math.Clamp(raw, minTrans, maxTrans);
+                break;
+
+            case GestureStatus.Completed:
+            case GestureStatus.Canceled:
+                if (!_isPanning) break;
+                _isPanning = false;
+                SnapByDirection(pageH, _lastPanTotalY);
+                break;
+        }
+    }
+
+    // Snap theo HƯỚNG kéo thay vì vị trí gần nhất
+    private void SnapByDirection(double pageH, double dragTotalY)
+    {
+        const double threshold = 40; // px tối thiểu để chuyển sang state khác
+
+        var currentIdx = Array.IndexOf(SnapPoints, _sheetSnapY);
+        double target;
+
+        if (dragTotalY < -threshold && currentIdx > 0)
+            target = SnapPoints[currentIdx - 1];          // kéo LÊN → mở rộng
+        else if (dragTotalY > threshold && currentIdx < SnapPoints.Length - 1)
+            target = SnapPoints[currentIdx + 1];          // kéo XUỐNG → thu nhỏ
+        else
+            target = _sheetSnapY;                         // kéo nhẹ → giữ nguyên
+
+        var fromY = _sheetSnapY * pageH + BottomSheet.TranslationY;
+        _sheetSnapY = target;
+        var toY = target * pageH;
+
+        var anim = new Animation(v =>
+        {
+            AbsoluteLayout.SetLayoutFlags(BottomSheet, Microsoft.Maui.Layouts.AbsoluteLayoutFlags.WidthProportional);
+            AbsoluteLayout.SetLayoutBounds(BottomSheet, new Rect(0, v, 1.0, pageH));
+            BottomSheet.TranslationY = 0;
+        }, fromY, toY);
+
+        anim.Commit(this, "SheetSnap", length: 260, easing: Easing.CubicOut);
     }
 
     // ─── Lifecycle ───────────────────────────────────────────────────────────
@@ -63,7 +150,7 @@ public partial class TourDetailPage : ContentPage
             // Quay lại trang → reset key để bắt buộc vẽ lại
             _lastStaticMapKey = null;
             RenderMap();
-            FocusOnSelectedStop();
+            FocusOnBuiVienAnchor();
         }
         else
         {
@@ -127,7 +214,7 @@ public partial class TourDetailPage : ContentPage
         {
             Debug.WriteLine($"[MAP_INIT] Calling initial RenderMap, stops={_viewModel.PoiStops.Count}");
             RenderMap();
-            FocusOnSelectedStop();
+            FocusOnBuiVienAnchor();
         });
     }
 
@@ -191,9 +278,7 @@ public partial class TourDetailPage : ContentPage
 
     private void OnFocusBuiVienClicked(object? sender, EventArgs e)
     {
-        if (!_isMapInitialized || _mapControl == null) return;
-        MoveToFitRegion(_viewModel.PoiStops.FirstOrDefault(x => x.IsSelected));
-        _mapControl.Refresh();
+        FocusOnBuiVienAnchor();
     }
 
     // ─── Render ──────────────────────────────────────────────────────────────
@@ -206,9 +291,9 @@ public partial class TourDetailPage : ContentPage
 
         if (_viewModel.PoiStops.Count == 0)
         {
-            _routeLayer.Features = null;
-            _poiLayer.Features = null;
-            _userLayer.Features = null;
+            _routeLayer.Features = EmptyFeatures;
+            _poiLayer.Features = EmptyFeatures;
+            _userLayer.Features = EmptyFeatures;
             _routeLayer.DataHasChanged();
             _poiLayer.DataHasChanged();
             _userLayer.DataHasChanged();
@@ -256,10 +341,17 @@ public partial class TourDetailPage : ContentPage
         var userChanged = UpdateUserLayer();
 
         var didFocus = false;
-        if (!_hasFocusedOnce || selectedZoneId != _lastSelectedZoneId)
+        if (!_hasFocusedOnce)
+        {
+            FocusOnBuiVienAnchor();
+            _hasFocusedOnce = true;
+            _lastSelectedZoneId = selectedZoneId;
+            didFocus = true;
+            Debug.WriteLine("[RENDER] Initial focus → Bùi Viện");
+        }
+        else if (selectedZoneId != _lastSelectedZoneId)
         {
             MoveToFitRegion(selectedStop);
-            _hasFocusedOnce = true;
             _lastSelectedZoneId = selectedZoneId;
             didFocus = true;
             Debug.WriteLine($"[RENDER] Focus → zone={selectedZoneId}");
@@ -276,7 +368,7 @@ public partial class TourDetailPage : ContentPage
     {
         if (visibleStops.Count < 2)
         {
-            _routeLayer.Features = null;
+            _routeLayer.Features = EmptyFeatures;
             _routeLayer.DataHasChanged();
             Debug.WriteLine("[RENDER][Route] < 2 stops → skip");
             return;
@@ -363,8 +455,12 @@ public partial class TourDetailPage : ContentPage
 
         if (userLocation == null)
         {
-            if (_userLayer.Features == null) return false;
-            _userLayer.Features = null;
+            if (_userLayer.Features != null)
+            {
+                using var enumerator = _userLayer.Features.GetEnumerator();
+                if (!enumerator.MoveNext()) return false;
+            }
+            _userLayer.Features = EmptyFeatures;
             _userLayer.DataHasChanged();
             _lastRenderedUserLocation = null;
             return true;
@@ -405,6 +501,18 @@ public partial class TourDetailPage : ContentPage
         if (!_isMapInitialized || _mapControl == null) return;
         if (_viewModel.PoiStops.Count == 0) return;
         MoveToFitRegion(_viewModel.PoiStops.FirstOrDefault(x => x.IsSelected));
+        _mapControl.Refresh();
+    }
+
+    private void FocusOnBuiVienAnchor()
+    {
+        if (!_isMapInitialized || _mapControl == null) return;
+
+        var (cx, cy) = SphericalMercator.FromLonLat(BuiVienLongitude, BuiVienLatitude);
+        var half = MinFocusMeters / 2d;
+        _mapControl.Map?.Navigator?.ZoomToBox(
+            new MRect(cx - half, cy - half, cx + half, cy + half),
+            MBoxFit.Fit, 0, null);
         _mapControl.Refresh();
     }
 
