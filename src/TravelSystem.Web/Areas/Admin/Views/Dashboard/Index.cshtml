@@ -175,3 +175,139 @@
         </div>
     </div>
 </div>
+
+<!-- Dashboard Charts Section -->
+<div class="row g-4 mt-2">
+    <!-- Shop Owner Registrations -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="card-custom">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h6 class="fw-bold mb-0">Shop Owner Registrations (Monthly)</h6>
+                <span class="badge bg-light text-dark fw-normal">Đăng ký hằng tháng</span>
+            </div>
+            <div style="height: 300px;">
+                <canvas id="shopRegChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-lg-5">
+        <div class="card-custom h-100">
+            <h6 class="fw-bold mb-3">Số liệu hằng ngày (30 ngày)</h6>
+            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                <table class="table table-sm table-hover mb-0" style="font-size: 13px;">
+                    <thead class="sticky-top bg-white">
+                        <tr>
+                            <th>Ngày</th>
+                            <th class="text-end">Đăng ký</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in (IEnumerable<KeyValuePair<string, int>>)ViewBag.DailyRegTable)
+                        {
+                            <tr>
+                                <td class="text-muted">@item.Key</td>
+                                <td class="text-end fw-bold">@item.Value</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-1">
+    <!-- App User Activity -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="card-custom">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h6 class="fw-bold mb-0">App User Activity (Monthly Sessions)</h6>
+                <span class="badge bg-light text-dark fw-normal">Xu hướng người dùng</span>
+            </div>
+            <div style="height: 300px;">
+                <canvas id="appUsageChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-lg-5">
+        <div class="card-custom h-100">
+            <h6 class="fw-bold mb-3">Số liệu hằng ngày (30 ngày)</h6>
+            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                <table class="table table-sm table-hover mb-0" style="font-size: 13px;">
+                    <thead class="sticky-top bg-white">
+                        <tr>
+                            <th>Ngày</th>
+                            <th class="text-end">Sessions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in (IEnumerable<KeyValuePair<string, int>>)ViewBag.DailyUsageTable)
+                        {
+                            <tr>
+                                <td class="text-muted">@item.Key</td>
+                                <td class="text-end fw-bold text-primary">@item.Value</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Shop Owner Registrations Chart
+        const shopRegCtx = document.getElementById('shopRegChart').getContext('2d');
+        new Chart(shopRegCtx, {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(Json.Serialize(ViewBag.MonthlyRegLabels)),
+                datasets: [{
+                    label: 'Registrations',
+                    data: @Html.Raw(Json.Serialize(ViewBag.MonthlyRegData)),
+                    backgroundColor: '#0ea5e9',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // App User Activity Chart
+        const appUsageCtx = document.getElementById('appUsageChart').getContext('2d');
+        new Chart(appUsageCtx, {
+            type: 'line',
+            data: {
+                labels: @Html.Raw(Json.Serialize(ViewBag.MonthlyUsageLabels)),
+                datasets: [{
+                    label: 'Unique Sessions',
+                    data: @Html.Raw(Json.Serialize(ViewBag.MonthlyUsageData)),
+                    borderColor: '#f43f5e',
+                    backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#f43f5e'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    </script>
+}

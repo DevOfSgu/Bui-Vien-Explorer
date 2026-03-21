@@ -91,8 +91,52 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
 
             ViewBag.TotalFavorites = await _db.GuestFavorites.CountAsync();
 
-            return View();
+            // 4. Shop Owner Registration Stats
+            var registrations = await _db.Users.Where(u => u.Role == 1).ToListAsync();
+            var now = DateTime.UtcNow;
 
+            // Monthly (Last 12)
+            var monthlyReg = Enumerable.Range(0, 12).Select(i => {
+                var month = now.AddMonths(-i);
+                return new {
+                    Label = month.ToString("MMM yyyy"),
+                    Count = registrations.Count(r => r.CreatedAt.Month == month.Month && r.CreatedAt.Year == month.Year)
+                };
+            }).Reverse().ToList();
+
+            ViewBag.MonthlyRegLabels = monthlyReg.Select(m => m.Label).ToList();
+            ViewBag.MonthlyRegData = monthlyReg.Select(m => m.Count).ToList();
+            
+            // Daily (Last 30) - Use Dictionary for stable access in view
+            var dailyReg = Enumerable.Range(0, 30).Select(i => {
+                var date = now.AddDays(-i).Date;
+                return new KeyValuePair<string, int>(date.ToString("dd/MM"), registrations.Count(r => r.CreatedAt.Date == date));
+            }).ToList();
+            ViewBag.DailyRegTable = dailyReg;
+
+            // 5. App User Usage Stats (Unique Sessions)
+            // Monthly (Last 12)
+            var monthlyUsage = Enumerable.Range(0, 12).Select(i => {
+                var month = now.AddMonths(-i);
+                return new {
+                    Label = month.ToString("MMM yyyy"),
+                    Count = analytics.Where(a => a.CreatedAt.Month == month.Month && a.CreatedAt.Year == month.Year)
+                                     .Select(a => a.SessionId).Distinct().Count()
+                };
+            }).Reverse().ToList();
+
+            ViewBag.MonthlyUsageLabels = monthlyUsage.Select(m => m.Label).ToList();
+            ViewBag.MonthlyUsageData = monthlyUsage.Select(m => m.Count).ToList();
+
+            // Daily (Last 30)
+            var dailyUsage = Enumerable.Range(0, 30).Select(i => {
+                var date = now.AddDays(-i).Date;
+                return new KeyValuePair<string, int>(date.ToString("dd/MM"), 
+                    analytics.Where(a => a.CreatedAt.Date == date).Select(a => a.SessionId).Distinct().Count());
+            }).ToList();
+            ViewBag.DailyUsageTable = dailyUsage;
+
+            return View();
         }
     }
 }
