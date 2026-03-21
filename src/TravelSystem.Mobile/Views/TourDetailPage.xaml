@@ -6,36 +6,92 @@
              Title="{Binding TourName}"
              Shell.TabBarIsVisible="False">
 
-    <Grid RowDefinitions="3.2*,2.8*">
-        <Grid Grid.Row="0">
-            <ContentView x:Name="MapHost" />
+    <!-- AbsoluteLayout để bottom sheet chạy đè lên bản đồ -->
+    <AbsoluteLayout x:Name="RootLayout">
 
-            <Button Text="Focus Bùi Viện"
-                    Clicked="OnFocusBuiVienClicked"
-                    HorizontalOptions="End"
-                    VerticalOptions="Start"
-                    Margin="12"
-                    Padding="14,8"
-                    BackgroundColor="#FFFFFF"
-                    TextColor="#1F2937"
-                    FontSize="12"
-                    CornerRadius="16"
-                    Shadow="{x:Null}" />
+        <!-- Bản đồ chiếm toàn màn hình -->
+        <ContentView x:Name="MapHost"
+                     AbsoluteLayout.LayoutFlags="All"
+                     AbsoluteLayout.LayoutBounds="0,0,1,1" />
+
+        <!-- Nút Focus (overlay góc phải trên) -->
+        <Grid AbsoluteLayout.LayoutFlags="All"
+              AbsoluteLayout.LayoutBounds="0,0,1,1"
+              InputTransparent="True"
+              CascadeInputTransparent="False">
+            <ImageButton Source="location.svg"
+                         Clicked="OnFocusBuiVienClicked"
+                         HorizontalOptions="End"
+                         VerticalOptions="Start"
+                         Margin="0,12,12,0"
+                         WidthRequest="44"
+                         HeightRequest="44"
+                         Padding="11"
+                         BackgroundColor="#FFFFFF"
+                         BorderWidth="0"
+                         CornerRadius="22"
+                         Shadow="{x:Null}"
+                         InputTransparent="False" />
         </Grid>
 
-        <Border Grid.Row="1"
+        <!-- Bottom Sheet Panel -->
+        <Border x:Name="BottomSheet"
                 BackgroundColor="White"
                 StrokeThickness="0"
-                StrokeShape="RoundRectangle 28,28,0,0"
-                Padding="18,14,18,12">
-            <VerticalStackLayout Spacing="10">
-                <Label Text="Tour Stops"
-                       FontFamily="SpaceGroteskBold"
-                       FontAttributes="Bold"
-                       FontSize="24"
-                       TextColor="#1F2937" />
+                StrokeShape="RoundRectangle 24,24,0,0"
+                AbsoluteLayout.LayoutFlags="WidthProportional"
+                AbsoluteLayout.LayoutBounds="0,9999,1,2000">
 
-                <CollectionView ItemsSource="{Binding PoiStops}" SelectionMode="None">
+            <!-- Shadow -->
+            <Border.Shadow>
+                <Shadow Brush="#000000" Offset="0,-4" Radius="16" Opacity="0.12" />
+            </Border.Shadow>
+
+            <Grid RowDefinitions="Auto,Auto,*" Padding="0,0,0,8">
+
+                <!-- Drag Handle -->
+                <Grid Grid.Row="0"
+                      HeightRequest="32"
+                      HorizontalOptions="Fill"
+                      VerticalOptions="Start"
+                      BackgroundColor="Transparent">
+                    <BoxView HeightRequest="5"
+                             WidthRequest="44"
+                             CornerRadius="3"
+                             BackgroundColor="#9CA3AF"
+                             HorizontalOptions="Center"
+                             VerticalOptions="Center" />
+                    <Grid.GestureRecognizers>
+                        <PanGestureRecognizer PanUpdated="OnBottomSheetPanUpdated" />
+                    </Grid.GestureRecognizers>
+                </Grid>
+
+                <!-- Header: tiêu đề + số lượng -->
+                <Grid Grid.Row="1"
+                      ColumnDefinitions="*,Auto"
+                      Padding="18,0,18,10">
+                    <Label Grid.Column="0"
+                           Text="Tour Stops"
+                           FontFamily="SpaceGroteskBold"
+                           FontAttributes="Bold"
+                           FontSize="22"
+                           TextColor="#1F2937"
+                           VerticalOptions="Center" />
+                    <Label Grid.Column="1"
+                           Text="{Binding PoiStops.Count, StringFormat='{0} điểm'}"
+                           FontSize="13"
+                           TextColor="#6B7280"
+                           VerticalOptions="Center" />
+                    <Grid.GestureRecognizers>
+                        <PanGestureRecognizer PanUpdated="OnBottomSheetPanUpdated" />
+                    </Grid.GestureRecognizers>
+                </Grid>
+
+                <!-- Danh sách Zones -->
+                <CollectionView Grid.Row="2"
+                                ItemsSource="{Binding PoiStops}"
+                                SelectionMode="None"
+                                Margin="18,0,18,0">
                     <CollectionView.ItemsLayout>
                         <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
                     </CollectionView.ItemsLayout>
@@ -75,9 +131,14 @@
                                                      CommandParameter="{Binding .}"
                                                      BackgroundColor="Transparent"
                                                      BorderWidth="0"
-                                                     WidthRequest="15"
-                                                     HeightRequest="15"
-                                                     Padding="0">
+                                                     WidthRequest="28"
+                                                     HeightRequest="28"
+                                                     MinimumWidthRequest="0"
+                                                     MinimumHeightRequest="0"
+                                                     Padding="0"
+                                                     Aspect="AspectFit"
+                                                     Scale="0.85">
+                                                    
                                             <ImageButton.Triggers>
                                                 <DataTrigger TargetType="ImageButton" Binding="{Binding IsFavorite}" Value="True">
                                                     <Setter Property="Source" Value="favourited.svg" />
@@ -95,12 +156,14 @@
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
-            </VerticalStackLayout>
+            </Grid>
         </Border>
 
-        <Grid Grid.RowSpan="2"
-              BackgroundColor="#66000000"
-              IsVisible="{Binding IsLoading}">
+        <!-- Loading overlay -->
+        <Grid BackgroundColor="#66000000"
+              IsVisible="{Binding IsLoading}"
+              AbsoluteLayout.LayoutFlags="All"
+              AbsoluteLayout.LayoutBounds="0,0,1,1">
             <VerticalStackLayout Spacing="10"
                                  HorizontalOptions="Center"
                                  VerticalOptions="Center">
@@ -114,6 +177,7 @@
                        HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
         </Grid>
-    </Grid>
+
+    </AbsoluteLayout>
 
 </ContentPage>

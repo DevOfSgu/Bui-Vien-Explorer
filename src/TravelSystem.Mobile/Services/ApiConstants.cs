@@ -31,4 +31,5 @@ public static class ApiConstants
     public const string ToursEndpoint      = "api/tours";
     public const string NarrationsEndpoint = "api/narrations";
     public const string AnalyticsEndpoint  = "api/analytics";
+    public const string FavoritesEndpoint = "api/favorites";
 }

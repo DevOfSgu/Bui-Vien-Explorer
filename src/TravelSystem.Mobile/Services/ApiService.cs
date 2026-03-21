@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Collections.Concurrent;
 using System.Text.Json;
+using System.Linq;
 using TravelSystem.Shared.Models;
 
 namespace TravelSystem.Mobile.Services;
@@ -26,6 +27,89 @@ public class ApiService
         {
             Timeout = TimeSpan.FromSeconds(8)
         };
+    }
+
+    // Simple sync: push pending ops then pull latest favorites into local table
+    public async Task SyncFavoritesIfOnlineAsync(CancellationToken cancellationToken = default)
+    {
+
+        try
+        {
+            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+            {
+                _logger.LogInformation("[API][SYNC] Favorites sync skipped: offline");
+                return;
+            }
+
+            await _dbService.InitializeAsync();
+            await _dbService.CleanupProcessedOpsAsync();    // ← dọn op cũ
+            await _dbService.DeduplicatePendingOpsAsync(); // ← dedup op trùng
+
+            // Push pending ops
+            var pending = await _dbService.GetPendingOpsAsync();
+            foreach (var op in pending)
+            {
+                _logger.LogInformation("[FAV][SYNC] Processing op Id={Id} Op={Op} ZoneId={ZoneId} Attempts={Attempts}",
+                op.Id, op.Operation, op.ZoneId, op.AttemptCount);
+                try
+                {
+                    bool ok = false;
+                    if (op.Operation == TravelSystem.Shared.Models.FavoriteOperation.Add)
+                    {
+                        ok = await AddFavoriteAsync(op.GuestId, op.ZoneId, cancellationToken, fromSync: true);
+                    }
+                    else
+                    {
+                        ok = await RemoveFavoriteAsync(op.GuestId, op.ZoneId, cancellationToken, fromSync: true);
+                    }
+
+                    if (ok)
+                    {
+                        op.Processed = 1;
+                        op.AttemptCount += 1;
+                        await _dbService.UpdatePendingOpAsync(op);
+                        _logger.LogInformation("[FAV][SYNC] Op Id={Id} ✅ processed", op.Id);
+                    }
+                    else
+                    {
+                        op.AttemptCount += 1;
+                        op.LastError = "Remote call failed";
+                        await _dbService.UpdatePendingOpAsync(op);
+                        _logger.LogWarning("[FAV][SYNC] Op Id={Id} ❌ failed, attempt={Attempts}", op.Id, op.AttemptCount);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    op.AttemptCount += 1;
+                    op.LastError = ex.Message;
+                    await _dbService.UpdatePendingOpAsync(op);
+                    _logger.LogError(ex, "[FAV][SYNC] Op Id={Id} threw exception", op.Id);
+                }
+            }
+
+            // Pull canonical favorites from server and write to LocalFavorite table
+            var guestId = await EnsureGuestIdAsync();
+            _logger.LogInformation("[FAV][SYNC] Pulling canonical favorites from server...");
+            var favorites = await GetFavoritesAsync(guestId, cancellationToken);
+            _logger.LogInformation("[FAV][SYNC] Server returned {Count} favorites", favorites?.Count ?? -1);
+            if (favorites != null)
+            {
+                var localList = favorites.Select(f => new TravelSystem.Shared.Models.LocalFavorite
+                {
+                    GuestId = f.GuestId,
+                    ZoneId = f.ZoneId,
+                    CreatedAt = f.CreatedAt,
+                    IsDeleted = 0,
+                    UpdatedAt = DateTime.UtcNow
+                }).ToList();
+
+                await _dbService.ReplaceLocalFavoritesForGuestAsync(guestId, localList);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[API][SYNC] Favorites sync failed");
+        }
     }
 
     private Uri GetBaseUri() => new(ApiConstants.GetBaseApiUrl(), UriKind.Absolute);
@@ -81,6 +165,31 @@ public class ApiService
     {
         try
         {
+            if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
+            {
+                var stops = await FetchTourStopsFromServerAsync(tourId, cancellationToken);
+                if (stops is not null)
+                {
+                    _tourStopsCache[tourId] = stops;
+                    await SaveCachedListAsync(TourStopsCacheKey(tourId), stops);
+                    _logger.LogInformation("[API] Fetched tour {TourId} stops from server: {StopCount}", tourId, stops.Count);
+                    return stops;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[API] Error fetching stops for tour {TourId} from server, falling back to cache", tourId);
+        }
+
+        try
+        {
+            if (_tourStopsCache.TryGetValue(tourId, out var cachedStops) && cachedStops.Count > 0)
+            {
+                _logger.LogInformation("[API][CACHE] Tour {TourId} stops from memory cache: {StopCount}", tourId, cachedStops.Count);
+                return cachedStops;
+            }
+
             var sqliteCachedStops = await LoadCachedListAsync<TourStopDto>(TourStopsCacheKey(tourId));
             if (sqliteCachedStops is { Count: > 0 })
             {
@@ -89,40 +198,12 @@ public class ApiService
                 return sqliteCachedStops;
             }
 
-            if (_tourStopsCache.TryGetValue(tourId, out var cachedStops) && cachedStops.Count > 0)
-            {
-                _logger.LogInformation("[API][CACHE] Tour {TourId} stops from memory cache: {StopCount}", tourId, cachedStops.Count);
-                return cachedStops;
-            }
-
             _logger.LogWarning("[API] No local cached stops found for tour {TourId}", tourId);
             return [];
         }
-        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
-        {
-            _logger.LogWarning(ex, "[API] Timeout while loading stops for tour {TourId}", tourId);
-            var sqliteCachedStops = await LoadCachedListAsync<TourStopDto>(TourStopsCacheKey(tourId));
-            if (sqliteCachedStops is { Count: > 0 })
-            {
-                return sqliteCachedStops;
-            }
-
-            if (_tourStopsCache.TryGetValue(tourId, out var cachedStops))
-            {
-                return cachedStops;
-            }
-
-            return null;
-        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[API] Error while loading stops for tour {TourId}", tourId);
-            var sqliteCachedStops = await LoadCachedListAsync<TourStopDto>(TourStopsCacheKey(tourId));
-            if (sqliteCachedStops is { Count: > 0 })
-            {
-                return sqliteCachedStops;
-            }
-
+            _logger.LogError(ex, "[API] Error while loading stops for tour {TourId} from cache", tourId);
             if (_tourStopsCache.TryGetValue(tourId, out var cachedStops))
             {
                 return cachedStops;
@@ -134,6 +215,29 @@ public class ApiService
 
     public async Task<IReadOnlyList<TourSummaryDto>?> GetToursAsync(CancellationToken cancellationToken = default)
     {
+        try
+        {
+            if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
+            {
+
+                var toursUri = BuildUri(ApiConstants.ToursEndpoint);
+                var tours = await _httpClient.GetFromJsonAsync<List<TourSummaryDto>>(toursUri, cancellationToken);
+                if (tours is not null)
+                {
+                    foreach (var tour in tours)          
+                        tour.ImageUrl = NormalizeImageUrl(tour.ImageUrl);
+                    await SaveCachedListAsync(ToursCacheKey, tours);
+                    _toursMemoryCache = tours;
+                    _logger.LogInformation("[API] Fetched tours from server: {TourCount}", tours.Count);
+                    return tours;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[API] Error fetching tours from server, falling back to cache");
+        }
+
         try
         {
             if (_toursMemoryCache is { Count: > 0 })
@@ -155,7 +259,7 @@ public class ApiService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[API] Error while loading tours");
+            _logger.LogError(ex, "[API] Error while loading tours from cache");
             return _toursMemoryCache ?? await LoadCachedListAsync<TourSummaryDto>(ToursCacheKey);
         }
     }
@@ -173,6 +277,8 @@ public class ApiService
 
             var toursUri = BuildUri(ApiConstants.ToursEndpoint);
             var tours = await _httpClient.GetFromJsonAsync<List<TourSummaryDto>>(toursUri, cancellationToken) ?? [];
+            foreach (var tour in tours)         
+                tour.ImageUrl = NormalizeImageUrl(tour.ImageUrl);
             await SaveCachedListAsync(ToursCacheKey, tours);
             _toursMemoryCache = tours;
             _logger.LogInformation("[API][SYNC] Tours synced: {TourCount}", tours.Count);
@@ -232,46 +338,177 @@ public class ApiService
 
     public async Task<IReadOnlyList<FavoriteDto>?> GetFavoritesAsync(string guestId, CancellationToken cancellationToken = default)
     {
+        var cacheKey = $"cache_favorites_{guestId}_v1";
         try
         {
-            var favorites = await _httpClient.GetFromJsonAsync<List<FavoriteDto>>(BuildUri($"api/favorites/{guestId}"), cancellationToken);
-            return favorites;
+            if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
+            {
+                var favorites = await _httpClient.GetFromJsonAsync<List<FavoriteDto>>(BuildUri($"api/favorites/{guestId}"), cancellationToken);
+                if (favorites is not null)
+                {
+                    await SaveCachedListAsync(cacheKey, favorites);
+                    return favorites;
+                }
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[API] Error while loading favorites");
-            return null;
+            _logger.LogWarning(ex, "[API] Error while loading favorites from server, falling back to cache");
         }
+
+        try
+        {
+            var sqliteCached = await LoadCachedListAsync<FavoriteDto>(cacheKey);
+            if (sqliteCached is { Count: > 0 })
+            {
+                _logger.LogInformation("[API][CACHE] Loaded favorites from cache: {Count}", sqliteCached.Count);
+                return sqliteCached;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[API] Error while loading favorites from cache");
+        }
+
+        return null;
     }
 
-    public async Task<bool> AddFavoriteAsync(string guestId, int zoneId, CancellationToken cancellationToken = default)
+    public async Task<bool> AddFavoriteAsync(string guestId, int zoneId, CancellationToken cancellationToken = default, bool fromSync = false)
     {
+        _logger.LogDebug("[FAV] AddFavorite START — guestId={GuestId}, zoneId={ZoneId}", guestId, zoneId);
+        await _dbService.InitializeAsync();
+        await _dbService.InsertOrUpdateLocalFavoriteAsync(new LocalFavorite
+        {
+            GuestId = guestId,
+            ZoneId = zoneId,
+            CreatedAt = DateTime.UtcNow,
+            IsDeleted = 0,
+            UpdatedAt = DateTime.UtcNow
+        });
+        _logger.LogDebug("[FAV] LocalFavorite upserted — zoneId={ZoneId}", zoneId);
+        if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+        {
+            if (!fromSync)
+            {
+                await _dbService.InsertPendingOpAsync(new PendingFavoriteOp
+                {
+                    GuestId = guestId,
+                    ZoneId = zoneId,
+                    Operation = FavoriteOperation.Add,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+            _logger.LogInformation("[FAV] OFFLINE — PendingOp(Add) queued, zoneId={ZoneId}", zoneId); ;
+            return true; // trả true vì đã lưu local
+        }
+
         try
         {
-            var response = await _httpClient.PostAsJsonAsync(BuildUri("api/favorites"), new { GuestId = guestId, ZoneId = zoneId }, cancellationToken);
-            return response.IsSuccessStatusCode;
+            var response = await _httpClient.PostAsJsonAsync(
+                BuildUri(ApiConstants.FavoritesEndpoint),
+                new { GuestId = guestId, ZoneId = zoneId },
+                cancellationToken);
+            _logger.LogInformation("[FAV] POST {Endpoint} → {StatusCode}",
+            ApiConstants.FavoritesEndpoint, (int)response.StatusCode);
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                return true;
+            if (!response.IsSuccessStatusCode && !fromSync)
+            {
+                // Server thất bại → queue lại
+                await _dbService.InsertPendingOpAsync(new PendingFavoriteOp
+                {
+                    GuestId = guestId,
+                    ZoneId = zoneId,
+                    Operation = FavoriteOperation.Add,
+                    CreatedAt = DateTime.UtcNow
+                });
+                _logger.LogWarning("[FAV] Server failed ({StatusCode}) — PendingOp(Add) queued", (int)response.StatusCode);
+            }
+
+            return response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.NotFound; ;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[API] Error while adding favorite");
-            return false;
+            _logger.LogError(ex, "[FAV] Exception during POST — PendingOp(Add) queued, zoneId={ZoneId}", zoneId);
+            if (!fromSync)
+            {
+                await _dbService.InsertPendingOpAsync(new PendingFavoriteOp
+                {
+                    GuestId = guestId,
+                    ZoneId = zoneId,
+                    Operation = FavoriteOperation.Add,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+            return true; // local đã lưu rồi
         }
     }
 
-    public async Task<bool> RemoveFavoriteAsync(string guestId, int zoneId, CancellationToken cancellationToken = default)
+    public async Task<bool> RemoveFavoriteAsync(string guestId, int zoneId, CancellationToken cancellationToken = default, bool fromSync = false)
     {
+        _logger.LogDebug("[FAV] RemoveFavorite START — guestId={GuestId}, zoneId={ZoneId}", guestId, zoneId);
+        // Optimistic local delete
+        await _dbService.InitializeAsync();
+        await _dbService.MarkLocalFavoriteDeletedAsync(guestId, zoneId);
+        _logger.LogDebug("[FAV] LocalFavorite soft-deleted — zoneId={ZoneId}", zoneId);
+
+        if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+        {
+            if(!fromSync)
+            {
+                await _dbService.InsertPendingOpAsync(new PendingFavoriteOp
+                {
+                    GuestId = guestId,
+                    ZoneId = zoneId,
+                    Operation = FavoriteOperation.Remove,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }    
+            _logger.LogInformation("[FAV] OFFLINE — PendingOp(Remove) queued, zoneId={ZoneId}", zoneId);
+            return true;
+        }
+
         try
         {
-            var response = await _httpClient.DeleteAsync(BuildUri($"api/favorites/{guestId}/{zoneId}"), cancellationToken);
-            return response.IsSuccessStatusCode;
+            var response = await _httpClient.DeleteAsync(
+                BuildUri($"{ApiConstants.FavoritesEndpoint}/{guestId}/{zoneId}"),
+                cancellationToken);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                return true;
+
+            if (!response.IsSuccessStatusCode && !fromSync)
+            {
+                await _dbService.InsertPendingOpAsync(new PendingFavoriteOp
+                {
+                    GuestId = guestId,
+                    ZoneId = zoneId,
+                    Operation = FavoriteOperation.Remove,
+                    CreatedAt = DateTime.UtcNow
+                });
+                _logger.LogWarning("[FAV] Server failed ({StatusCode}) — PendingOp(Remove) queued", (int)response.StatusCode);
+            }
+            
+
+            return response.IsSuccessStatusCode
+                || response.StatusCode == System.Net.HttpStatusCode.NotFound; ;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[API] Error while removing favorite");
-            return false;
+            _logger.LogError(ex, "[FAV] Exception during DELETE — PendingOp(Remove) queued, zoneId={ZoneId}", zoneId);
+            if (!fromSync)
+            {
+                await _dbService.InsertPendingOpAsync(new PendingFavoriteOp
+                {
+                    GuestId = guestId,
+                    ZoneId = zoneId,
+                    Operation = FavoriteOperation.Remove,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+            return true;
         }
     }
-
     public async Task<bool> RegisterAnonymousInstallAsync(Guid sessionId, CancellationToken cancellationToken = default)
     {
         try
