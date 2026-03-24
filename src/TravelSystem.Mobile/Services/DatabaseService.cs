@@ -1,6 +1,7 @@
-﻿using SQLite;
+using SQLite;
 using TravelSystem.Shared.Models;
 using TravelSystem.Shared.Factories;
+using System.Diagnostics;
 
 namespace TravelSystem.Mobile.Services;
 
@@ -225,6 +226,72 @@ public class DatabaseService
             Console.WriteLine($"⚠️ SetSettingAsync failed ({key}): {ex.Message}");
         }
     }
+
+    // LẤY THUYẾT MINH (NARRATION)
+    public async Task<LocalNarration?> GetNarrationAsync(int zoneId, string language)
+    {
+        try
+        {
+            await InitializeAsync();
+            // ZoneId trong LocalNarration là string, cần convert hoặc so khớp
+            var zoneIdStr = zoneId.ToString();
+            Debug.WriteLine($"[DEBUG][DB] Querying narration for ZoneId: {zoneIdStr}, Language: {language}");
+            
+            var result = await _connection.Table<LocalNarration>()
+                .FirstOrDefaultAsync(n => n.ZoneId == zoneIdStr && n.Language == language);
+
+            if (result != null)
+                Debug.WriteLine("[DEBUG][DB] Narration found in local database.");
+            else
+                Debug.WriteLine("[DEBUG][DB] Narration NOT found in local database.");
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠️ GetNarrationAsync failed (ZoneId={zoneId}, Lang={language}): {ex.Message}");
+            return null;
+        }
+    }
+    
+    // UPSERT DANH SÁCH THUYẾT MINH
+    public async Task UpsertNarrationsAsync(IEnumerable<LocalNarration> narrations)
+    {
+        try
+        {
+            await InitializeAsync();
+            await _connection.RunInTransactionAsync(tran =>
+            {
+                foreach (var n in narrations)
+                {
+                    // Kiểm tra xem đã có bản ghi cho ZoneId + Lang chưa
+                    var existing = tran.Table<LocalNarration>()
+                        .FirstOrDefault(x => x.ZoneId == n.ZoneId && x.Language == n.Language);
+
+
+                    if (existing == null)
+                    {
+                        tran.Insert(n);
+                    }
+                    else
+                    {
+                        existing.Text = n.Text;
+                        existing.FileUrl = n.FileUrl;
+                        existing.Language = n.Language;
+                        existing.UpdatedAt = DateTime.UtcNow;
+                        tran.Update(existing);
+                    }
+                }
+            });
+            Console.WriteLine($"✅ Đã cập nhật {narrations.Count()} bản ghi thuyết minh.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ UpsertNarrationsAsync failed: {ex.Message}");
+        }
+    }
+
+
 
 
     private static string NormalizeImageUrl(string? imageUrl)

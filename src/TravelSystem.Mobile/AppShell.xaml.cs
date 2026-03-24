@@ -11,7 +11,8 @@ public partial class AppShell : Shell
         
         // Đăng ký Route cho trang ngôn ngữ để dùng được GoToAsync
         Routing.RegisterRoute(nameof(Views.LanguageSelectionPage), typeof(Views.LanguageSelectionPage));
-       Routing.RegisterRoute(nameof(Views.TourDetailPage), typeof(Views.TourDetailPage));
+        Routing.RegisterRoute(nameof(Views.TourDetailPage), typeof(Views.TourDetailPage));
+        Routing.RegisterRoute(nameof(Views.ZoneDetailPage), typeof(Views.ZoneDetailPage));
 	}
 
 	private bool _isCheckedOnboarding = false;

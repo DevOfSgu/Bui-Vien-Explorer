@@ -23,6 +23,7 @@ namespace TravelSystem.Shared.Models
         public int Version { get; set; } = 1;     // Để biết file có thay đổi không
 
         public string SyncedAt { get; set; } = string.Empty; // ISO datetime
-
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
+
 }

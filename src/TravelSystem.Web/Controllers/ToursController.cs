@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TravelSystem.Web.Data;
+using TravelSystem.Web.Models;
 
 namespace TravelSystem.Web.Controllers;
 
@@ -9,10 +10,12 @@ namespace TravelSystem.Web.Controllers;
 public class ToursController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly HttpClient _httpClient;
 
-    public ToursController(AppDbContext db)
+    public ToursController(AppDbContext db, IHttpClientFactory httpClientFactory)
     {
         _db = db;
+        _httpClient = httpClientFactory.CreateClient();
     }
 
     [HttpGet]
@@ -62,5 +65,40 @@ public class ToursController : ControllerBase
             .ToListAsync();
 
         return Ok(stops);
+    }
+    [HttpGet("{id:int}/route")]
+    public async Task<IActionResult> GetRoute(int id)
+    {
+        var stops = await _db.TourZones
+            .AsNoTracking()
+            .Where(tz => tz.TourId == id && tz.Zone != null && tz.Zone.IsActive && !tz.Zone.IsHidden)
+            .OrderBy(tz => tz.OrderIndex)
+            .Select(tz => new
+            {
+                Latitude = tz.Zone != null ? tz.Zone.Latitude : 0,
+                Longitude = tz.Zone != null ? tz.Zone.Longitude : 0
+            })
+            .ToListAsync();
+
+        if (stops.Count < 2)
+            return Ok(new List<double[]>());
+
+        var coords = string.Join(";", stops.Select(s => $"{s.Longitude},{s.Latitude}"));
+        var url = $"http://router.project-osrm.org/route/v1/walking/{coords}?overview=full&geometries=geojson";
+
+        try
+        {
+            var osrm = await _httpClient.GetFromJsonAsync<OsrmResponse>(url);
+            var coordinates = osrm?.Routes?.FirstOrDefault()?.Geometry?.Coordinates;
+
+            if (coordinates == null || coordinates.Count == 0)
+                return Ok(stops.Select(s => new double[] { (double)s.Longitude, (double)s.Latitude }).ToList());
+
+            return Ok(coordinates);
+        }
+        catch
+        {
+            return Ok(stops.Select(s => new double[] { (double)s.Longitude, (double)s.Latitude }).ToList());
+        }
     }
 }

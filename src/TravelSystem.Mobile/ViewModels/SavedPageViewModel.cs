@@ -72,7 +72,8 @@ public partial class SavedPageViewModel : ObservableObject
                 {
                     Id = fav.ZoneId,
                     Name = zone?.Name ?? $"Zone {fav.ZoneId}",
-                    Description = zone?.Description ?? string.Empty
+                    Description = zone?.Description ?? string.Empty,
+                    ImageUrl = zone?.ImageUrl ?? string.Empty
                 });
             }
 

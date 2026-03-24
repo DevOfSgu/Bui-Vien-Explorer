@@ -1,3 +1,4 @@
+using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
 using SkiaSharp.Views.Maui.Controls.Hosting;
 using TravelSystem.Mobile.Views;
@@ -8,9 +9,11 @@ public static class MauiProgram
 {
 	public static MauiApp CreateMauiApp()
 	{
+        SQLitePCL.Batteries_V2.Init();
 		var builder = MauiApp.CreateBuilder();
 		builder
 			.UseMauiApp<App>()
+            .UseMauiCommunityToolkit()
             .UseSkiaSharp()
 			.ConfigureFonts(fonts =>
 			{
@@ -29,11 +32,14 @@ public static class MauiProgram
 		builder.Services.AddSingleton<TravelSystem.Shared.Factories.SqliteConnectionFactory>();
         builder.Services.AddSingleton<Services.DatabaseService>();
         builder.Services.AddSingleton<Services.ApiService>();
+        builder.Services.AddSingleton<Services.IAudioGuideService, Services.AudioGuideService>();
+
 
 		// Register ViewModels
 		builder.Services.AddSingleton<ViewModels.MainPageViewModel>();
 		builder.Services.AddSingleton<ViewModels.SavedPageViewModel>();
         builder.Services.AddSingleton<ViewModels.TourDetailViewModel>();
+        builder.Services.AddTransient<ViewModels.ZoneDetailViewModel>();
 		builder.Services.AddTransient<ViewModels.LanguageSelectionViewModel>();
 
 
@@ -42,6 +48,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<AppShell>();
         builder.Services.AddTransient<SavedPage>();
         builder.Services.AddSingleton<TourDetailPage>();
+        builder.Services.AddTransient<ZoneDetailPage>();
 		builder.Services.AddTransient<SettingsPage>();
         builder.Services.AddTransient<LanguageSelectionPage>();
 

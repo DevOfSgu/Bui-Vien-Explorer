@@ -213,7 +213,38 @@ public class ApiService
         }
     }
 
+    public async Task SyncNarrationsAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet) return;
+
+            var narrationsUri = BuildUri(ApiConstants.NarrationsEndpoint);
+            var narrations = await _httpClient.GetFromJsonAsync<List<Narration>>(narrationsUri, cancellationToken);
+            
+            if (narrations != null && narrations.Count > 0)
+            {
+                var localNarrations = narrations.Select(n => new LocalNarration
+                {
+                    ZoneId = n.ZoneId.ToString(),
+                    Language = n.Language,
+                    Text = n.Text,
+                    Version = 1, // Default
+                    SyncedAt = DateTime.UtcNow.ToString("O")
+                });
+
+                await _dbService.UpsertNarrationsAsync(localNarrations);
+                _logger.LogInformation("[API][SYNC] Synced {Count} narrations", narrations.Count);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[API][SYNC] Narration sync failed");
+        }
+    }
+
     public async Task<IReadOnlyList<TourSummaryDto>?> GetToursAsync(CancellationToken cancellationToken = default)
+
     {
         try
         {
@@ -295,7 +326,11 @@ public class ApiService
                 }
             }
 
+            // Sync Narrations
+            await SyncNarrationsAsync(cancellationToken);
+
             _logger.LogInformation("[API][SYNC] Startup sync end");
+
         }
         catch (Exception ex)
         {
@@ -310,6 +345,10 @@ public class ApiService
             var zonesUri = BuildUri(ApiConstants.ZonesEndpoint);
             Debug.WriteLine($"[API] Loading zones from {zonesUri}");
             var zones = await _httpClient.GetFromJsonAsync<List<Zone>>(zonesUri, cancellationToken) ?? [];
+            foreach (var zone in zones)
+            {
+                zone.ImageUrl = NormalizeImageUrl(zone.ImageUrl);
+            }
             _logger.LogInformation("[API] Loaded {ZoneCount} zones", zones.Count);
             return zones;
         }
@@ -628,5 +667,6 @@ public class TourStopDto
     public string? ImageUrl { get; set; }
     public double Latitude { get; set; }
     public double Longitude { get; set; }
+    public int Radius { get; set; }
 }
 

@@ -30,6 +30,8 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     private const double MapRefreshMoveThresholdMeters = 35;
     private static readonly TimeSpan ForegroundTrackingInterval = TimeSpan.FromSeconds(8);
 
+    public event EventHandler<PoiStopItem>? StopSelected;
+
     public ObservableCollection<PoiStopItem> PoiStops { get; } = [];
     public IAsyncRelayCommand LoadDataCommand { get; }
     public IAsyncRelayCommand<PoiStopItem> ToggleFavoriteCommand { get; }
@@ -64,6 +66,31 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         LoadDataCommand = new AsyncRelayCommand(LoadData);
         ToggleFavoriteCommand = new AsyncRelayCommand<PoiStopItem>(ToggleFavorite);
         SelectStopCommand = new RelayCommand<PoiStopItem>(SelectStop);
+        NavigateToZoneDetailCommand = new AsyncRelayCommand<PoiStopItem>(NavigateToZoneDetail);
+    }
+
+    public IAsyncRelayCommand<PoiStopItem> NavigateToZoneDetailCommand { get; }
+
+    private async Task NavigateToZoneDetail(PoiStopItem stop)
+    {
+        if (stop == null) return;
+
+        // Select the stop locally first for UI feedback
+        SelectStop(stop);
+
+        var parameters = new Dictionary<string, object>
+        {
+            { "zoneId", stop.ZoneId },
+            { "name", Uri.EscapeDataString(stop.Name) },
+            { "description", Uri.EscapeDataString(stop.Description) },
+            { "imageUrl", Uri.EscapeDataString(stop.ImageUrl) },
+            { "latitude", stop.Latitude },
+            { "longitude", stop.Longitude },
+            { "isFavorite", stop.IsFavorite },
+            { "distance", Uri.EscapeDataString(stop.DistanceText) }
+        };
+
+        await Shell.Current.GoToAsync(nameof(Views.ZoneDetailPage), parameters);
     }
 
     /// <summary>
@@ -170,16 +197,20 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
                         ImageUrl = stop.ImageUrl ?? string.Empty,
                         Latitude = stop.Latitude,
                         Longitude = stop.Longitude,
+                        Radius = stop.Radius,
                         IsFavorite = favoriteZoneIds.Contains(stop.ZoneId)
                     });
                 }
             }
 
+            /* 
+            // Removed default selection as per user request
             if (PoiStops.Count > 0)
             {
                 PoiStops[0].IsSelected = true;
                 Trace($"Initial selected ZoneId={PoiStops[0].ZoneId}");
             }
+            */
 
             MapDataChanged?.Invoke(this, EventArgs.Empty);
             Trace("MapDataChanged invoked after loading stops");
@@ -348,7 +379,15 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             poi.IsSelected = poi.ZoneId == stop.ZoneId;
         }
 
+        // Đẩy zone được chọn lên đầu danh sách
+        var currentIndex = PoiStops.IndexOf(stop);
+        if (currentIndex > 0)
+        {
+            PoiStops.Move(currentIndex, 0);
+        }
+
         MapDataChanged?.Invoke(this, EventArgs.Empty);
+        StopSelected?.Invoke(this, stop);
     }
 
     public void SelectStopByZoneId(int zoneId)
@@ -470,7 +509,15 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             }
         }
 
-        if (nearestStop == null || nearestDistanceMeters > GeofenceTriggerMeters)
+        if (nearestStop == null)
+        {
+            return false;
+        }
+
+        // Use the stop's radius if available, otherwise fallback to GeofenceTriggerMeters (80m)
+        double triggerRadius = nearestStop.Radius > 0 ? nearestStop.Radius : GeofenceTriggerMeters;
+
+        if (nearestDistanceMeters > triggerRadius)
         {
             return false;
         }
@@ -485,7 +532,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         {
             stop.IsSelected = stop.ZoneId == nearestStop.ZoneId;
         }
-
+        StopSelected?.Invoke(this, nearestStop);
         return true;
     }
 
@@ -514,6 +561,7 @@ public class PoiStopItem : ObservableObject
     public string ImageUrl { get; init; } = string.Empty;
     public double Latitude { get; init; }
     public double Longitude { get; init; }
+    public int Radius { get; init; }
 
     public bool IsSelected
     {

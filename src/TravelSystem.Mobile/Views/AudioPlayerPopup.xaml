@@ -1,0 +1,98 @@
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="TravelSystem.Mobile.Views.AudioPlayerPopup"
+             IsVisible="False">
+
+    <Grid BackgroundColor="#80000000">
+        <Frame VerticalOptions="Center" 
+               HorizontalOptions="Center" 
+               Margin="20"
+               Padding="0"
+               CornerRadius="20"
+               HasShadow="True"
+               WidthRequest="320"
+               BackgroundColor="White">
+            
+            <Grid Padding="20">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Button Text="✕" 
+                        Clicked="OnCloseClicked"
+                        HorizontalOptions="End"
+                        BackgroundColor="Transparent"
+                        TextColor="#666"
+                        FontSize="20"
+                        Padding="10"/>
+
+                <Frame Grid.Row="1" 
+                       Padding="0" 
+                       CornerRadius="15" 
+                       IsClippedToBounds="True" 
+                       HeightRequest="150" 
+                       Margin="0,0,0,15">
+                    <Image x:Name="ZoneImage" 
+                           Aspect="AspectFill"
+                           Source="logoapp.png"/>
+                </Frame>
+
+                <StackLayout Grid.Row="2" Spacing="4" Margin="0,0,0,15">
+                    <Label x:Name="ZoneTitleLabel" 
+                           FontAttributes="Bold" 
+                           FontSize="20" 
+                           HorizontalTextAlignment="Center"
+                           TextColor="#2C3E50"/>
+                    <Label Text="Audio Guide" 
+                           FontSize="12" 
+                           TextColor="#95A5A6" 
+                           HorizontalTextAlignment="Center"/>
+                </StackLayout>
+
+                <StackLayout Grid.Row="3" Spacing="15">
+                    <Slider x:Name="AudioProgressBar" 
+                            MaximumTrackColor="#ECF0F1" 
+                            MinimumTrackColor="#3498DB" 
+                            ThumbColor="#3498DB"/>
+                    
+                    <Grid ColumnDefinitions="*, *, *" HorizontalOptions="FillAndExpand">
+                        <Button Text="↺" 
+                                Clicked="OnRewindClicked"
+                                FontSize="24"
+                                BackgroundColor="Transparent"
+                                TextColor="#3498DB"/>
+                        <Button x:Name="PlayPauseButton" 
+                                Grid.Column="1"
+                                Text="▶" 
+                                Clicked="OnPlayPauseClicked"
+                                FontSize="32"
+                                WidthRequest="70"
+                                HeightRequest="70"
+                                CornerRadius="35"
+                                BackgroundColor="#3498DB"
+                                TextColor="White"/>
+                        <Button Text="↻" 
+                                Grid.Column="2"
+                                Clicked="OnForwardClicked"
+                                FontSize="24"
+                                BackgroundColor="Transparent"
+                                TextColor="#3498DB"/>
+                    </Grid>
+                </StackLayout>
+
+                <FlexLayout Grid.Row="4" 
+                            JustifyContent="SpaceEvenly" 
+                            Margin="0,15,0,0">
+                    <Button Text="0.75x" Clicked="OnSpeedClicked" FontSize="11" Padding="5" HeightRequest="30" BackgroundColor="#F8F9FA" TextColor="#7F8C8D"/>
+                    <Button Text="1.0x" Clicked="OnSpeedClicked" FontSize="11" Padding="5" HeightRequest="30" BackgroundColor="#E3F2FD" TextColor="#1976D2" BorderWidth="1" BorderColor="#1976D2"/>
+                    <Button Text="1.5x" Clicked="OnSpeedClicked" FontSize="11" Padding="5" HeightRequest="30" BackgroundColor="#F8F9FA" TextColor="#7F8C8D"/>
+                    <Button Text="2.0x" Clicked="OnSpeedClicked" FontSize="11" Padding="5" HeightRequest="30" BackgroundColor="#F8F9FA" TextColor="#7F8C8D"/>
+                </FlexLayout>
+            </Grid>
+        </Frame>
+    </Grid>
+</ContentView>

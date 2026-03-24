@@ -63,6 +63,9 @@ public partial class App : Application
             // Pre-warm GPS permission sớm — để TourDetailPage không xin quyền lần đầu khi mở
             _ = Task.Run(() => _tourDetailViewModel.WarmUpLocationPermissionAsync());
 
+            // Giải nén file map offline từ raw resources ra AppData
+            _ = Services.MapHelper.EnsureOfflineMapExistsAsync();
+
             _ = _apiService.SyncCoreDataFromServerIfOnlineAsync();
             _ = _apiService.SyncFavoritesIfOnlineAsync();
         }

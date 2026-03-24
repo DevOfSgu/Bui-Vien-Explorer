@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="TravelSystem.Mobile.Views.ZoneDetailPage"
+             xmlns:vm="clr-namespace:TravelSystem.Mobile.ViewModels"
+             xmlns:views="clr-namespace:TravelSystem.Mobile.Views"
+             x:DataType="vm:ZoneDetailViewModel"
+             BackgroundColor="White"
+             Shell.TabBarIsVisible="False"
+             Shell.NavBarIsVisible="False">
+
+    <AbsoluteLayout>
+        <Grid AbsoluteLayout.LayoutFlags="All" AbsoluteLayout.LayoutBounds="0,0,1,1" RowDefinitions="350,*">
+            <!-- Hero Image -->
+            <Grid Grid.Row="0">
+                <Image Source="{Binding ImageUrl}" 
+                       Aspect="AspectFill"
+                       HorizontalOptions="Fill"
+                       VerticalOptions="Fill"/>
+                
+                <BoxView Opacity="0.1" BackgroundColor="Black" />
+
+                <!-- Top Overlay Buttons -->
+                <Grid VerticalOptions="Start" Padding="20,50,20,0" ColumnDefinitions="Auto,*,Auto,Auto">
+                    <Border Grid.Column="0"
+                            WidthRequest="40"
+                            HeightRequest="40"
+                            BackgroundColor="White"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 20"
+                            Padding="8">
+                        <Image Source="arrow_forward_icon.svg" Rotation="180" />
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding GoBackCommand}" />
+                        </Border.GestureRecognizers>
+                    </Border>
+
+                    <HorizontalStackLayout Grid.Column="2" Spacing="10">
+                        <Border WidthRequest="40"
+                                HeightRequest="40"
+                                BackgroundColor="White"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 20"
+                                Padding="8">
+                            <Image Source="favourite.svg">
+                                <Image.Triggers>
+                                    <DataTrigger TargetType="Image" Binding="{Binding IsFavorite}" Value="True">
+                                        <Setter Property="Source" Value="favourited.svg" />
+                                    </DataTrigger>
+                                </Image.Triggers>
+                            </Image>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ToggleFavoriteCommand}" />
+                            </Border.GestureRecognizers>
+                        </Border>
+
+                        <Border WidthRequest="40"
+                                HeightRequest="40"
+                                BackgroundColor="White"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 20"
+                                Padding="8">
+                            <Image Source="home.svg" />
+                        </Border>
+                    </HorizontalStackLayout>
+                </Grid>
+
+                <!-- Indicator dots -->
+                <HorizontalStackLayout Spacing="6" HorizontalOptions="Center" VerticalOptions="End" Margin="0,0,0,20">
+                    <BoxView WidthRequest="8" HeightRequest="8" CornerRadius="4" BackgroundColor="White" />
+                    <BoxView WidthRequest="8" HeightRequest="8" CornerRadius="4" BackgroundColor="White" Opacity="0.5" />
+                    <BoxView WidthRequest="8" HeightRequest="8" CornerRadius="4" BackgroundColor="White" Opacity="0.5" />
+                </HorizontalStackLayout>
+            </Grid>
+
+            <!-- Bottom Content -->
+            <Border Grid.Row="1"
+                    Margin="0,-24,0,0"
+                    BackgroundColor="White"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 24,24,0,0">
+                <ScrollView Padding="24">
+                    <VerticalStackLayout Spacing="16">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="{Binding Name}"
+                                   FontSize="28"
+                                   FontAttributes="Bold"
+                                   TextColor="#1F2937"
+                                   FontFamily="SpaceGroteskBold" />
+                            
+                            <Border Grid.Column="1"
+                                    BackgroundColor="#FFF1F2"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 16"
+                                    Padding="12,6">
+                                <Label Text="OPEN NOW" TextColor="#FF4B4B" FontSize="12" FontAttributes="Bold" />
+                            </Border>
+                        </Grid>
+
+                        <Button Text="🎧 Thuyết minh âm thanh"
+                                BackgroundColor="#E3F2FD"
+                                TextColor="#2196F3"
+                                FontAttributes="Bold"
+                                HeightRequest="50"
+                                CornerRadius="25"
+                                Clicked="OnPlayAudioClicked" />
+
+                        <HorizontalStackLayout Spacing="8">
+                            <Image Source="location.svg" WidthRequest="16" HeightRequest="16" />
+                            <Label Text="4.8" FontAttributes="Bold" />
+                            <Label Text="{Binding DistanceText, StringFormat='• {0} away'}" TextColor="#6B7280" />
+                        </HorizontalStackLayout>
+
+                        <Label Text="About" FontSize="18" FontAttributes="Bold" Margin="0,8,0,0" />
+                        <Label Text="{Binding Description}" FontSize="15" TextColor="#4B5563" LineHeight="1.5" />
+                    </VerticalStackLayout>
+                </ScrollView>
+            </Border>
+        </Grid>
+
+        <!-- Custom Overlay Overlay -->
+        <views:AudioPlayerPopup x:Name="AudioPlayer" 
+                               AbsoluteLayout.LayoutFlags="All"
+                               AbsoluteLayout.LayoutBounds="0,0,1,1" />
+    </AbsoluteLayout>
+</ContentPage>
