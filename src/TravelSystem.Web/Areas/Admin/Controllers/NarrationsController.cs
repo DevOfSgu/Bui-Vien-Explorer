@@ -112,7 +112,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 narration.ApprovalStatus = "Approved";
 
                 // Generate TTS for original language
-                narration.FileUrl = await _audioService.GenerateTtsAsync(narration.Text, narration.Language, narration.Id, _env.WebRootPath);
+                narration.FileUrl = await _audioService.GenerateTtsAsync(narration.Text, narration.Language, narration.ZoneId, _env.WebRootPath);
                 narration.AudioStatus = "ready";
 
                 if (narration.Language.ToLower() == "vi")
@@ -129,7 +129,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                     _db.Narrations.Add(enNarration);
                     await _db.SaveChangesAsync(); // Save to generate ID
                     
-                    enNarration.FileUrl = await _audioService.GenerateTtsAsync(enText, "en", enNarration.Id, _env.WebRootPath);
+                    enNarration.FileUrl = await _audioService.GenerateTtsAsync(enText, "en", enNarration.ZoneId, _env.WebRootPath);
                     enNarration.AudioStatus = "ready";
 
                     // Generate Japanese Translation and Audio
@@ -144,7 +144,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                     _db.Narrations.Add(jaNarration);
                     await _db.SaveChangesAsync(); // Save to generate ID
                     
-                    jaNarration.FileUrl = await _audioService.GenerateTtsAsync(jaText, "ja", jaNarration.Id, _env.WebRootPath);
+                    jaNarration.FileUrl = await _audioService.GenerateTtsAsync(jaText, "ja", jaNarration.ZoneId, _env.WebRootPath);
                     jaNarration.AudioStatus = "ready";
                 }
 
