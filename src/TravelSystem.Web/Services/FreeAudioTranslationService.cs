@@ -38,9 +38,9 @@ namespace TravelSystem.Web.Services
             return $"[Bản dịch {targetLanguageCode}] {text}";
         }
 
-        public async Task<string> GenerateTtsAsync(string text, string languageCode, int narrationId, string webRootPath)
+        public async Task<string> GenerateTtsAsync(string text, string languageCode, int zoneId, string webRootPath)
         {
-            var fileName = $"{languageCode}_{narrationId}_{Guid.NewGuid().ToString().Substring(0, 4)}.mp3";
+            var fileName = $"{zoneId}_{languageCode}.mp3";
             var uploadDir = Path.Combine(webRootPath, "uploads", "audio");
             Directory.CreateDirectory(uploadDir);
             var filePath = Path.Combine(uploadDir, fileName);
