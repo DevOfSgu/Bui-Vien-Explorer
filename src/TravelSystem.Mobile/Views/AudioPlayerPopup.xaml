@@ -28,17 +28,24 @@
                 <Shadow Brush="Black" Offset="0,2" Radius="10" Opacity="0.1"/>
             </Border.Shadow>
             
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="15">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="15">
                 
-                <!-- Close Button -->
-                <ImageButton Source="close_icon.png"
-                             HorizontalOptions="End"
-                             VerticalOptions="Start"
-                             WidthRequest="30"
-                             HeightRequest="30"
-                             Padding="5"
-                             Clicked="OnCloseClicked"
-                             BackgroundColor="Transparent"/>
+                <!-- Header with Close Button -->
+                <Grid Grid.Row="0" Margin="0,-10,-10,0">
+                    <ImageButton Source="close_icon.png"
+                                 HorizontalOptions="End"
+                                 VerticalOptions="Start"
+                                 WidthRequest="36"
+                                 HeightRequest="36"
+                                 Padding="8"
+                                 CornerRadius="18"
+                                 Clicked="OnCloseClicked"
+                                 BackgroundColor="#F5F5F5">
+                        <ImageButton.Shadow>
+                            <Shadow Brush="Black" Offset="0,2" Radius="4" Opacity="0.1"/>
+                        </ImageButton.Shadow>
+                    </ImageButton>
+                </Grid>
 
                 <!-- Zone Image -->
                 <Border Grid.Row="1" 
@@ -67,7 +74,7 @@
                 </StackLayout>
 
                 <!-- Seek Bar -->
-                <Grid Grid.Row="3" Margin="0,5,0,15">
+                <Grid Grid.Row="3" Margin="0,5,0,10">
                     <Slider x:Name="AudioSlider"
                             MinimumTrackColor="#3498DB"
                             MaximumTrackColor="#ECF0F1"
@@ -77,41 +84,51 @@
                             ValueChanged="OnSliderValueChanged"/>
                 </Grid>
 
-                <HorizontalStackLayout Grid.Row="4" 
-                                       HorizontalOptions="Center" 
-                                       Spacing="25" 
-                                       Margin="0,0,0,15">
-                    <ImageButton x:Name="PlayPauseButton" 
-                                 Source="play_icon.png"
-                                 Clicked="OnPlayPauseClicked"
-                                 WidthRequest="65"
-                                 HeightRequest="65"
-                                 Padding="15"
-                                 CornerRadius="32"
-                                 BackgroundColor="#3498DB"/>
+                <VerticalStackLayout Grid.Row="4" Spacing="20">
+                    <!-- Controls: Replay, Play/Pause, Details -->
+                    <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="15">
+                        <ImageButton x:Name="ReplayButton"
+                                     Grid.Column="0"
+                                     Source="replay_icon.png"
+                                     Clicked="OnReplayClicked"
+                                     WidthRequest="50"
+                                     HeightRequest="50"
+                                     Padding="12"
+                                     CornerRadius="25"
+                                     BackgroundColor="#F0F3F5"/>
 
-                    <Button Text="Xem chi tiết"
-                            Clicked="OnSeeDetailsClicked"
-                            FontSize="16"
-                            FontAttributes="Bold"
-                            HeightRequest="60"
-                            Padding="25,0"
-                            CornerRadius="30"
-                            BackgroundColor="#2ECC71"
-                            TextColor="White"/>
-                </HorizontalStackLayout>
+                        <ImageButton x:Name="PlayPauseButton" 
+                                     Grid.Column="1"
+                                     Source="play_icon.png"
+                                     Clicked="OnPlayPauseClicked"
+                                     WidthRequest="65"
+                                     HeightRequest="65"
+                                     Padding="15"
+                                     CornerRadius="32"
+                                     BackgroundColor="#3498DB"/>
 
-                <!-- Speed Selection -->
-                <FlexLayout Grid.Row="5" 
-                            JustifyContent="Center" 
-                            AlignItems="Center" 
-                            Wrap="Wrap"
-                            Margin="0,0,0,10">
-                    <Button Text="0.8x" Clicked="OnSpeedSelected" CommandParameter="0.8" Style="{StaticResource SpeedButtonStyle}"/>
-                    <Button Text="1.0x" Clicked="OnSpeedSelected" CommandParameter="1.0" Style="{StaticResource SpeedButtonStyle}" BackgroundColor="#3498DB" TextColor="White"/>
-                    <Button Text="1.5x" Clicked="OnSpeedSelected" CommandParameter="1.5" Style="{StaticResource SpeedButtonStyle}"/>
-                    <Button Text="2.0x" Clicked="OnSpeedSelected" CommandParameter="2.0" Style="{StaticResource SpeedButtonStyle}"/>
-                </FlexLayout>
+                        <Button Grid.Column="2"
+                                Text="Xem chi tiết"
+                                Clicked="OnSeeDetailsClicked"
+                                FontSize="16"
+                                FontAttributes="Bold"
+                                HeightRequest="65"
+                                CornerRadius="32"
+                                BackgroundColor="#2ECC71"
+                                TextColor="White"/>
+                    </Grid>
+
+                    <!-- Speed Selection -->
+                    <FlexLayout JustifyContent="Center" 
+                                AlignItems="Center" 
+                                Wrap="Wrap"
+                                Margin="0,0,0,10">
+                        <Button Text="0.8x" Clicked="OnSpeedSelected" CommandParameter="0.8" Style="{StaticResource SpeedButtonStyle}"/>
+                        <Button Text="1.0x" Clicked="OnSpeedSelected" CommandParameter="1.0" Style="{StaticResource SpeedButtonStyle}" BackgroundColor="#3498DB" TextColor="White"/>
+                        <Button Text="1.5x" Clicked="OnSpeedSelected" CommandParameter="1.5" Style="{StaticResource SpeedButtonStyle}"/>
+                        <Button Text="2.0x" Clicked="OnSpeedSelected" CommandParameter="2.0" Style="{StaticResource SpeedButtonStyle}"/>
+                    </FlexLayout>
+                </VerticalStackLayout>
             </Grid>
         </Border>
     </Grid>

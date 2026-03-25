@@ -14,43 +14,81 @@ public partial class AudioPlayerPopup : ContentView
     private PoiStopItem? _stop;
     private bool _isUsingMp3 = false;
     private bool _isDragging = false;
+    private Task? _mp3CheckTask;
+    private CancellationTokenSource? _initCts;
 
     public event Action<PoiStopItem>? SeeDetailsRequested;
 
     public AudioPlayerPopup()
     {
         InitializeComponent();
+        this.PropertyChanged += OnPopupPropertyChanged;
+    }
+
+    private void OnPopupPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(IsVisible) && !IsVisible)
+        {
+            // Auto-stop when hidden
+            StopAllPlayback();
+        }
+    }
+
+    private void StopAllPlayback()
+    {
+        try 
+        {
+            if (AudioMediaPlayer != null)
+                AudioMediaPlayer.Stop();
+                
+            if (_audioService != null)
+                _audioService.Stop(true);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ERROR][AUDIO] Error stopping playback: {ex.Message}");
+        }
     }
 
     public void Initialize(IAudioGuideService audioService, PoiStopItem stop, string language)
     {
-        // Unsubscribe if reusing
+        _initCts?.Cancel();
+        _initCts = new CancellationTokenSource();
+
+        // 1. Dừng ngay lập tức mọi âm thanh cũ để tránh chồng chéo (Fix lỗi Sahara đọc tiếng Cổng chào)
+        StopAllPlayback();
+
+        // 2. Unsubscribe logic cũ
         if (_audioService != null)
             _audioService.PlaybackProgressChanged -= OnPlaybackProgressChanged;
 
+        // 3. Reset State hoàn toàn
         _audioService = audioService;
         _stop = stop;
         _text = stop.Description ?? string.Empty;
         _language = language;
-
-        ZoneTitleLabel.Text = stop.Name;
-        if (!string.IsNullOrEmpty(stop.ImageUrl))
-            ZoneImage.Source = stop.ImageUrl;
+        _isUsingMp3 = false; // Mặc định là false cho đến khi check xong
+        
+        // Clear MediaElement source ngay lập tức
+        MainThread.BeginInvokeOnMainThread(() => {
+            AudioMediaPlayer.Source = null;
+            AudioSlider.Value = 0;
+            ZoneTitleLabel.Text = stop.Name;
+            if (!string.IsNullOrEmpty(stop.ImageUrl))
+                ZoneImage.Source = stop.ImageUrl;
+        });
 
         _audioService.PlaybackProgressChanged += OnPlaybackProgressChanged;
         
-        Debug.WriteLine($"[DEBUG][TTS_POPUP] Initialized for: {stop.Name}");
+        Debug.WriteLine($"[DEBUG][TTS_POPUP] Initializing for: {stop.Name} (ZoneId: {stop.ZoneId})");
 
-        // Reset Slider
-        AudioSlider.Value = 0;
-
-        // Kiểm tra xem có file MP3 local chưa
-        _ = CheckForMp3Async(stop, language);
+        // 4. Bắt đầu check MP3 và lưu task lại để ShowAsync có thể đợi
+        _mp3CheckTask = CheckForMp3Async(stop, language, _initCts.Token);
 
         UpdatePlayPauseButton();
     }
 
-    private async Task CheckForMp3Async(PoiStopItem stop, string language)
+    private async Task CheckForMp3Async(PoiStopItem stop, string language, CancellationToken ct)
     {
         try
         {
@@ -58,6 +96,8 @@ public partial class AudioPlayerPopup : ContentView
             Debug.WriteLine($"[DEBUG][AUDIO] Checking database for ZoneId: {stop.ZoneId}, Language: {language}");
             var narration = await db.GetNarrationAsync(stop.ZoneId, language);
             
+            if (ct.IsCancellationRequested) return;
+
             if (narration != null)
             {
                 Debug.WriteLine($"[DEBUG][AUDIO] Narration found in DB. FileUrl: {narration.FileUrl}, LocalPath: {narration.LocalFilePath}");
@@ -67,7 +107,7 @@ public partial class AudioPlayerPopup : ContentView
                     Debug.WriteLine($"[SUCCESS][AUDIO] Local MP3 file found at: {narration.LocalFilePath}");
                     _isUsingMp3 = true;
                     _text = string.Empty;
-                    MainThread.BeginInvokeOnMainThread(() => 
+                    await MainThread.InvokeOnMainThreadAsync(() => 
                     {
                         AudioMediaPlayer.Source = MediaSource.FromFile(narration.LocalFilePath);
                         Debug.WriteLine("[DEBUG][AUDIO] MediaElement source set to Local MP3.");
@@ -76,10 +116,9 @@ public partial class AudioPlayerPopup : ContentView
                 }
                 else
                 {
-                    Debug.WriteLine($"[WARNING][AUDIO] LocalFilePath is '{narration.LocalFilePath}', but file exists on disk: {File.Exists(narration.LocalFilePath)}");
                     _isUsingMp3 = false;
                     _text = narration.Text ?? stop.Description ?? string.Empty;
-                    MainThread.BeginInvokeOnMainThread(() => 
+                    await MainThread.InvokeOnMainThreadAsync(() => 
                     {
                         AudioSlider.Maximum = 100;
                     });
@@ -87,10 +126,9 @@ public partial class AudioPlayerPopup : ContentView
             }
             else
             {
-                Debug.WriteLine("[WARNING][AUDIO] No narration record found in DB for this Zone/Language.");
                 _isUsingMp3 = false;
                 _text = stop.Description ?? string.Empty;
-                MainThread.BeginInvokeOnMainThread(() => 
+                await MainThread.InvokeOnMainThreadAsync(() => 
                 {
                     AudioSlider.Maximum = 100; 
                 });
@@ -107,12 +145,22 @@ public partial class AudioPlayerPopup : ContentView
     {
         this.IsVisible = true;
         
+        Debug.WriteLine("[DEBUG][AUDIO] ShowAsync called. Waiting for MP3 check task...");
+        
+        // Chờ check MP3 xong mới được chạy Play (Fix lỗi tự động đọc nhầm TTS thay vì MP3)
+        if (_mp3CheckTask != null)
+        {
+            try { await _mp3CheckTask; } catch { }
+        }
+
         if (_isUsingMp3)
         {
+            Debug.WriteLine("[DEBUG][AUDIO] Autoplaying MP3...");
             AudioMediaPlayer.Play();
         }
-        else if (_audioService != null)
+        else if (_audioService != null && !string.IsNullOrEmpty(_text))
         {
+            Debug.WriteLine($"[DEBUG][AUDIO] Autoplaying TTS: {_text.Substring(0, Math.Min(20, _text.Length))}...");
             await _audioService.PlayAsync(_text, _language, _audioService.CurrentSpeed);
         }
         
@@ -207,6 +255,21 @@ public partial class AudioPlayerPopup : ContentView
                 }
             }
         }
+    }
+
+    private async void OnReplayClicked(object sender, EventArgs e)
+    {
+        Debug.WriteLine("[DEBUG][AUDIO] Replay clicked.");
+        if (_isUsingMp3)
+        {
+            AudioMediaPlayer.SeekTo(TimeSpan.Zero);
+            AudioMediaPlayer.Play();
+        }
+        else if (_audioService != null)
+        {
+            await _audioService.PlayAsync(_text, _language, _audioService.CurrentSpeed);
+        }
+        UpdatePlayPauseButton();
     }
 
     private async void OnPlayPauseClicked(object sender, EventArgs e)

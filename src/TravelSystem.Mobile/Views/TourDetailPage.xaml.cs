@@ -452,8 +452,13 @@ public partial class TourDetailPage : ContentPage
         await ShowAudioNarrationAsync(stop);
     }
 
+    private bool _isShowingNarration = false;
+
     private async Task ShowAudioNarrationAsync(PoiStopItem stop)
     {
+        if (_isShowingNarration) return;
+        _isShowingNarration = true;
+
         try
         {
             var lang = await _dbService.GetSettingAsync("Language", "vi");
@@ -477,6 +482,10 @@ public partial class TourDetailPage : ContentPage
         catch (Exception ex)
         {
             Debug.WriteLine($"[TOUR_PAGE] Error showing audio popup: {ex.Message}");
+        }
+        finally
+        {
+            _isShowingNarration = false;
         }
     }
 
