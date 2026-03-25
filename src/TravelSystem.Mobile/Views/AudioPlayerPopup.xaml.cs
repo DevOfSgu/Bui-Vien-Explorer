@@ -307,7 +307,7 @@ public partial class AudioPlayerPopup : ContentView
         else
             isPlaying = _audioService?.IsPlaying ?? false;
 
-        PlayPauseButton.Source = isPlaying ? "pause_icon.png" : "play_icon.png";
+        PlayPauseButton.Source = isPlaying ? "pause.png" : "play.png";
     }
 
     private void OnSeeDetailsClicked(object sender, EventArgs e)

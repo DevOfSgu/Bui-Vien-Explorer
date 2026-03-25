@@ -32,7 +32,7 @@
                 
                 <!-- Header with Close Button -->
                 <Grid Grid.Row="0" Margin="0,-10,-10,0">
-                    <ImageButton Source="close_icon.png"
+                    <ImageButton Source="close.png"
                                  HorizontalOptions="End"
                                  VerticalOptions="Start"
                                  WidthRequest="36"
@@ -89,7 +89,7 @@
                     <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="15">
                         <ImageButton x:Name="ReplayButton"
                                      Grid.Column="0"
-                                     Source="replay_icon.png"
+                                     Source="replay.png"
                                      Clicked="OnReplayClicked"
                                      WidthRequest="50"
                                      HeightRequest="50"
@@ -99,7 +99,7 @@
 
                         <ImageButton x:Name="PlayPauseButton" 
                                      Grid.Column="1"
-                                     Source="play_icon.png"
+                                     Source="play.png"
                                      Clicked="OnPlayPauseClicked"
                                      WidthRequest="65"
                                      HeightRequest="65"
