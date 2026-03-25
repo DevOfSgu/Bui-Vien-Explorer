@@ -8,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient<TravelSystem.Web.Services.IAudioTranslationService, TravelSystem.Web.Services.FreeAudioTranslationService>();
 
 // Add DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
