@@ -15,6 +15,7 @@ public interface IAudioGuideService
     int TotalSentences { get; }
     int CurrentSentenceIndex { get; }
     event Action<int, int>? PlaybackProgressChanged;
+    event Action? StatusChanged;
 }
 
 
@@ -29,6 +30,7 @@ public class AudioGuideService : IAudioGuideService
     private string _currentLanguage = "vi";
 
     public event Action<int, int>? PlaybackProgressChanged;
+    public event Action? StatusChanged;
 
     public bool IsPlaying => _isPlaying;
     public int TotalSentences => _sentences.Length;
@@ -59,10 +61,11 @@ public class AudioGuideService : IAudioGuideService
 
     private async Task StartPlaybackAsync()
     {
-    Stop(hardStop: false);
-    _ttsCts = new CancellationTokenSource();
-    _isPlaying = true;
-    _isPaused = false;
+        Stop(hardStop: false);
+        _ttsCts = new CancellationTokenSource();
+        _isPlaying = true;
+        _isPaused = false;
+        StatusChanged?.Invoke();
 
     try
     {
@@ -101,13 +104,16 @@ public class AudioGuideService : IAudioGuideService
     {
         if (!_isPlaying) return;
         _isPaused = true;
+        _isPlaying = false;
         _ttsCts?.Cancel();
+        StatusChanged?.Invoke();
     }
 
     public void Resume()
     {
         if (!_isPaused) return;
         _ = StartPlaybackAsync();
+        StatusChanged?.Invoke();
     }
 
     public void SeekTo(int index)
@@ -141,6 +147,7 @@ public class AudioGuideService : IAudioGuideService
             _isPlaying = false;
             _currentSentenceIndex = 0;
         }
+        StatusChanged?.Invoke();
     }
 
     private async Task<Locale?> GetLocaleAsync(string languageCode)

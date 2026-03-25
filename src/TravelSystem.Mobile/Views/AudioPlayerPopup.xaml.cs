@@ -60,7 +60,10 @@ public partial class AudioPlayerPopup : ContentView
 
         // 2. Unsubscribe logic cũ
         if (_audioService != null)
+        {
             _audioService.PlaybackProgressChanged -= OnPlaybackProgressChanged;
+            _audioService.StatusChanged -= OnAudioStatusChanged;
+        }
 
         // 3. Reset State hoàn toàn
         _audioService = audioService;
@@ -79,6 +82,7 @@ public partial class AudioPlayerPopup : ContentView
         });
 
         _audioService.PlaybackProgressChanged += OnPlaybackProgressChanged;
+        _audioService.StatusChanged += OnAudioStatusChanged;
         
         Debug.WriteLine($"[DEBUG][TTS_POPUP] Initializing for: {stop.Name} (ZoneId: {stop.ZoneId})");
 
@@ -86,6 +90,11 @@ public partial class AudioPlayerPopup : ContentView
         _mp3CheckTask = CheckForMp3Async(stop, language, _initCts.Token);
 
         UpdatePlayPauseButton();
+    }
+
+    private void OnAudioStatusChanged()
+    {
+        MainThread.BeginInvokeOnMainThread(UpdatePlayPauseButton);
     }
 
     private async Task CheckForMp3Async(PoiStopItem stop, string language, CancellationToken ct)
@@ -161,7 +170,8 @@ public partial class AudioPlayerPopup : ContentView
         else if (_audioService != null && !string.IsNullOrEmpty(_text))
         {
             Debug.WriteLine($"[DEBUG][AUDIO] Autoplaying TTS: {_text.Substring(0, Math.Min(20, _text.Length))}...");
-            await _audioService.PlayAsync(_text, _language, _audioService.CurrentSpeed);
+            // Không await ở đây để tránh block việc Update UI icon ngay lúc bắt đầu
+            _ = _audioService.PlayAsync(_text, _language, _audioService.CurrentSpeed);
         }
         
         UpdatePlayPauseButton();
@@ -199,6 +209,12 @@ public partial class AudioPlayerPopup : ContentView
                 AudioSlider.Value = e.Position.TotalSeconds;
             }
         });
+    }
+
+    private void OnMediaStateChanged(object? sender, MediaStateChangedEventArgs e)
+    {
+        Debug.WriteLine($"[DEBUG][AUDIO] Media State Changed: {e.NewState}");
+        MainThread.BeginInvokeOnMainThread(UpdatePlayPauseButton);
     }
 
     private void OnMediaEnded(object? sender, EventArgs e)

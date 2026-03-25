@@ -91,19 +91,19 @@
                             <Shadow Brush="#E5E5EA" Offset="0,10" Radius="20" Opacity="0.4" />
                         </Border.Shadow>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnLanguageSelected" CommandParameter="fr" />
+                            <TapGestureRecognizer Tapped="OnLanguageSelected" CommandParameter="ja" />
                         </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="60, *, 40">
-                            <Image Source="ic_flag_fr.png" WidthRequest="44" HeightRequest="44" Aspect="AspectFit" Grid.Column="0" />
+                            <Image Source="japan.png" WidthRequest="44" HeightRequest="44" Aspect="AspectFit" Grid.Column="0" />
                             <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
-                                <Label Text="Français" FontSize="18" FontAttributes="Bold" TextColor="#1C1C1E" />
-                                <Label Text="FRENCH" FontSize="11" TextColor="#8E8E93" FontAttributes="Bold" CharacterSpacing="1" Margin="0,2,0,0"/>
+                                <Label Text="日本語" FontSize="18" FontAttributes="Bold" TextColor="#1C1C1E" />
+                                <Label Text="JAPANESE" FontSize="11" TextColor="#8E8E93" FontAttributes="Bold" CharacterSpacing="1" Margin="0,2,0,0"/>
                             </VerticalStackLayout>
-                            <Border x:Name="fran_border" Grid.Column="2" WidthRequest="24" HeightRequest="24" Stroke="#E5E5EA" StrokeThickness="2" Background="Transparent">
+                            <Border x:Name="jp_border" Grid.Column="2" WidthRequest="24" HeightRequest="24" Stroke="#E5E5EA" StrokeThickness="2" Background="Transparent">
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
                                 </Border.StrokeShape>
-                                <Ellipse x:Name="fran_dot" IsVisible="False" WidthRequest="12" HeightRequest="12" HorizontalOptions="Center" VerticalOptions="Center" Fill="#FF4B4B" />
+                                <Ellipse x:Name="jp_dot" IsVisible="False" WidthRequest="12" HeightRequest="12" HorizontalOptions="Center" VerticalOptions="Center" Fill="#FF4B4B" />
                             </Border>
                         </Grid>
                     </Border>
