@@ -10,10 +10,14 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
     public class NarrationsController : Controller
     {
         private readonly AppDbContext _db;
+        private readonly TravelSystem.Web.Services.IAudioTranslationService _audioService;
+        private readonly IWebHostEnvironment _env;
 
-        public NarrationsController(AppDbContext db)
+        public NarrationsController(AppDbContext db, TravelSystem.Web.Services.IAudioTranslationService audioService, IWebHostEnvironment env)
         {
             _db = db;
+            _audioService = audioService;
+            _env = env;
         }
 
         public async Task<IActionResult> Index(int? zoneId, int page = 1)
@@ -103,9 +107,47 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
         public async Task<IActionResult> Approve(int id)
         {
             var narration = await _db.Narrations.FindAsync(id);
-            if (narration != null)
+            if (narration != null && narration.ApprovalStatus != "Approved")
             {
                 narration.ApprovalStatus = "Approved";
+
+                // Generate TTS for original language
+                narration.FileUrl = await _audioService.GenerateTtsAsync(narration.Text, narration.Language, narration.Id, _env.WebRootPath);
+                narration.AudioStatus = "ready";
+
+                if (narration.Language.ToLower() == "vi")
+                {
+                    // Generate English Translation and Audio
+                    var enText = await _audioService.TranslateAsync(narration.Text, "en");
+                    var enNarration = new TravelSystem.Shared.Models.Narration
+                    {
+                        ZoneId = narration.ZoneId,
+                        Language = "en",
+                        Text = enText,
+                        ApprovalStatus = "Approved"
+                    };
+                    _db.Narrations.Add(enNarration);
+                    await _db.SaveChangesAsync(); // Save to generate ID
+                    
+                    enNarration.FileUrl = await _audioService.GenerateTtsAsync(enText, "en", enNarration.Id, _env.WebRootPath);
+                    enNarration.AudioStatus = "ready";
+
+                    // Generate Japanese Translation and Audio
+                    var jaText = await _audioService.TranslateAsync(narration.Text, "ja");
+                    var jaNarration = new TravelSystem.Shared.Models.Narration
+                    {
+                        ZoneId = narration.ZoneId,
+                        Language = "ja",
+                        Text = jaText,
+                        ApprovalStatus = "Approved"
+                    };
+                    _db.Narrations.Add(jaNarration);
+                    await _db.SaveChangesAsync(); // Save to generate ID
+                    
+                    jaNarration.FileUrl = await _audioService.GenerateTtsAsync(jaText, "ja", jaNarration.Id, _env.WebRootPath);
+                    jaNarration.AudioStatus = "ready";
+                }
+
                 await _db.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index), new { zoneId = narration?.ZoneId });
