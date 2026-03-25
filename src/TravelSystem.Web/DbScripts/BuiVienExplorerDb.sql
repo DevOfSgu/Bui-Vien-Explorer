@@ -8,7 +8,8 @@ IF NOT EXISTS (
     WHERE name = 'BuiVienExplorerDb'
 ) BEGIN CREATE DATABASE BuiVienExplorerDb;
 END
-GO USE BuiVienExplorerDb;
+GO
+USE BuiVienExplorerDb;
 -- RESET: Xóa bảng cũ (nếu có) trước khi tạo lại
 -- Thứ tự xóa: bảng con trước, bảng cha sau (tránh lỗi FK)
 -- ============================================================
@@ -107,6 +108,8 @@ CREATE TABLE Narrations (
     -- Nội dung kịch bản thuyết minh
     VoiceId NVARCHAR(50),
     -- "vi-VN-Standard-A", "en-US-Wavenet-D"
+    FileUrl NVARCHAR(512) NULL, -- URL file MP3 trên server
+    AudioStatus NVARCHAR(50) DEFAULT 'pending', -- "pending", "ready", "error"
     ApprovalStatus NVARCHAR(20) NOT NULL DEFAULT 'Pending',
     -- "Pending", "Approved", "Rejected"
     UpdatedAt DATETIME DEFAULT GETDATE(),

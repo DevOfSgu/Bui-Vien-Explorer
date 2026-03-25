@@ -97,13 +97,7 @@
                             </Border>
                         </Grid>
 
-                        <Button Text="🎧 Thuyết minh âm thanh"
-                                BackgroundColor="#E3F2FD"
-                                TextColor="#2196F3"
-                                FontAttributes="Bold"
-                                HeightRequest="50"
-                                CornerRadius="25"
-                                Clicked="OnPlayAudioClicked" />
+
 
                         <HorizontalStackLayout Spacing="8">
                             <Image Source="location.svg" WidthRequest="16" HeightRequest="16" />
@@ -118,9 +112,6 @@
             </Border>
         </Grid>
 
-        <!-- Custom Overlay Overlay -->
-        <views:AudioPlayerPopup x:Name="AudioPlayer" 
-                               AbsoluteLayout.LayoutFlags="All"
-                               AbsoluteLayout.LayoutBounds="0,0,1,1" />
+
     </AbsoluteLayout>
 </ContentPage>

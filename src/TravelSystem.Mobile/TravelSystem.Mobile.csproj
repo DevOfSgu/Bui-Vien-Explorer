@@ -70,6 +70,7 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.41" />
     	<PackageReference Include="CommunityToolkit.Maui" Version="14.0.1" />
+		<PackageReference Include="CommunityToolkit.Maui.MediaElement" Version="8.0.1" />
 		<PackageReference Include="Mapsui.Maui" Version="5.0.2" />
 
 		<PackageReference Include="Mapsui.Nts" Version="5.0.2" />

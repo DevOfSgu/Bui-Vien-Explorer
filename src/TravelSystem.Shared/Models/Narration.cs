@@ -9,6 +9,10 @@ namespace TravelSystem.Shared.Models
         public string Text { get; set; } = string.Empty;       // Nội dung TTS
         public string? VoiceId { get; set; }                   // "vi-VN-Standard-A"
 
+        // Hỗ trợ phát file MP3 thực tế
+        public string? FileUrl { get; set; }                   // URL file MP3 trên server/CDN
+        public string AudioStatus { get; set; } = "pending";   // "pending", "ready", "error"
+
         // Approval Workflow: "Pending", "Approved", "Rejected"
         public string ApprovalStatus { get; set; } = "Pending";
 

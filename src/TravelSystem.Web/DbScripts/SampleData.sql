@@ -44,8 +44,8 @@ VALUES (
         NULL
     ),
     (
-        N'Spotted By Locals',
-        N'5 Bùi Viện, Q1, TP.HCM',
+        N'Go2 Bar',
+        N'187 Bùi Viện, Q1, TP.HCM',
         N'028-3838-3333',
         NULL
     ),
@@ -68,20 +68,20 @@ VALUES (
         NULL
     ),
     (
-        N'Ocean Club',
+        N'Broma Not A Bar',
         N'41 Bùi Viện, Q1, TP.HCM',
         N'028-3838-7777',
         NULL
     ),
     (
-        N'Donkey Bar',
-        N'120 Bùi Viện, Q1, TP.HCM',
+        N'Phatty''s Bar',
+        N'95 Bùi Viện, Q1, TP.HCM',
         N'028-3838-8888',
         NULL
     ),
     (
-        N'Universal Pub',
-        N'90 Bùi Viện, Q1, TP.HCM',
+        N'Bobby Brewers',
+        N'45 Bùi Viện, Q1, TP.HCM',
         N'028-3838-9999',
         NULL
     ),
@@ -98,13 +98,13 @@ VALUES (
         NULL
     ),
     (
-        N'Republic Club',
-        N'200 Bùi Viện, Q1, TP.HCM',
+        N'Knock Knock Bar',
+        N'139 Bùi Viện, Q1, TP.HCM',
         N'028-3838-2233',
         NULL
     ),
     (
-        N'86 Club',
+        N'86 Phố Tây',
         N'86 Bùi Viện, Q1, TP.HCM',
         N'028-3838-3344',
         NULL
@@ -116,26 +116,26 @@ VALUES (
         NULL
     ),
     (
-        N'Asiana Food Town',
-        N'Khu ẩm thực ngầm 23/9, Q1, TP.HCM',
+        N'Quán ăn vỉa hè Bùi Viện',
+        N'155 Bùi Viện, Q1, TP.HCM',
         N'028-3838-5566',
         NULL
     ),
     (
-        N'Krystal Lounge',
+        N'Crazy Night',
         N'80 Bùi Viện, Q1, TP.HCM',
         N'028-3838-6677',
         NULL
     ),
     (
-        N'Nubes Rooftop',
+        N'Light Pub',
         N'115 Bùi Viện, Q1, TP.HCM',
         N'028-3838-7788',
         NULL
     ),
     (
-        N'Sky Bar 360',
-        N'99 Bùi Viện, Q1, TP.HCM',
+        N'The View Rooftop Bar',
+        N'195 Bùi Viện, Q1, TP.HCM',
         N'028-3838-8899',
         NULL
     ),
@@ -221,8 +221,8 @@ VALUES (
 
         N'Cổng chào Bùi Viện',
         N'Nơi đón khách tham quan chính thức của toàn phố.',
-        10.76968,
-        106.69156,
+        10.76772,
+        106.69400,
         20,
         1,
         3,
@@ -237,8 +237,8 @@ VALUES (
 
         N'The Hideout Bar',
         N'Quán bar lâu đời.',
-        10.76945,
-        106.69170,
+        10.76765,
+        106.69380,
         15,
         2,
         0,
@@ -253,8 +253,8 @@ VALUES (
 
         N'Crazy Buffalo Bar',
         N'Biểu tượng nổi tiếng với mô hình trâu rừng.',
-        10.76930,
-        106.69185,
+        10.76758,
+        106.69358,
         15,
         3,
         0,
@@ -269,8 +269,8 @@ VALUES (
 
         N'Quảng trường giữa',
         N'Nơi hay có múa lửa nghệ thuật.',
-        10.76910,
-        106.69200,
+        10.76748,
+        106.69300,
         25,
         4,
         3,
@@ -283,15 +283,15 @@ VALUES (
     (
         3,
 
-        N'Spotted By Locals',
-        N'Nhà hàng có không khí lãng mạn.',
-        10.76890,
-        106.69215,
+        N'Go2 Bar',
+        N'Bar nổi tiếng với bia rẻ và nhạc sôi động trên Bùi Viện.',
+        10.76742,
+        106.69272,
         15,
         5,
-        1,
-        1,
         0,
+        1,
+        2,
         0,
         0,
         NULL
@@ -301,8 +301,8 @@ VALUES (
 
         N'Boheme Pub',
         N'Điểm đến cho sinh viên quẩy banh nóc.',
-        10.76895,
-        106.69225,
+        10.76738,
+        106.69250,
         15,
         6,
         0,
@@ -317,8 +317,8 @@ VALUES (
 
         N'Sahara Beer Club',
         N'Trải nghiệm bia hơi và nhạc DJ.',
-        10.76890,
-        106.69230,
+        10.76733,
+        106.69228,
         15,
         7,
         0,
@@ -333,8 +333,8 @@ VALUES (
 
         N'Miss Saigon',
         N'Phong cách sang trọng với âm nhạc hiện đại.',
-        10.76885,
-        106.69235,
+        10.76728,
+        106.69208,
         15,
         8,
         0,
@@ -347,10 +347,10 @@ VALUES (
     (
         7,
 
-        N'Ocean Club',
-        N'Nổi bật với thiết kế xanh mát nhiệt đới.',
-        10.76880,
-        106.69240,
+        N'Broma Not A Bar',
+        N'Cocktail bar nổi tiếng với đồ uống sáng tạo, không gian nghệ thuật.',
+        10.76724,
+        106.69188,
         15,
         9,
         0,
@@ -363,10 +363,10 @@ VALUES (
     (
         8,
 
-        N'Donkey Bar',
-        N'Không gian nhỏ, ấm cúng.',
-        10.76875,
-        106.69245,
+        N'Phatty''s Bar',
+        N'Bar lâu đời, không gian nhỏ ấm cúng, bia rẻ nhất phố.',
+        10.76720,
+        106.69170,
         15,
         10,
         0,
@@ -379,10 +379,10 @@ VALUES (
     (
         9,
 
-        N'Universal Pub',
-        N'Nhạc sống Tây ba lô yêu thích.',
-        10.76870,
-        106.69250,
+        N'Bobby Brewers',
+        N'Craft beer tươi, không gian thoáng mát ngay trên Bùi Viện.',
+        10.76716,
+        106.69148,
         15,
         11,
         0,
@@ -397,8 +397,8 @@ VALUES (
 
         N'Champion Sports Bar',
         N'Nơi xem bóng đá ngoại hạng Anh tốt nhất.',
-        10.76865,
-        106.69255,
+        10.76712,
+        106.69128,
         15,
         12,
         0,
@@ -413,8 +413,8 @@ VALUES (
 
         N'Hair of the Dog',
         N'Sôi động thâu đêm.',
-        10.76860,
-        106.69260,
+        10.76708,
+        106.69108,
         15,
         13,
         0,
@@ -427,10 +427,10 @@ VALUES (
     (
         12,
 
-        N'Republic Club',
-        N'Sang trọng đẳng cấp.',
-        10.76855,
-        106.69265,
+        N'Knock Knock Bar',
+        N'Bar phong cách trẻ, menu đồ uống đa dạng.',
+        10.76704,
+        106.69088,
         15,
         14,
         0,
@@ -443,10 +443,10 @@ VALUES (
     (
         13,
 
-        N'86 Club',
+        N'86 Phố Tây',
         N'Góc phố nhìn ra công viên 23/9.',
-        10.76850,
-        106.69270,
+        10.76700,
+        106.69068,
         15,
         15,
         0,
@@ -461,8 +461,8 @@ VALUES (
 
         N'Le Pub',
         N'Khách Tây hay ngồi vỉa hè.',
-        10.76845,
-        106.69275,
+        10.76696,
+        106.69048,
         15,
         16,
         0,
@@ -475,10 +475,10 @@ VALUES (
     (
         15,
 
-        N'Asiana Food Town',
-        N'Khu ẩm thực đa quốc gia.',
-        10.76840,
-        106.69280,
+        N'Quán ăn vỉa hè Bùi Viện',
+        N'Khu ẩm thực đường phố sầm uất với các món Việt Nam.',
+        10.76692,
+        106.69028,
         15,
         17,
         1,
@@ -491,10 +491,10 @@ VALUES (
     (
         16,
 
-        N'Krystal Lounge',
-        N'Thư giãn thưởng thức Shisha.',
-        10.76835,
-        106.69285,
+        N'Crazy Night',
+        N'Club EDM nổi tiếng, nhạc mạnh, đèn laser sôi động.',
+        10.76688,
+        106.69008,
         15,
         18,
         0,
@@ -507,10 +507,10 @@ VALUES (
     (
         17,
 
-        N'Nubes Rooftop',
-        N'Từ tầng thượng bạn có thể ngắm Landmark 81.',
-        10.76830,
-        106.69290,
+        N'Light Pub',
+        N'Pub nhỏ xinh với nhạc Acoustic và ấm cúng.',
+        10.76684,
+        106.68988,
         15,
         19,
         0,
@@ -523,10 +523,10 @@ VALUES (
     (
         18,
 
-        N'Sky Bar 360',
-        N'Nhạc House, chill.',
-        10.76825,
-        106.69295,
+        N'The View Rooftop Bar',
+        N'Rooftop bar với tầm nhìn toàn cảnh phố đi bộ Bùi Viện.',
+        10.76680,
+        106.68965,
         15,
         20,
         0,
@@ -576,126 +576,166 @@ SET ANSI_WARNINGS ON;
 
 IF EXISTS (SELECT 1 FROM Zones)
 BEGIN
-INSERT INTO Narrations (ZoneId, Language, Text, VoiceId)
+INSERT INTO Narrations (ZoneId, Language, Text, VoiceId, FileUrl, AudioStatus)
 VALUES (
         @z1,
         N'vi',
         N'Chào mừng bạn đến với Cổng chào Bùi Viện. Hãy sẵn sàng trải nghiệm buổi tối thú vị.',
-        N'vi-VN-Standard-A'
+        N'vi-VN-Standard-A',
+        N'/uploads/audio/1_vi.mp3',
+        N'ready'
     ),
     (
         @z2,
         N'vi',
         N'Đây là The Hideout Bar, luôn là điểm nhậu lý tưởng của khách phương xa.',
-        N'vi-VN-Standard-A'
+        N'vi-VN-Standard-A',
+        N'/uploads/audio/2_vi.mp3',
+        N'ready'
     ),
     (
         @z3,
         N'vi',
         N'Crazy Buffalo Bar có không gian cực đại. Hãy chụp một bức ảnh check in ở đây nhé.',
-        N'vi-VN-Standard-A'
+        N'vi-VN-Standard-A',
+        N'/uploads/audio/3_vi.mp3',
+        N'ready'
     ),
     (
         @z4,
         N'vi',
         N'Tại quảng trường trung tâm này, cuối tuần hay có múa lửa và biểu diễn ảo thuật.',
-        N'vi-VN-Standard-A'
+        N'vi-VN-Standard-A',
+        N'/uploads/audio/4_vi.mp3',
+        N'ready'
     ),
     (
         @z5,
         N'vi',
-        N'Spotted By Locals cung cấp các món ăn ngon sau khi dạo phố.',
-        N'vi-VN-Standard-A'
+        N'Go2 Bar là một trong những bar lâu đời nhất Bùi Viện, bia rẻ và nhạc hay.',
+        N'vi-VN-Standard-A',
+        N'/uploads/audio/5_vi.mp3',
+        N'ready'
     ),
     (
         @z6,
         N'vi',
         N'Boheme Pub có DJ chơi nhạc cực cháy. Hãy ghé vào thử 1 chai bia!',
-        N'vi-VN-Standard-A'
+        N'vi-VN-Standard-A',
+        NULL,
+        N'pending'
     ),
     (
         @z7,
         N'en',
         N'Welcome to Sahara Beer Club. Let''s have a cold beer and enjoy the vibe.',
-        N'en-US-Standard-C'
+        N'en-US-Standard-C',
+        NULL,
+        N'pending'
     ),
     (
         @z8,
         N'en',
         N'This is Miss Saigon, where modern aesthetics meet traditional hospitality.',
-        N'en-US-Standard-C'
+        N'en-US-Standard-C',
+        NULL,
+        N'pending'
     ),
     (
         @z9,
         N'en',
-        N'Ocean Club offers a tropical vibe right inside the crowded city.',
-        N'en-US-Standard-C'
+        N'Broma Not A Bar is famous for its creative cocktails and artistic space.',
+        N'en-US-Standard-C',
+        NULL,
+        N'pending'
     ),
     (
         @z10,
         N'en',
-        N'Donkey Bar is the best place to chill and talk with your friends.',
-        N'en-US-Standard-C'
+        N'Phatty''s Bar is the cheapest bar in town. Perfect for backpackers.',
+        N'en-US-Standard-C',
+        NULL,
+        N'pending'
     ),
     (
         @z11,
         N'vi',
-        N'Universal Pub là nơi hay có nhạc Acoustic.',
-        N'vi-VN-Standard-A'
+        N'Bobby Brewers mang đến bia thủ công tươi ngay trên phố Bùi Viện.',
+        N'vi-VN-Standard-A',
+        NULL,
+        N'pending'
     ),
     (
         @z12,
         N'vi',
         N'Nếu bạn mê bóng đá, hãy dừng chân tại Champion Sports Bar vào cuối tuần.',
-        N'vi-VN-Standard-A'
+        N'vi-VN-Standard-A',
+        NULL,
+        N'pending'
     ),
     (
         @z13,
         N'en',
         N'Hair of the Dog is perfect for late night parties.',
-        N'en-US-Standard-C'
+        N'en-US-Standard-C',
+        NULL,
+        N'pending'
     ),
     (
         @z14,
         N'en',
-        N'Republic Club is the premium option for EDM lovers.',
-        N'en-US-Standard-C'
+        N'Knock Knock Bar has a youthful style and diverse drink menu.',
+        N'en-US-Standard-C',
+        NULL,
+        N'pending'
     ),
     (
         @z15,
         N'vi',
-        N'Từ 86 Club bạn có thể ngồi nhìn ra khu công viên cực kỳ thoáng.',
-        N'vi-VN-Standard-A'
+        N'Từ 86 Phố Tây bạn có thể ngồi nhìn ra khu công viên cực kỳ thoáng.',
+        N'vi-VN-Standard-A',
+        NULL,
+        N'pending'
     ),
     (
         @z16,
         N'vi',
         N'Le Pub là nơi giao thoa văn hóa đường phố rất tuyệt vời.',
-        N'vi-VN-Standard-A'
+        N'vi-VN-Standard-A',
+        NULL,
+        N'pending'
     ),
     (
         @z17,
         N'en',
-        N'Asiana Food Town is literally an underground food heaven.',
-        N'en-US-Standard-C'
+        N'Khu quán ăn vỉa hè này có bánh tráng trộn, bò nướng lá lốt ngon xuất sắc.',
+        N'en-US-Standard-C',
+        NULL,
+        N'pending'
     ),
     (
         @z18,
         N'vi',
-        N'Vào Krystal Lounge bạn sẽ thấy không khí rất tĩnh lặng nhẹ nhàng hơn.',
-        N'vi-VN-Standard-A'
+        N'Crazy Night là club EDM sôi động nhất đoạn cuối Bùi Viện.',
+        N'vi-VN-Standard-A',
+        NULL,
+        N'pending'
     ),
     (
         @z19,
         N'vi',
-        N'Bạn muốn ngắm cảnh ư? Nhìn lên ngay, Nubes Rooftop ở trên lầu 6.',
-        N'vi-VN-Standard-A'
+        N'Light Pub nhỏ xinh, ấm cúng với nhạc Acoustic mỗi tối.',
+        N'vi-VN-Standard-A',
+        NULL,
+        N'pending'
     ),
     (
         @z20,
         N'en',
-        N'End your night gracefully at Sky Bar 360 with a panoramic view.',
-        N'en-US-Standard-C'
+        N'End your night at The View Rooftop Bar with a panoramic view of Bui Vien.',
+        N'en-US-Standard-C',
+        NULL,
+        N'pending'
     );
 END
 
@@ -707,26 +747,30 @@ VALUES (
     N'Nightlife & Pub Crawl', 
     N'Khám phá những quán bar sôi động nhất Bùi Viện về đêm.', 
     120, 
-    N'https://images.unsplash.com/photo-1514525253361-bee8d41deeb4'
+    N'/images/tours/4e32d559-c3b9-4b98-821e-f39678e5a79e.jpg'
 ),
 (
     N'Street Food & Culture', 
     N'Hành trình trải nghiệm ẩm thực đường phố và văn hóa địa phương.', 
     90, 
-    N'https://images.unsplash.com/photo-1504674900247-0877df9cc836'
+    N'/images/tours/fb38ed4c-c419-401b-b6be-5be1c195d3b5.jpg'
 );
 
 -- ============================================================
 -- 7. Insert TourZones (Assign zones to tours)
 -- ============================================================
--- Tour 1: Nightlife (Z1, Z2, Z3, Z6, Z7, Z11)
+DECLARE @t1 INT, @t2 INT;
+SELECT @t1 = Id FROM Tours WHERE Name = N'Nightlife & Pub Crawl';
+SELECT @t2 = Id FROM Tours WHERE Name = N'Street Food & Culture';
+
+-- Tour 1: Nightlife (Z1, @z2, @z3, @z6, @z7, @z11)
 INSERT INTO TourZones (TourId, ZoneId, OrderIndex)
-SELECT 1, Id, CASE Id WHEN @z1 THEN 1 WHEN @z2 THEN 2 WHEN @z3 THEN 3 WHEN @z6 THEN 4 WHEN @z7 THEN 5 WHEN @z11 THEN 6 END
+SELECT @t1, Id, CASE Id WHEN @z1 THEN 1 WHEN @z2 THEN 2 WHEN @z3 THEN 3 WHEN @z6 THEN 4 WHEN @z7 THEN 5 WHEN @z11 THEN 6 END
 FROM Zones WHERE Id IN (@z1, @z2, @z3, @z6, @z7, @z11);
 
 -- Tour 2: Street Food (Z1, @z5, @z15, @z17, @z20)
 INSERT INTO TourZones (TourId, ZoneId, OrderIndex)
-SELECT 2, Id, CASE Id WHEN @z1 THEN 1 WHEN @z5 THEN 2 WHEN @z15 THEN 3 WHEN @z17 THEN 4 WHEN @z20 THEN 5 END
+SELECT @t2, Id, CASE Id WHEN @z1 THEN 1 WHEN @z5 THEN 2 WHEN @z15 THEN 3 WHEN @z17 THEN 4 WHEN @z20 THEN 5 END
 FROM Zones WHERE Id IN (@z1, @z5, @z15, @z17, @z20);
 
 -- Kiểm tra kết quả

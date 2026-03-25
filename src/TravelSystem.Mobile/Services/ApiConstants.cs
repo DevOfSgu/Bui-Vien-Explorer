@@ -4,6 +4,8 @@ public static class ApiConstants
 {
 #if DEBUG
     private const string DebugAndroidEmulatorBaseApiUrl = "http://10.0.2.2:5281/";
+    // HƯỚNG DẪN: Nếu dùng điện thoại thật, hãy chạy lệnh 'ipconfig' trên máy tính, 
+    // lấy địa chỉ IPv4 (ví dụ: 192.168.1.10) và thay vào 127.0.0.1 dưới đây.
     private const string DebugAndroidDeviceBaseApiUrl = "http://127.0.0.1:5281/";
     private const string DebugDesktopBaseApiUrl = "http://localhost:5281/";
 #else

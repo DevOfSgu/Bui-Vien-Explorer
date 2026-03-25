@@ -59,6 +59,17 @@ public class DatabaseService
                 await _connection.ExecuteAsync($"ALTER TABLE {nameof(LocalZone)} ADD COLUMN {nameof(LocalZone.ImageUrl)} TEXT");
             }
 
+            // Ensure LocalNarration table has expected columns (migration path)
+            var narrationColumns = await _connection.GetTableInfoAsync(nameof(LocalNarration));
+            if (!narrationColumns.Any(c => c.Name.Equals(nameof(LocalNarration.ContentHash), StringComparison.OrdinalIgnoreCase)))
+            {
+                await _connection.ExecuteAsync($"ALTER TABLE {nameof(LocalNarration)} ADD COLUMN {nameof(LocalNarration.ContentHash)} TEXT");
+            }
+            if (!narrationColumns.Any(c => c.Name.Equals(nameof(LocalNarration.DownloadStatus), StringComparison.OrdinalIgnoreCase)))
+            {
+                await _connection.ExecuteAsync($"ALTER TABLE {nameof(LocalNarration)} ADD COLUMN {nameof(LocalNarration.DownloadStatus)} INTEGER DEFAULT 0");
+            }
+
             // Ensure LocalFavorite table has expected columns (migration path)
             var localFavColumns = await _connection.GetTableInfoAsync(nameof(TravelSystem.Shared.Models.LocalFavorite));
             // No schema changes needed now, placeholder for future migrations
@@ -234,16 +245,23 @@ public class DatabaseService
         {
             await InitializeAsync();
             // ZoneId trong LocalNarration là string, cần convert hoặc so khớp
-            var zoneIdStr = zoneId.ToString();
-            Debug.WriteLine($"[DEBUG][DB] Querying narration for ZoneId: {zoneIdStr}, Language: {language}");
+            var zoneIdStr = zoneId.ToString().Trim();
+            var langNorm = language?.Trim().ToLower() ?? "vi";
+            
+            Debug.WriteLine($"[DEBUG][DB] Querying narration for ZoneId: '{zoneIdStr}', Language: '{langNorm}'");
             
             var result = await _connection.Table<LocalNarration>()
-                .FirstOrDefaultAsync(n => n.ZoneId == zoneIdStr && n.Language == language);
+                .FirstOrDefaultAsync(n => n.ZoneId == zoneIdStr && n.Language == langNorm);
 
             if (result != null)
-                Debug.WriteLine("[DEBUG][DB] Narration found in local database.");
+                Debug.WriteLine($"[DEBUG][DB] Narration found. Text length: {result.Text?.Length ?? 0}");
             else
+            {
                 Debug.WriteLine("[DEBUG][DB] Narration NOT found in local database.");
+                // Log all available ZoneIds for the language to help troubleshooting
+                var allForLang = await _connection.Table<LocalNarration>().Where(x => x.Language == langNorm).ToListAsync();
+                Debug.WriteLine($"[DEBUG][DB] Total narrations for lang '{langNorm}': {allForLang.Count}. ZoneIds: {string.Join(", ", allForLang.Select(x => x.ZoneId))}");
+            }
 
             return result;
         }
@@ -264,6 +282,10 @@ public class DatabaseService
             {
                 foreach (var n in narrations)
                 {
+                    // Chuẩn hóa dữ liệu trước khi lưu
+                    n.ZoneId = n.ZoneId?.Trim() ?? string.Empty;
+                    n.Language = n.Language?.Trim().ToLower() ?? string.Empty;
+
                     // Kiểm tra xem đã có bản ghi cho ZoneId + Lang chưa
                     var existing = tran.Table<LocalNarration>()
                         .FirstOrDefault(x => x.ZoneId == n.ZoneId && x.Language == n.Language);
@@ -271,12 +293,28 @@ public class DatabaseService
 
                     if (existing == null)
                     {
+                        // New record
+                        if (!string.IsNullOrEmpty(n.Text))
+                        {
+                            n.ContentHash = GenerateHash(n.Text);
+                        }
                         tran.Insert(n);
                     }
                     else
                     {
+                        // Update existing
+                        var newHash = !string.IsNullOrEmpty(n.Text) ? GenerateHash(n.Text) : string.Empty;
+                        
+                        // Nếu hash thay đổi hoặc FileUrl thay đổi -> Reset trạng thái download
+                        if (existing.ContentHash != newHash || existing.FileUrl != n.FileUrl)
+                        {
+                            existing.DownloadStatus = 0; // NotStarted
+                            existing.LocalFilePath = string.Empty; // Invalidate old file
+                        }
+
                         existing.Text = n.Text;
                         existing.FileUrl = n.FileUrl;
+                        existing.ContentHash = newHash;
                         existing.Language = n.Language;
                         existing.UpdatedAt = DateTime.UtcNow;
                         tran.Update(existing);
@@ -289,6 +327,16 @@ public class DatabaseService
         {
             Console.WriteLine($"❌ UpsertNarrationsAsync failed: {ex.Message}");
         }
+    }
+
+    private static string GenerateHash(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return string.Empty;
+        // Simple fast hash for comparison
+        using var sha = System.Security.Cryptography.SHA256.Create();
+        var bytes = System.Text.Encoding.UTF8.GetBytes(text);
+        var hashBytes = sha.ComputeHash(bytes);
+        return Convert.ToBase64String(hashBytes);
     }
 
 
@@ -345,5 +393,46 @@ public class DatabaseService
             WHERE Processed = 0
             GROUP BY GuestId, ZoneId, Operation
         ) AND Processed = 0");
+    }
+
+    // LẤY DANH SÁCH CẦN TẢI AUDIO
+    public async Task<List<LocalNarration>> GetPendingDownloadsAsync()
+    {
+        try
+        {
+            await InitializeAsync();
+            return await _connection.Table<LocalNarration>()
+                .Where(n => n.DownloadStatus != 2 && !string.IsNullOrEmpty(n.FileUrl))
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"⚠️ GetPendingDownloadsAsync failed: {ex.Message}");
+            return new List<LocalNarration>();
+        }
+    }
+
+    // CẬP NHẬT TRẠNG THÁI TẢI
+    public async Task UpdateDownloadStatusAsync(int id, int status, string localPath = "")
+    {
+        try
+        {
+            await InitializeAsync();
+            var existing = await _connection.Table<LocalNarration>().FirstOrDefaultAsync(n => n.Id == id);
+            if (existing != null)
+            {
+                existing.DownloadStatus = status;
+                if (!string.IsNullOrEmpty(localPath))
+                {
+                    existing.LocalFilePath = localPath;
+                }
+                existing.UpdatedAt = DateTime.UtcNow;
+                await _connection.UpdateAsync(existing);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"⚠️ UpdateDownloadStatusAsync failed: {ex.Message}");
+        }
     }
 }

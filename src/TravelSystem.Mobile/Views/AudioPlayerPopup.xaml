@@ -1,98 +1,133 @@
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:TravelSystem.Mobile.ViewModels"
+             xmlns:toolkit="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui.MediaElement"
              x:Class="TravelSystem.Mobile.Views.AudioPlayerPopup"
+             BackgroundColor="#80000000"
              IsVisible="False">
 
-    <Grid BackgroundColor="#80000000">
-        <Frame VerticalOptions="Center" 
-               HorizontalOptions="Center" 
-               Margin="20"
-               Padding="0"
-               CornerRadius="20"
-               HasShadow="True"
-               WidthRequest="320"
-               BackgroundColor="White">
+    <Grid x:Name="RootLayout">
+        <!-- MediaElement for MP3 playback (hidden) -->
+        <toolkit:MediaElement x:Name="AudioMediaPlayer"
+                              ShouldAutoPlay="False"
+                              IsVisible="False"
+                              PositionChanged="OnMediaPositionChanged"
+                              MediaEnded="OnMediaEnded"/>
+
+        <Border VerticalOptions="Center" 
+                HorizontalOptions="Center" 
+                Margin="20"
+                Padding="25"
+                BackgroundColor="White"
+                WidthRequest="340">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="25"/>
+            </Border.StrokeShape>
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,2" Radius="10" Opacity="0.1"/>
+            </Border.Shadow>
             
-            <Grid Padding="20">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="15">
+                
+                <!-- Close Button -->
+                <ImageButton Source="close_icon.png"
+                             HorizontalOptions="End"
+                             VerticalOptions="Start"
+                             WidthRequest="30"
+                             HeightRequest="30"
+                             Padding="5"
+                             Clicked="OnCloseClicked"
+                             BackgroundColor="Transparent"/>
 
-                <Button Text="✕" 
-                        Clicked="OnCloseClicked"
-                        HorizontalOptions="End"
-                        BackgroundColor="Transparent"
-                        TextColor="#666"
-                        FontSize="20"
-                        Padding="10"/>
-
-                <Frame Grid.Row="1" 
-                       Padding="0" 
-                       CornerRadius="15" 
-                       IsClippedToBounds="True" 
-                       HeightRequest="150" 
-                       Margin="0,0,0,15">
+                <!-- Zone Image -->
+                <Border Grid.Row="1" 
+                        HeightRequest="160" 
+                        Padding="0" 
+                        StrokeThickness="0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="15"/>
+                    </Border.StrokeShape>
                     <Image x:Name="ZoneImage" 
-                           Aspect="AspectFill"
-                           Source="logoapp.png"/>
-                </Frame>
+                           Source="app_logo.png"
+                           Aspect="AspectFill"/>
+                </Border>
 
-                <StackLayout Grid.Row="2" Spacing="4" Margin="0,0,0,15">
+                 <StackLayout Grid.Row="2" Spacing="4" Margin="0,0,0,5">
                     <Label x:Name="ZoneTitleLabel" 
+                           Text="Sahara Beer Club" 
+                           FontSize="22" 
                            FontAttributes="Bold" 
-                           FontSize="20" 
-                           HorizontalTextAlignment="Center"
-                           TextColor="#2C3E50"/>
+                           TextColor="#2C3E50" 
+                           HorizontalOptions="Center"/>
                     <Label Text="Audio Guide" 
-                           FontSize="12" 
-                           TextColor="#95A5A6" 
-                           HorizontalTextAlignment="Center"/>
+                           FontSize="14" 
+                           TextColor="#7F8C8D" 
+                           HorizontalOptions="Center"/>
                 </StackLayout>
 
-                <StackLayout Grid.Row="3" Spacing="15">
-                    <Slider x:Name="AudioProgressBar" 
-                            MaximumTrackColor="#ECF0F1" 
-                            MinimumTrackColor="#3498DB" 
-                            ThumbColor="#3498DB"/>
-                    
-                    <Grid ColumnDefinitions="*, *, *" HorizontalOptions="FillAndExpand">
-                        <Button Text="↺" 
-                                Clicked="OnRewindClicked"
-                                FontSize="24"
-                                BackgroundColor="Transparent"
-                                TextColor="#3498DB"/>
-                        <Button x:Name="PlayPauseButton" 
-                                Grid.Column="1"
-                                Text="▶" 
-                                Clicked="OnPlayPauseClicked"
-                                FontSize="32"
-                                WidthRequest="70"
-                                HeightRequest="70"
-                                CornerRadius="35"
-                                BackgroundColor="#3498DB"
-                                TextColor="White"/>
-                        <Button Text="↻" 
-                                Grid.Column="2"
-                                Clicked="OnForwardClicked"
-                                FontSize="24"
-                                BackgroundColor="Transparent"
-                                TextColor="#3498DB"/>
-                    </Grid>
-                </StackLayout>
+                <!-- Seek Bar -->
+                <Grid Grid.Row="3" Margin="0,5,0,15">
+                    <Slider x:Name="AudioSlider"
+                            MinimumTrackColor="#3498DB"
+                            MaximumTrackColor="#ECF0F1"
+                            ThumbColor="#3498DB"
+                            DragStarted="OnSliderDragStarted"
+                            DragCompleted="OnSliderDragCompleted"
+                            ValueChanged="OnSliderValueChanged"/>
+                </Grid>
 
-                <FlexLayout Grid.Row="4" 
-                            JustifyContent="SpaceEvenly" 
-                            Margin="0,15,0,0">
-                    <Button Text="0.75x" Clicked="OnSpeedClicked" FontSize="11" Padding="5" HeightRequest="30" BackgroundColor="#F8F9FA" TextColor="#7F8C8D"/>
-                    <Button Text="1.0x" Clicked="OnSpeedClicked" FontSize="11" Padding="5" HeightRequest="30" BackgroundColor="#E3F2FD" TextColor="#1976D2" BorderWidth="1" BorderColor="#1976D2"/>
-                    <Button Text="1.5x" Clicked="OnSpeedClicked" FontSize="11" Padding="5" HeightRequest="30" BackgroundColor="#F8F9FA" TextColor="#7F8C8D"/>
-                    <Button Text="2.0x" Clicked="OnSpeedClicked" FontSize="11" Padding="5" HeightRequest="30" BackgroundColor="#F8F9FA" TextColor="#7F8C8D"/>
+                <HorizontalStackLayout Grid.Row="4" 
+                                       HorizontalOptions="Center" 
+                                       Spacing="25" 
+                                       Margin="0,0,0,15">
+                    <ImageButton x:Name="PlayPauseButton" 
+                                 Source="play_icon.png"
+                                 Clicked="OnPlayPauseClicked"
+                                 WidthRequest="65"
+                                 HeightRequest="65"
+                                 Padding="15"
+                                 CornerRadius="32"
+                                 BackgroundColor="#3498DB"/>
+
+                    <Button Text="Xem chi tiết"
+                            Clicked="OnSeeDetailsClicked"
+                            FontSize="16"
+                            FontAttributes="Bold"
+                            HeightRequest="60"
+                            Padding="25,0"
+                            CornerRadius="30"
+                            BackgroundColor="#2ECC71"
+                            TextColor="White"/>
+                </HorizontalStackLayout>
+
+                <!-- Speed Selection -->
+                <FlexLayout Grid.Row="5" 
+                            JustifyContent="Center" 
+                            AlignItems="Center" 
+                            Wrap="Wrap"
+                            Margin="0,0,0,10">
+                    <Button Text="0.8x" Clicked="OnSpeedSelected" CommandParameter="0.8" Style="{StaticResource SpeedButtonStyle}"/>
+                    <Button Text="1.0x" Clicked="OnSpeedSelected" CommandParameter="1.0" Style="{StaticResource SpeedButtonStyle}" BackgroundColor="#3498DB" TextColor="White"/>
+                    <Button Text="1.5x" Clicked="OnSpeedSelected" CommandParameter="1.5" Style="{StaticResource SpeedButtonStyle}"/>
+                    <Button Text="2.0x" Clicked="OnSpeedSelected" CommandParameter="2.0" Style="{StaticResource SpeedButtonStyle}"/>
                 </FlexLayout>
             </Grid>
-        </Frame>
+        </Border>
     </Grid>
+
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <Style x:Key="SpeedButtonStyle" TargetType="Button">
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="HeightRequest" Value="32"/>
+                <Setter Property="Padding" Value="10,0"/>
+                <Setter Property="Margin" Value="4"/>
+                <Setter Property="CornerRadius" Value="16"/>
+                <Setter Property="BackgroundColor" Value="#F4F7F9"/>
+                <Setter Property="TextColor" Value="#34495E"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+            </Style>
+        </ResourceDictionary>
+    </ContentView.Resources>
 </ContentView>

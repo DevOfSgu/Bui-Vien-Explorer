@@ -7,10 +7,14 @@ public interface IAudioGuideService
     Task PlayAsync(string text, string language, double speed = 1.0);
     void Pause();
     void Resume();
-    void Stop();
+    void Stop(bool hardStop = true);
     bool IsPlaying { get; }
     double CurrentSpeed { get; set; }
+    void SeekTo(int index);
     void SeekRelative(int sentenceDelta);
+    int TotalSentences { get; }
+    int CurrentSentenceIndex { get; }
+    event Action<int, int>? PlaybackProgressChanged;
 }
 
 
@@ -24,7 +28,12 @@ public class AudioGuideService : IAudioGuideService
     private int _currentSentenceIndex = 0;
     private string _currentLanguage = "vi";
 
+    public event Action<int, int>? PlaybackProgressChanged;
+
     public bool IsPlaying => _isPlaying;
+    public int TotalSentences => _sentences.Length;
+    public int CurrentSentenceIndex => _currentSentenceIndex;
+
     public double CurrentSpeed 
     { 
         get => _currentSpeed; 
@@ -101,34 +110,35 @@ public class AudioGuideService : IAudioGuideService
         _ = StartPlaybackAsync();
     }
 
-    public void Stop() => Stop(true);
-
-    public void SeekRelative(int sentenceDelta)
+    public void SeekTo(int index)
     {
+        _currentSentenceIndex = Math.Clamp(index, 0, Math.Max(0, _sentences.Length - 1));
+        Debug.WriteLine($"[DEBUG][TTS_SERVICE] SeekTo: {_currentSentenceIndex}");
         if (_isPlaying)
         {
-            _currentSentenceIndex += sentenceDelta;
-            if (_currentSentenceIndex < 0) _currentSentenceIndex = 0;
-            if (_currentSentenceIndex >= _sentences.Length)
-            {
-                Stop();
-                return;
-            }
-            // Restart playback at the new sentence
             _ = StartPlaybackAsync();
+        }
+        else
+        {
+            PlaybackProgressChanged?.Invoke(_currentSentenceIndex, _sentences.Length);
         }
     }
 
-    private void Stop(bool hardStop)
-
+    public void SeekRelative(int sentenceDelta)
     {
+        SeekTo(_currentSentenceIndex + sentenceDelta);
+    }
+
+    public void Stop(bool hardStop = true)
+    {
+        Debug.WriteLine($"[DEBUG][TTS_SERVICE] Stop requested. Hard: {hardStop}");
         _ttsCts?.Cancel();
         _ttsCts?.Dispose();
         _ttsCts = null;
+        
         if (hardStop)
         {
             _isPlaying = false;
-            _isPaused = false;
             _currentSentenceIndex = 0;
         }
     }

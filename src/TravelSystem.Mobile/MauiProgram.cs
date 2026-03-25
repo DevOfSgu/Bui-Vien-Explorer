@@ -14,6 +14,7 @@ public static class MauiProgram
 		builder
 			.UseMauiApp<App>()
             .UseMauiCommunityToolkit()
+            .UseMauiCommunityToolkitMediaElement(true)
             .UseSkiaSharp()
 			.ConfigureFonts(fonts =>
 			{
@@ -33,6 +34,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<Services.DatabaseService>();
         builder.Services.AddSingleton<Services.ApiService>();
         builder.Services.AddSingleton<Services.IAudioGuideService, Services.AudioGuideService>();
+        builder.Services.AddSingleton<Services.AudioPreloadService>();
 
 
 		// Register ViewModels

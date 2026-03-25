@@ -25,8 +25,9 @@ public class ApiService
         _dbService = dbService;
         _httpClient = new HttpClient
         {
-            Timeout = TimeSpan.FromSeconds(8)
+            Timeout = TimeSpan.FromSeconds(30) // Increased for initial sync
         };
+        _logger.LogInformation("[API] Initialized with BaseUrl: {BaseUrl}", ApiConstants.GetBaseApiUrl());
     }
 
     // Simple sync: push pending ops then pull latest favorites into local table
@@ -229,7 +230,8 @@ public class ApiService
                     ZoneId = n.ZoneId.ToString(),
                     Language = n.Language,
                     Text = n.Text,
-                    Version = 1, // Default
+                    FileUrl = n.FileUrl ?? string.Empty, // Quan trọng: Sync URL từ server
+                    Version = string.IsNullOrEmpty(n.FileUrl) ? 1 : 2, // Nếu có file thì coi như version mới
                     SyncedAt = DateTime.UtcNow.ToString("O")
                 });
 
@@ -252,6 +254,7 @@ public class ApiService
             {
 
                 var toursUri = BuildUri(ApiConstants.ToursEndpoint);
+                _logger.LogInformation("[API] Requesting: {Uri}", toursUri);
                 var tours = await _httpClient.GetFromJsonAsync<List<TourSummaryDto>>(toursUri, cancellationToken);
                 if (tours is not null)
                 {

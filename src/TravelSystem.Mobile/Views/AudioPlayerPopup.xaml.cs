@@ -1,5 +1,8 @@
 using TravelSystem.Mobile.Services;
+using TravelSystem.Mobile.ViewModels;
 using System.Diagnostics;
+using CommunityToolkit.Maui.Views;
+using CommunityToolkit.Maui.Core;
 
 namespace TravelSystem.Mobile.Views;
 
@@ -8,97 +11,266 @@ public partial class AudioPlayerPopup : ContentView
     private IAudioGuideService? _audioService;
     private string _text = string.Empty;
     private string _language = "vi";
+    private PoiStopItem? _stop;
+    private bool _isUsingMp3 = false;
+    private bool _isDragging = false;
+
+    public event Action<PoiStopItem>? SeeDetailsRequested;
 
     public AudioPlayerPopup()
     {
         InitializeComponent();
     }
 
-    public void Initialize(IAudioGuideService audioService, string title, string text, string language, string? imageUrl)
+    public void Initialize(IAudioGuideService audioService, PoiStopItem stop, string language)
     {
+        // Unsubscribe if reusing
+        if (_audioService != null)
+            _audioService.PlaybackProgressChanged -= OnPlaybackProgressChanged;
+
         _audioService = audioService;
-        _text = text;
+        _stop = stop;
+        _text = stop.Description ?? string.Empty;
         _language = language;
 
-        Debug.WriteLine($"[DEBUG][TTS_POPUP] Initialized with Title: {title}, Lang: {language}");
-        Debug.WriteLine($"[DEBUG][TTS_POPUP] Text length: {text.Length} characters");
+        ZoneTitleLabel.Text = stop.Name;
+        if (!string.IsNullOrEmpty(stop.ImageUrl))
+            ZoneImage.Source = stop.ImageUrl;
 
-        ZoneTitleLabel.Text = title;
-        if (!string.IsNullOrEmpty(imageUrl))
-        {
-            ZoneImage.Source = imageUrl;
-        }
+        _audioService.PlaybackProgressChanged += OnPlaybackProgressChanged;
+        
+        Debug.WriteLine($"[DEBUG][TTS_POPUP] Initialized for: {stop.Name}");
+
+        // Reset Slider
+        AudioSlider.Value = 0;
+
+        // Kiểm tra xem có file MP3 local chưa
+        _ = CheckForMp3Async(stop, language);
 
         UpdatePlayPauseButton();
+    }
+
+    private async Task CheckForMp3Async(PoiStopItem stop, string language)
+    {
+        try
+        {
+            var db = Handler.MauiContext.Services.GetService<DatabaseService>();
+            Debug.WriteLine($"[DEBUG][AUDIO] Checking database for ZoneId: {stop.ZoneId}, Language: {language}");
+            var narration = await db.GetNarrationAsync(stop.ZoneId, language);
+            
+            if (narration != null)
+            {
+                Debug.WriteLine($"[DEBUG][AUDIO] Narration found in DB. FileUrl: {narration.FileUrl}, LocalPath: {narration.LocalFilePath}");
+                
+                if (!string.IsNullOrEmpty(narration.LocalFilePath) && File.Exists(narration.LocalFilePath))
+                {
+                    Debug.WriteLine($"[SUCCESS][AUDIO] Local MP3 file found at: {narration.LocalFilePath}");
+                    _isUsingMp3 = true;
+                    _text = string.Empty;
+                    MainThread.BeginInvokeOnMainThread(() => 
+                    {
+                        AudioMediaPlayer.Source = MediaSource.FromFile(narration.LocalFilePath);
+                        Debug.WriteLine("[DEBUG][AUDIO] MediaElement source set to Local MP3.");
+                        AudioSlider.Maximum = 1;
+                    });
+                }
+                else
+                {
+                    Debug.WriteLine($"[WARNING][AUDIO] LocalFilePath is '{narration.LocalFilePath}', but file exists on disk: {File.Exists(narration.LocalFilePath)}");
+                    _isUsingMp3 = false;
+                    _text = narration.Text ?? stop.Description ?? string.Empty;
+                    MainThread.BeginInvokeOnMainThread(() => 
+                    {
+                        AudioSlider.Maximum = 100;
+                    });
+                }
+            }
+            else
+            {
+                Debug.WriteLine("[WARNING][AUDIO] No narration record found in DB for this Zone/Language.");
+                _isUsingMp3 = false;
+                _text = stop.Description ?? string.Empty;
+                MainThread.BeginInvokeOnMainThread(() => 
+                {
+                    AudioSlider.Maximum = 100; 
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ERROR][AUDIO] Error checking for MP3: {ex.Message}");
+            _isUsingMp3 = false;
+        }
     }
 
     public async Task ShowAsync()
     {
         this.IsVisible = true;
-        if (_audioService != null)
+        
+        if (_isUsingMp3)
         {
-            await _audioService.PlayAsync(_text, _language);
+            AudioMediaPlayer.Play();
+        }
+        else if (_audioService != null)
+        {
+            await _audioService.PlayAsync(_text, _language, _audioService.CurrentSpeed);
+        }
+        
+        UpdatePlayPauseButton();
+    }
+
+    private void OnPlaybackProgressChanged(int current, int total)
+    {
+        if (_isUsingMp3 || _isDragging) return;
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            if (total > 0)
+            {
+                AudioSlider.Maximum = total;
+                AudioSlider.Value = current;
+            }
+            
+            if (current >= total && total > 0)
+            {
+                UpdatePlayPauseButton();
+            }
+        });
+    }
+
+    private void OnMediaPositionChanged(object? sender, MediaPositionChangedEventArgs e)
+    {
+        if (_isDragging) return;
+
+        MainThread.BeginInvokeOnMainThread(() => 
+        {
+            var duration = AudioMediaPlayer.Duration.TotalSeconds;
+            if (duration > 0)
+            {
+                AudioSlider.Maximum = duration;
+                AudioSlider.Value = e.Position.TotalSeconds;
+            }
+        });
+    }
+
+    private void OnMediaEnded(object? sender, EventArgs e)
+    {
+        Debug.WriteLine("[DEBUG][TTS_POPUP] MP3 Playback Finished.");
+        MainThread.BeginInvokeOnMainThread(() => 
+        {
+            AudioSlider.Value = AudioSlider.Maximum;
             UpdatePlayPauseButton();
+        });
+    }
+
+    private void OnSliderDragStarted(object sender, EventArgs e) => _isDragging = true;
+
+    private void OnSliderDragCompleted(object sender, EventArgs e)
+    {
+        _isDragging = false;
+        if (_isUsingMp3)
+        {
+            AudioMediaPlayer.SeekTo(TimeSpan.FromSeconds(AudioSlider.Value));
+        }
+        else if (_audioService != null)
+        {
+            _audioService.SeekTo((int)AudioSlider.Value);
         }
     }
 
-    private void OnPlayPauseClicked(object sender, EventArgs e)
+    private void OnSliderValueChanged(object sender, ValueChangedEventArgs e)
     {
-        if (_audioService == null) return;
+        // Handled in DragCompleted to avoid too many seeks
+    }
 
-        if (_audioService.IsPlaying)
+    private void OnSpeedSelected(object sender, EventArgs e)
+    {
+        if (sender is Button btn && double.TryParse(btn.CommandParameter?.ToString(), out var speed))
         {
-            Debug.WriteLine("[DEBUG][TTS_POPUP] Pause clicked");
-            _audioService.Pause();
+            Debug.WriteLine($"[DEBUG][TTS_POPUP] Setting speed: {speed}x");
+            
+            if (_isUsingMp3)
+                AudioMediaPlayer.Speed = speed;
+            else if (_audioService != null)
+                _audioService.CurrentSpeed = speed;
+
+            // Update UI feedback (highlighter)
+            if (btn.Parent is FlexLayout container)
+            {
+                foreach (var child in container.Children)
+                {
+                    if (child is Button b)
+                    {
+                        b.BackgroundColor = (b == btn) ? Color.FromArgb("#3498DB") : Color.FromArgb("#F4F7F9");
+                        b.TextColor = (b == btn) ? Colors.White : Color.FromArgb("#34495E");
+                    }
+                }
+            }
+        }
+    }
+
+    private async void OnPlayPauseClicked(object sender, EventArgs e)
+    {
+        if (_isUsingMp3)
+        {
+            if (AudioMediaPlayer.CurrentState == MediaElementState.Playing)
+                AudioMediaPlayer.Pause();
+            else
+                AudioMediaPlayer.Play();
         }
         else
         {
-            Debug.WriteLine("[DEBUG][TTS_POPUP] Play/Resume clicked");
-            _audioService.Resume();
+            if (_audioService == null) return;
+            if (_audioService.IsPlaying)
+                _audioService.Pause();
+            else
+            {
+                if (!_audioService.IsPlaying && _audioService.CurrentSentenceIndex >= (_audioService.TotalSentences - 1))
+                     await _audioService.PlayAsync(_text, _language, _audioService.CurrentSpeed);
+                else
+                    _audioService.Resume();
+            }
         }
         UpdatePlayPauseButton();
     }
 
     private void UpdatePlayPauseButton()
     {
-        PlayPauseButton.Text = (_audioService?.IsPlaying ?? false) ? "⏸" : "▶";
+        if (PlayPauseButton == null) return;
+
+        bool isPlaying = false;
+        if (_isUsingMp3)
+            isPlaying = AudioMediaPlayer.CurrentState == MediaElementState.Playing;
+        else
+            isPlaying = _audioService?.IsPlaying ?? false;
+
+        PlayPauseButton.Source = isPlaying ? "pause_icon.png" : "play_icon.png";
     }
 
-    private void OnRewindClicked(object sender, EventArgs e)
+    private void OnSeeDetailsClicked(object sender, EventArgs e)
     {
-        if (_audioService != null)
+        if (_stop != null)
         {
-            // Lùi lại 1 câu
-            _audioService.SeekRelative(-1);
-        }
-    }
+            this.IsVisible = false;
+            
+            if (_isUsingMp3)
+                AudioMediaPlayer.Pause();
+            else
+                _audioService?.Pause();
 
-    private void OnForwardClicked(object sender, EventArgs e)
-    {
-        if (_audioService != null)
-        {
-            // Tiến tới 1 câu
-            _audioService.SeekRelative(1);
-        }
-    }
-
-
-
-    private void OnSpeedClicked(object sender, EventArgs e)
-    {
-        if (sender is Button btn && _audioService != null)
-        {
-            var speedText = btn.Text.Replace("x", "");
-            if (double.TryParse(speedText, out var speed))
-            {
-                _audioService.CurrentSpeed = speed;
-            }
+            SeeDetailsRequested?.Invoke(_stop);
         }
     }
 
     private void OnCloseClicked(object sender, EventArgs e)
     {
-        _audioService?.Stop();
+        if (_isUsingMp3)
+            AudioMediaPlayer.Stop();
+        else if (_audioService != null)
+        {
+            _audioService.PlaybackProgressChanged -= OnPlaybackProgressChanged;
+            _audioService.Stop();
+        }
         this.IsVisible = false;
     }
 }

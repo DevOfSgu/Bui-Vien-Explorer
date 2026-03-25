@@ -85,6 +85,12 @@ public partial class TourDetailPage : ContentPage
         {
             Debug.WriteLine($"[MAPSUI_CRASH_LOG] Level: {level} | Msg: {message} | Ex: {exception}");
         };
+
+        // Subscribe to See Details request from Audio Player Popup
+        AudioPlayer.SeeDetailsRequested += (stop) => 
+        {
+            _viewModel.NavigateToZoneDetailCommand.Execute(stop); // Navigate directly
+        };
     }
 
     // ─── Bottom Sheet Drag ───────────────────────────────────────────────────
@@ -451,22 +457,22 @@ public partial class TourDetailPage : ContentPage
         try
         {
             var lang = await _dbService.GetSettingAsync("Language", "vi");
+            Debug.WriteLine($"[TOUR_PAGE] Attempting to get narration for ZoneId: {stop.ZoneId}, Lang: {lang}");
+            
             var narration = await _dbService.GetNarrationAsync(stop.ZoneId, lang);
 
             if (narration != null && !string.IsNullOrEmpty(narration.Text))
             {
-                AudioPlayer.Initialize(_audioService, stop.Name, narration.Text, lang, stop.ImageUrl);
+                Debug.WriteLine($"[TOUR_PAGE] Found narration. Text length: {narration.Text.Length}");
+                AudioPlayer.Initialize(_audioService, stop, lang);
                 _ = AudioPlayer.ShowAsync();
             }
             else
             {
-                AudioPlayer.Initialize(_audioService, stop.Name, stop.Description, lang, stop.ImageUrl);
+                Debug.WriteLine($"[TOUR_PAGE] Narration NOT found or empty. Using description. Description length: {stop.Description?.Length ?? 0}");
+                AudioPlayer.Initialize(_audioService, stop, lang);
                 _ = AudioPlayer.ShowAsync();
             }
-
-
-
-
         }
         catch (Exception ex)
         {

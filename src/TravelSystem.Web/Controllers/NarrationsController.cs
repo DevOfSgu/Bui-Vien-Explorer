@@ -15,24 +15,29 @@ public class NarrationsController : ControllerBase
         _db = db;
     }
 
-    // GET /api/narrations?zoneId=1&language=vi
-    // Lấy kịch bản TTS: nếu không có zoneId thì lấy tất cả (để sync)
     [HttpGet]
     public async Task<IActionResult> Get([FromQuery] int? zoneId, [FromQuery] string language = "vi")
     {
-        if (zoneId == null || zoneId == 0)
+        try
         {
-            var allNarrations = await _db.Narrations.ToListAsync();
-            return Ok(allNarrations);
+            if (zoneId == null || zoneId == 0)
+            {
+                var allNarrations = await _db.Narrations.ToListAsync();
+                return Ok(allNarrations);
+            }
+
+            var narration = await _db.Narrations
+                .FirstOrDefaultAsync(n => n.ZoneId == zoneId.Value && n.Language == language);
+
+            if (narration == null)
+                return NotFound(new { message = $"Không tìm thấy narration cho zone {zoneId} / ngôn ngữ '{language}'." });
+
+            return Ok(narration);
         }
-
-        var narration = await _db.Narrations
-            .FirstOrDefaultAsync(n => n.ZoneId == zoneId.Value && n.Language == language);
-
-        if (narration == null)
-            return NotFound(new { message = $"Không tìm thấy narration cho zone {zoneId} / ngôn ngữ '{language}'." });
-
-        return Ok(narration);
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Lỗi truy vấn Narrations", detail = ex.Message, stack = ex.StackTrace });
+        }
     }
 
     // GET /api/narrations/zone/{zoneId}

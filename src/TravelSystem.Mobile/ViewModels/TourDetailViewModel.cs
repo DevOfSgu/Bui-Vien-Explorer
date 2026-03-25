@@ -65,7 +65,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         _dbService = dbService;
         LoadDataCommand = new AsyncRelayCommand(LoadData);
         ToggleFavoriteCommand = new AsyncRelayCommand<PoiStopItem>(ToggleFavorite);
-        SelectStopCommand = new RelayCommand<PoiStopItem>(SelectStop);
+        SelectStopCommand = new RelayCommand<PoiStopItem>(stop => SelectStop(stop));
         NavigateToZoneDetailCommand = new AsyncRelayCommand<PoiStopItem>(NavigateToZoneDetail);
     }
 
@@ -75,8 +75,8 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     {
         if (stop == null) return;
 
-        // Select the stop locally first for UI feedback
-        SelectStop(stop);
+        // Select the stop locally first for UI feedback (SILENT = No Audio)
+        SelectStop(stop, triggerEvent: false);
 
         var parameters = new Dictionary<string, object>
         {
@@ -146,7 +146,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
 
     public async Task LoadData()
     {
-        if (TourId <= 0) return;
+        if (TourId < 0) return;
         if (IsLoading) return;
 
         await _loadLock.WaitAsync();
@@ -370,7 +370,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         }
     }
 
-    private void SelectStop(PoiStopItem stop)
+    private void SelectStop(PoiStopItem stop, bool triggerEvent = true)
     {
         if (stop == null) return;
 
@@ -387,7 +387,11 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         }
 
         MapDataChanged?.Invoke(this, EventArgs.Empty);
-        StopSelected?.Invoke(this, stop);
+        
+        if (triggerEvent)
+        {
+            StopSelected?.Invoke(this, stop);
+        }
     }
 
     public void SelectStopByZoneId(int zoneId)
@@ -528,11 +532,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             return false;
         }
 
-        foreach (var stop in PoiStops)
-        {
-            stop.IsSelected = stop.ZoneId == nearestStop.ZoneId;
-        }
-        StopSelected?.Invoke(this, nearestStop);
+        SelectStop(nearestStop, true);
         return true;
     }
 
