@@ -54,13 +54,16 @@ public class FavoritesController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Add([FromBody] AddFavoriteRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.GuestId) || request.ZoneId <= 0)
+        if (string.IsNullOrWhiteSpace(request.GuestId) || request.ZoneId < 0)
             return BadRequest(new { message = "GuestId và ZoneId là bắt buộc." });
 
-        // Kiểm tra zone tồn tại
-        var zoneExists = await _db.Zones.AnyAsync(z => z.Id == request.ZoneId);
-        if (!zoneExists)
-            return NotFound(new { message = $"Zone {request.ZoneId} không tồn tại." });
+        // Kiểm tra zone tồn tại (bỏ qua nếu ZoneId = 0 — zone offline-only như Cổng chào)
+        if (request.ZoneId > 0)
+        {
+            var zoneExists = await _db.Zones.AnyAsync(z => z.Id == request.ZoneId);
+            if (!zoneExists)
+                return NotFound(new { message = $"Zone {request.ZoneId} không tồn tại." });
+        }
 
         // Kiểm tra đã like rồi chưa, đồng thời dọn dữ liệu trùng nếu có từ trước
         var existingFavorites = await _db.GuestFavorites

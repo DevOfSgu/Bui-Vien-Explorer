@@ -169,14 +169,27 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             try
             {
                 var guestId = await guestIdTask;
-                var favorites = await _apiService.GetFavoritesAsync(guestId);
-                if (favorites != null)
+                // 1. Lấy từ API (Server)
+                var remoteFavorites = await _apiService.GetFavoritesAsync(guestId);
+                if (remoteFavorites != null)
                 {
-                    favoriteZoneIds = favorites
-                        .Select(f => f.ZoneId)
-                        .ToHashSet();
+                    foreach (var f in remoteFavorites) favoriteZoneIds.Add(f.ZoneId);
                 }
-                Trace($"Favorites resolved: {favoriteZoneIds.Count}");
+
+                // 2. Lấy từ DB cục bộ (Bao gồm các mục chưa sync hoặc local-only như Cổng Chào)
+                var localFavorites = await _dbService.GetLocalFavoritesAsync(guestId);
+                if (localFavorites != null)
+                {
+                    foreach (var f in localFavorites)
+                    {
+                        if (f.IsDeleted == 0)
+                            favoriteZoneIds.Add(f.ZoneId);
+                        else
+                            favoriteZoneIds.Remove(f.ZoneId); // Đã bị xóa local
+                    }
+                }
+                
+                Trace($"Favorites resolved: Total={favoriteZoneIds.Count}");
             }
             catch (Exception ex)
             {
@@ -355,7 +368,16 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
 
             if (!success)
             {
-                Trace($"ToggleFavorite failed for ZoneId={stop.ZoneId}");
+                Trace($"ToggleFavorite failed for ZoneId={stop.ZoneId} (perhaps it's a marker only)");
+                // Optimistic: Even if API fails (e.g. invalid server ID), allow local favorite for UI feedback
+                stop.IsFavorite = !before;
+                await _dbService.InsertOrUpdateLocalFavoriteAsync(new TravelSystem.Shared.Models.LocalFavorite
+                {
+                    GuestId = guestId,
+                    ZoneId = stop.ZoneId,
+                    CreatedAt = DateTime.UtcNow,
+                    IsDeleted = stop.IsFavorite ? 0 : 1
+                });
                 return;
             }
 

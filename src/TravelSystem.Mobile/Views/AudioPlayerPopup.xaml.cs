@@ -3,6 +3,7 @@ using TravelSystem.Mobile.ViewModels;
 using System.Diagnostics;
 using CommunityToolkit.Maui.Views;
 using CommunityToolkit.Maui.Core;
+using System.Linq;
 
 namespace TravelSystem.Mobile.Views;
 
@@ -86,10 +87,14 @@ public partial class AudioPlayerPopup : ContentView
         
         Debug.WriteLine($"[DEBUG][TTS_POPUP] Initializing for: {stop.Name} (ZoneId: {stop.ZoneId})");
 
-        // 4. Bắt đầu check MP3 và lưu task lại để ShowAsync có thể đợi
         _mp3CheckTask = CheckForMp3Async(stop, language, _initCts.Token);
-
         UpdatePlayPauseButton();
+
+        // Highlight 1.0x mặc định
+        MainThread.BeginInvokeOnMainThread(() => {
+            var btn1x = SpeedLayout?.Children.OfType<Button>().FirstOrDefault(b => b.Text == "1.0x");
+            if (btn1x != null) UpdateSpeedButtonHighlights(btn1x);
+        });
     }
 
     private void OnAudioStatusChanged()
@@ -249,7 +254,7 @@ public partial class AudioPlayerPopup : ContentView
 
     private void OnSpeedSelected(object sender, EventArgs e)
     {
-        if (sender is Button btn && double.TryParse(btn.CommandParameter?.ToString(), out var speed))
+        if (sender is Button btn && double.TryParse(btn.CommandParameter?.ToString(), System.Globalization.CultureInfo.InvariantCulture, out var speed))
         {
             Debug.WriteLine($"[DEBUG][TTS_POPUP] Setting speed: {speed}x");
             
@@ -258,17 +263,21 @@ public partial class AudioPlayerPopup : ContentView
             else if (_audioService != null)
                 _audioService.CurrentSpeed = speed;
 
-            // Update UI feedback (highlighter)
-            if (btn.Parent is FlexLayout container)
+            UpdateSpeedButtonHighlights(btn);
+        }
+    }
+
+    private void UpdateSpeedButtonHighlights(Button selectedBtn)
+    {
+        if (SpeedLayout == null) return;
+
+        foreach (var child in SpeedLayout.Children)
+        {
+            if (child is Button b)
             {
-                foreach (var child in container.Children)
-                {
-                    if (child is Button b)
-                    {
-                        b.BackgroundColor = (b == btn) ? Color.FromArgb("#3498DB") : Color.FromArgb("#F4F7F9");
-                        b.TextColor = (b == btn) ? Colors.White : Color.FromArgb("#34495E");
-                    }
-                }
+                bool isSelected = (b == selectedBtn);
+                b.BackgroundColor = isSelected ? Color.FromArgb("#3498DB") : Color.FromArgb("#F4F7F9");
+                b.TextColor = isSelected ? Colors.White : Color.FromArgb("#34495E");
             }
         }
     }

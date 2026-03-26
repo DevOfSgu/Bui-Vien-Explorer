@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Linq;
 
 namespace TravelSystem.Mobile.Services;
 
@@ -39,7 +40,18 @@ public class AudioGuideService : IAudioGuideService
     public double CurrentSpeed 
     { 
         get => _currentSpeed; 
-        set => _currentSpeed = value; 
+        set 
+        {
+            if (Math.Abs(_currentSpeed - value) > 0.01)
+            {
+                _currentSpeed = value;
+                if (_isPlaying && !_isPaused)
+                {
+                    // Restart playback from current sentence with new speed
+                    _ = StartPlaybackAsync();
+                }
+            }
+        }
     }
 
     public async Task PlayAsync(string text, string language, double speed = 1.0)
@@ -62,7 +74,8 @@ public class AudioGuideService : IAudioGuideService
     private async Task StartPlaybackAsync()
     {
         Stop(hardStop: false);
-        _ttsCts = new CancellationTokenSource();
+        var cts = new CancellationTokenSource();
+        _ttsCts = cts;
         _isPlaying = true;
         _isPaused = false;
         StatusChanged?.Invoke();
@@ -71,32 +84,43 @@ public class AudioGuideService : IAudioGuideService
     {
         var locale = await GetLocaleAsync(_currentLanguage);
         
-        // ✅ Cảnh báo nếu không tìm được locale đúng
         if (locale == null)
-        {
-            Debug.WriteLine($"[WARN][TTS_SERVICE] Không tìm thấy locale '{_currentLanguage}'. " +
-                            "Hãy kiểm tra thiết bị đã cài gói TTS tiếng Việt chưa.");
-        }
+            Debug.WriteLine($"[WARN][TTS_SERVICE] Không tìm thấy locale '{_currentLanguage}'");
 
-        // ✅ Áp dụng cả speed vào options
         var options = new SpeechOptions 
         {
             Locale = locale,
-            Volume = 1.0f,          // 0.0 -> 1.0
-            Pitch = (float)_currentSpeed,  // 0.1 -> 2.0
+            Volume = 1.0f,
+            Rate = (float)_currentSpeed,
+            Pitch = 1.0f 
         };
 
         for (; _currentSentenceIndex < _sentences.Length; _currentSentenceIndex++)
         {
-            if (_ttsCts.Token.IsCancellationRequested) break;
+            if (cts.Token.IsCancellationRequested) break;
+            
             await TextToSpeech.Default.SpeakAsync(
-                _sentences[_currentSentenceIndex], options, _ttsCts.Token);
+                _sentences[_currentSentenceIndex], options, cts.Token);
+                
+            PlaybackProgressChanged?.Invoke(_currentSentenceIndex + 1, _sentences.Length);
         }
     }
     catch (OperationCanceledException) { }
+    catch (Exception ex)
+    {
+        Debug.WriteLine($"[ERROR][TTS_SERVICE] {ex.Message}");
+    }
     finally
     {
-        if (!_isPaused) _isPlaying = false;
+        // Chỉ reset _isPlaying khi cts này thực sự hoàn thành (tức là không bị hủy bởi cts khác)
+        if (_ttsCts == cts)
+        {
+            if (!_isPaused)
+            {
+                _isPlaying = false;
+                StatusChanged?.Invoke();
+            }
+        }
     }
     }
 

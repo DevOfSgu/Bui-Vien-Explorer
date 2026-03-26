@@ -230,9 +230,9 @@ public class ApiService
                     ZoneId = n.ZoneId.ToString(),
                     Language = n.Language,
                     Text = n.Text,
-                    FileUrl = n.FileUrl ?? string.Empty, // Quan trọng: Sync URL từ server
-                    Version = string.IsNullOrEmpty(n.FileUrl) ? 1 : 2, // Nếu có file thì coi như version mới
-                    SyncedAt = DateTime.UtcNow.ToString("O")
+                    FileUrl = n.FileUrl ?? string.Empty, 
+                    SyncedAt = DateTime.UtcNow.ToString("O"),
+                    UpdatedAt = n.UpdatedAt // Sync thời gian cập nhật từ server
                 });
 
                 await _dbService.UpsertNarrationsAsync(localNarrations);

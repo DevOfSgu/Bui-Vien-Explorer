@@ -2,10 +2,27 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:TravelSystem.Mobile.ViewModels"
              x:Class="TravelSystem.Mobile.Views.SavedPage"
-             BackgroundColor="#F3F4F6"
+             BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark=#121212}"
              Title="Địa điểm đã lưu"
              x:DataType="vm:SavedPageViewModel">
 
+    <Shell.TitleView>
+        <HorizontalStackLayout Spacing="10" Padding="12,4" VerticalOptions="Center">
+            <Border StrokeShape="RoundRectangle 8"
+                    StrokeThickness="0"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark=#121212}"
+                    Padding="2"
+                    HeightRequest="36"
+                    WidthRequest="36">
+                <Image Source="logoapp.png" Aspect="AspectFit"/>
+            </Border>
+            <Label Text="Bùi Viện Explorer"
+                   TextColor="{AppThemeBinding Light=#111827, Dark=White}"
+                   FontAttributes="Bold"
+                   FontSize="18"
+                   VerticalOptions="Center" />
+        </HorizontalStackLayout>
+    </Shell.TitleView>
 
     <ContentPage.Behaviors>
         <!-- In a real app, we'd use an EventToCommandBehavior from Toolkit to trigger LoadFavorites on Appearing -->
@@ -46,8 +63,8 @@
                         </CollectionView.ItemsLayout>
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="vm:ZoneCardItem">
-                                <Border BackgroundColor="White"
-                                        Stroke="#ECEEF2"
+                                <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
+                                        Stroke="{AppThemeBinding Light=#ECEEF2, Dark=#2D2D2D}"
                                         StrokeThickness="1"
                                         StrokeShape="RoundRectangle 22">
                                     <Grid Padding="16" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="15">

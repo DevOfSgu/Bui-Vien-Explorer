@@ -4,8 +4,26 @@
              xmlns:vm="clr-namespace:TravelSystem.Mobile.ViewModels"
              x:Class="TravelSystem.Mobile.Views.MainPage"
 
-             BackgroundColor="#F3F4F6"
+             BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark=#121212}"
              x:DataType="vm:MainPageViewModel">
+
+    <Shell.TitleView>
+        <HorizontalStackLayout Spacing="10" Padding="12,4" VerticalOptions="Center">
+            <Border StrokeShape="RoundRectangle 8"
+                    StrokeThickness="0"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark=#121212}"
+                    Padding="2"
+                    HeightRequest="36"
+                    WidthRequest="36">
+                <Image Source="logoapp.png" Aspect="AspectFit"/>
+            </Border>
+            <Label Text="Bùi Viện Explorer"
+                   TextColor="{AppThemeBinding Light=#111827, Dark=White}"
+                   FontAttributes="Bold"
+                   FontSize="18"
+                   VerticalOptions="Center" />
+        </HorizontalStackLayout>
+    </Shell.TitleView>
 
     <Grid>
         <RefreshView Command="{Binding LoadDataCommand}" IsRefreshing="{Binding IsLoading}">
@@ -39,8 +57,8 @@
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="vm:ZoneCardItem">
 
-                    <Border BackgroundColor="White"
-                            Stroke="#ECEEF2"
+                    <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
+                            Stroke="{AppThemeBinding Light=#ECEEF2, Dark=#2D2D2D}"
                             StrokeThickness="1"
                             StrokeShape="RoundRectangle 22">
                         <Border.GestureRecognizers>
@@ -63,7 +81,7 @@
                                        FontSize="24"
                                        FontFamily="SpaceGroteskBold"
                                        FontAttributes="Bold"
-                                       TextColor="#1F2937" />
+                                       TextColor="{AppThemeBinding Light=#1F2937, Dark=White}" />
 
                                 <HorizontalStackLayout Grid.Column="1" Spacing="15" VerticalOptions="Center">
 
@@ -77,7 +95,7 @@
                                     <Label Text="📍" FontSize="12" TextColor="#98A2B3" />
                                     <Label Text="{Binding StopsText}"
                                            FontSize="13"
-                                           TextColor="#98A2B3" />
+                                           TextColor="{AppThemeBinding Light=#98A2B3, Dark=#CCCCCC}" />
                                     <Label Text="•" FontSize="14" TextColor="#98A2B3" />
                                     <Label Text="{Binding MinutesText, StringFormat='~{0}'}"
                                            FontSize="13"

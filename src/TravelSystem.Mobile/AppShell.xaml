@@ -4,35 +4,14 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:views="clr-namespace:TravelSystem.Mobile.Views"
-    Shell.BackgroundColor="White"
-    Shell.ForegroundColor="#111827"
-    Shell.TitleColor="#111827"
-    Shell.TabBarBackgroundColor="White"
-    Shell.TabBarForegroundColor="#FF4B4B"
-    Shell.TabBarTitleColor="#FF4B4B"
-    Shell.TabBarUnselectedColor="#94A3B8"
+    Shell.BackgroundColor="{AppThemeBinding Light=White, Dark=#121212}"
+    Shell.ForegroundColor="{AppThemeBinding Light=#111827, Dark=White}"
+    Shell.TitleColor="{AppThemeBinding Light=#111827, Dark=White}"
+    Shell.TabBarBackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
+    Shell.TabBarForegroundColor="{AppThemeBinding Light=#FF4B4B, Dark=#FF4B4B}"
+    Shell.TabBarTitleColor="{AppThemeBinding Light=#FF4B4B, Dark=#FF4B4B}"
+    Shell.TabBarUnselectedColor="{AppThemeBinding Light=#94A3B8, Dark=#94A3B8}"
     Title="Bùi Viện Explorer">
-
-    <Shell.TitleView>
-        <HorizontalStackLayout Spacing="10"
-                               Padding="10,5"
-                               HeightRequest="60"
-                               HorizontalOptions="Start"
-                               VerticalOptions="Center">
-            <Image Source="logoapp.png"
-                   WidthRequest="40"
-                   HeightRequest="40"
-                   Aspect="AspectFit"
-                   VerticalOptions="Center" />
-            <Label Text="Bùi Viện Explorer"
-                   TextColor="#111827"
-                   LineBreakMode="NoWrap"
-                   FontSize="20"
-                   FontFamily="SpaceGroteskBold"
-                   FontAttributes="Bold"
-                   VerticalOptions="Center" />
-        </HorizontalStackLayout>
-    </Shell.TitleView>
 
     <TabBar Route="MainTabs">
         <ShellContent

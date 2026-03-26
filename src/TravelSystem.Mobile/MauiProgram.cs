@@ -43,6 +43,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<ViewModels.TourDetailViewModel>();
         builder.Services.AddTransient<ViewModels.ZoneDetailViewModel>();
 		builder.Services.AddTransient<ViewModels.LanguageSelectionViewModel>();
+		builder.Services.AddTransient<ViewModels.SettingsViewModel>();
 
 
 		// Register Pages

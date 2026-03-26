@@ -119,7 +119,8 @@
                     </Grid>
 
                     <!-- Speed Selection -->
-                    <FlexLayout JustifyContent="Center" 
+                    <FlexLayout x:Name="SpeedLayout"
+                                JustifyContent="Center" 
                                 AlignItems="Center" 
                                 Wrap="Wrap"
                                 Margin="0,0,0,10">

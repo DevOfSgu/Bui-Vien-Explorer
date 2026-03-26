@@ -461,23 +461,15 @@ public partial class TourDetailPage : ContentPage
 
         try
         {
+            // Luôn lấy ngôn ngữ mới nhất từ DB mỗi khi hiển thị popup
             var lang = await _dbService.GetSettingAsync("Language", "vi");
-            Debug.WriteLine($"[TOUR_PAGE] Attempting to get narration for ZoneId: {stop.ZoneId}, Lang: {lang}");
+            Debug.WriteLine($"[TOUR_PAGE] Current app language from DB: {lang}");
             
             var narration = await _dbService.GetNarrationAsync(stop.ZoneId, lang);
 
-            if (narration != null && !string.IsNullOrEmpty(narration.Text))
-            {
-                Debug.WriteLine($"[TOUR_PAGE] Found narration. Text length: {narration.Text.Length}");
-                AudioPlayer.Initialize(_audioService, stop, lang);
-                _ = AudioPlayer.ShowAsync();
-            }
-            else
-            {
-                Debug.WriteLine($"[TOUR_PAGE] Narration NOT found or empty. Using description. Description length: {stop.Description?.Length ?? 0}");
-                AudioPlayer.Initialize(_audioService, stop, lang);
-                _ = AudioPlayer.ShowAsync();
-            }
+            // Khởi tạo AudioPlayer với ngôn ngữ đã lưu
+            AudioPlayer.Initialize(_audioService, stop, lang);
+            _ = AudioPlayer.ShowAsync();
         }
         catch (Exception ex)
         {

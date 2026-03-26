@@ -305,18 +305,21 @@ public class DatabaseService
                         // Update existing
                         var newHash = !string.IsNullOrEmpty(n.Text) ? GenerateHash(n.Text) : string.Empty;
                         
-                        // Nếu hash thay đổi hoặc FileUrl thay đổi -> Reset trạng thái download
-                        if (existing.ContentHash != newHash || existing.FileUrl != n.FileUrl)
+                        // Nếu hash thay đổi OR FileUrl thay đổi OR thời gian cập nhật từ server mới hơn hiện tại -> Redownload
+                        if (existing.ContentHash != newHash || 
+                            existing.FileUrl != n.FileUrl || 
+                            n.UpdatedAt > existing.UpdatedAt)
                         {
-                            existing.DownloadStatus = 0; // NotStarted
-                            existing.LocalFilePath = string.Empty; // Invalidate old file
+                            Debug.WriteLine($"[DEBUG][DB] Detecting change for ZoneId={n.ZoneId}, Lang={n.Language}. Resetting for redownload.");
+                            existing.DownloadStatus = 0; // NotStarted -> Triggers AudioPreloadService to download again
+                            existing.LocalFilePath = string.Empty; // Invalidate old file path
                         }
 
                         existing.Text = n.Text;
                         existing.FileUrl = n.FileUrl;
                         existing.ContentHash = newHash;
                         existing.Language = n.Language;
-                        existing.UpdatedAt = DateTime.UtcNow;
+                        existing.UpdatedAt = n.UpdatedAt; // Cập nhật lại thời gian theo server
                         tran.Update(existing);
                     }
                 }

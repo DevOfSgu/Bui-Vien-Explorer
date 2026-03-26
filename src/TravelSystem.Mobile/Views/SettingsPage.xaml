@@ -1,22 +1,242 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TravelSystem.Mobile.ViewModels"
              x:Class="TravelSystem.Mobile.Views.SettingsPage"
-             BackgroundColor="#F3F4F6">
-    <Grid Padding="20,24">
-        <VerticalStackLayout Spacing="10">
-            <Label Text="Settings"
-                   FontSize="22"
+             x:DataType="vm:SettingsViewModel"
+             Title="Settings"
+             BackgroundColor="{AppThemeBinding Light=#F8F9FA, Dark=#121212}">
+
+    <Shell.TitleView>
+        <HorizontalStackLayout Spacing="10" Padding="12,4" VerticalOptions="Center">
+            <Border StrokeShape="RoundRectangle 8"
+                    StrokeThickness="0"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark=#121212}"
+                    Padding="2"
+                    HeightRequest="36"
+                    WidthRequest="36">
+                <Image Source="logoapp.png" Aspect="AspectFit"/>
+            </Border>
+            <Label Text="Bùi Viện Explorer"
+                   TextColor="{AppThemeBinding Light=#111827, Dark=White}"
                    FontAttributes="Bold"
-                   TextColor="#1F2937" />
+                   FontSize="18"
+                   VerticalOptions="Center" />
+        </HorizontalStackLayout>
+    </Shell.TitleView>
 
-            <Label Text="Bản dev Android device đang dùng adb reverse về API local."
-                   FontSize="13"
-                   TextColor="#64748B" />
+    <Grid>
+        <!-- Main Content -->
+        <ScrollView>
+            <VerticalStackLayout Padding="20,24" Spacing="25">
+            
+                <!-- Header -->
+                <Label Text="Settings"
+                       FontSize="32"
+                       FontFamily="SpaceGroteskBold"
+                       TextColor="{AppThemeBinding Light=#1F2937, Dark=White}" />
 
-            <Label Text="Lệnh: adb reverse tcp:5281 tcp:5281"
-                   FontSize="12"
-                   TextColor="#0F172A" />
-        </VerticalStackLayout>
+                <!-- User Info Card -->
+                <Border StrokeShape="RoundRectangle 16"
+                        StrokeThickness="0"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
+                        Padding="15">
+                    <Border.Shadow>
+                        <Shadow Brush="Black" Offset="0,2" Radius="10" Opacity="0.05" />
+                    </Border.Shadow>
+                    <Grid ColumnDefinitions="60, *, 30">
+                        <Border Grid.Column="0"
+                                WidthRequest="48"
+                                HeightRequest="48"
+                                HorizontalOptions="Start"
+                                StrokeShape="RoundRectangle 24"
+                                BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark=#2D2D2D}">
+                            <Label Text="👤" 
+                                   HorizontalOptions="Center" 
+                                   VerticalOptions="Center" 
+                                   FontSize="20"/>
+                        </Border>
+                        
+                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                            <Label Text="Guest Traveler"
+                                   FontFamily="SpaceGroteskBold"
+                                   FontSize="16"
+                                   TextColor="{AppThemeBinding Light=#1F2937, Dark=White}"/>
+                            <Label Text="TAP TO SIGN IN OR REGISTER"
+                                   FontSize="10"
+                                   TextColor="#94A3B8"
+                                   CharacterSpacing="1"/>
+                        </VerticalStackLayout>
+						<Image Grid.Column="2"
+                               Source="arrow_forward_icon.png"
+                               WidthRequest="20"
+                               HeightRequest="20"
+						       HorizontalOptions="End"
+                               VerticalOptions="Center" />
+                       
+
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SignInOutCommand}"/>
+                        </Grid.GestureRecognizers>
+                    </Grid>
+                </Border>
+
+                <!-- PREFERENCES Section -->
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="PREFERENCES" 
+                           FontSize="12" 
+                           FontFamily="SpaceGroteskBold" 
+                           TextColor="#94A3B8"
+                           CharacterSpacing="1"/>
+                    
+                    <Border StrokeShape="RoundRectangle 16"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
+                            Padding="0">
+                        <Border.Shadow>
+                            <Shadow Brush="Black" Offset="0,2" Radius="10" Opacity="0.05" />
+                        </Border.Shadow>
+                        
+                        <VerticalStackLayout>
+                            <!-- Language Item -->
+                            <Grid Padding="15" ColumnDefinitions="40, *, Auto, 30">
+                                <Label Text="🌐" FontSize="18" VerticalOptions="Center"/>
+                                <Label Grid.Column="1" 
+                                       Text="Language" 
+                                       FontFamily="SpaceGroteskMedium"
+                                       VerticalOptions="Center"
+                                       TextColor="{AppThemeBinding Light=#374151, Dark=#E5E7EB}"/>
+                                <Label Grid.Column="2" 
+                                       Text="{Binding CurrentLanguage}" 
+                                       FontSize="14"
+                                       TextColor="#6366F1"
+                                       VerticalOptions="Center"/>
+							    <Image Grid.Column="3"
+                                        Source="arrow_forward_icon.png"
+                                        WidthRequest="20"
+                                        HeightRequest="20"
+							            HorizontalOptions="End"
+                                        VerticalOptions="Center" />
+                                
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnLanguageTapped"/>
+                                </Grid.GestureRecognizers>
+                            </Grid>
+                            
+                            <BoxView HeightRequest="1" Color="{AppThemeBinding Light=#F3F4F6, Dark=#2D2D2D}" Margin="15,0"/>
+
+                            <!-- Dark Mode Item -->
+                            <Grid Padding="15" ColumnDefinitions="40, *, Auto">
+                                <Label Text="🌙" FontSize="18" VerticalOptions="Center"/>
+                                <Label Grid.Column="1" 
+                                       Text="Dark Mode" 
+                                       FontFamily="SpaceGroteskMedium"
+                                       VerticalOptions="Center"
+                                       TextColor="{AppThemeBinding Light=#374151, Dark=#E5E7EB}"/>
+                                <Switch Grid.Column="2" 
+                                        IsToggled="{Binding IsDarkMode}" 
+                                        OnColor="#6366F1"
+                                        VerticalOptions="Center"/>
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- ═══════ Language Selection Overlay ═══════ -->
+        <Grid x:Name="LanguageOverlay" 
+              IsVisible="False" 
+              BackgroundColor="#80000000"
+              VerticalOptions="Fill" 
+              HorizontalOptions="Fill">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnOverlayDismiss"/>
+            </Grid.GestureRecognizers>
+
+            <Border StrokeShape="RoundRectangle 24"
+                    StrokeThickness="0"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
+                    WidthRequest="320"
+                    VerticalOptions="Center"
+                    HorizontalOptions="Center"
+                    Padding="24">
+                
+                <VerticalStackLayout Spacing="16">
+                    <!-- Title -->
+                    <Label Text="🌐  Chọn ngôn ngữ"
+                           TextColor="{AppThemeBinding Light=#1F2937, Dark=White}"
+                           FontSize="20"
+                           FontFamily="SpaceGroteskBold"
+                           HorizontalOptions="Center" />
+
+                    <BoxView HeightRequest="1" Color="{AppThemeBinding Light=#E5E7EB, Dark=#333333}"/>
+
+                    <!-- Vietnamese -->
+                    <Border StrokeShape="RoundRectangle 12"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark=#2D2D2D}"
+                            Padding="14,12">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnSelectVietnamese"/>
+                        </Border.GestureRecognizers>
+                        <HorizontalStackLayout Spacing="14">
+                            <Label Text="🇻🇳" FontSize="24" VerticalOptions="Center"/>
+                            <Label Text="Tiếng Việt" 
+                                   TextColor="{AppThemeBinding Light=#1F2937, Dark=White}" 
+                                   VerticalOptions="Center" 
+                                   FontSize="16"
+                                   FontFamily="SpaceGroteskMedium"/>
+                        </HorizontalStackLayout>
+                    </Border>
+
+                    <!-- English -->
+                    <Border StrokeShape="RoundRectangle 12"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark=#2D2D2D}"
+                            Padding="14,12">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnSelectEnglish"/>
+                        </Border.GestureRecognizers>
+                        <HorizontalStackLayout Spacing="14">
+                            <Label Text="🇬🇧" FontSize="24" VerticalOptions="Center"/>
+                            <Label Text="English" 
+                                   TextColor="{AppThemeBinding Light=#1F2937, Dark=White}" 
+                                   VerticalOptions="Center" 
+                                   FontSize="16"
+                                   FontFamily="SpaceGroteskMedium"/>
+                        </HorizontalStackLayout>
+                    </Border>
+
+                    <!-- Japanese -->
+                    <Border StrokeShape="RoundRectangle 12"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark=#2D2D2D}"
+                            Padding="14,12">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnSelectJapanese"/>
+                        </Border.GestureRecognizers>
+                        <HorizontalStackLayout Spacing="14">
+                            <Label Text="🇯🇵" FontSize="24" VerticalOptions="Center"/>
+                            <Label Text="日本語 (Japanese)" 
+                                   TextColor="{AppThemeBinding Light=#1F2937, Dark=White}" 
+                                   VerticalOptions="Center" 
+                                   FontSize="16"
+                                   FontFamily="SpaceGroteskMedium"/>
+                        </HorizontalStackLayout>
+                    </Border>
+
+                    <!-- Cancel -->
+                    <Button Text="Đóng"
+                            Clicked="OnOverlayDismiss"
+                            BackgroundColor="Transparent"
+                            TextColor="#94A3B8"
+                            FontSize="14"
+                            FontFamily="SpaceGroteskMedium"
+                            HeightRequest="44"/>
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
     </Grid>
 </ContentPage>

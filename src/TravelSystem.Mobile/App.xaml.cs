@@ -21,7 +21,18 @@ public partial class App : Application
         _apiService = apiService;
         _tourDetailViewModel = tourDetailViewModel;
         _audioPreloadService = audioPreloadService;
+        
+        // Mặc định là Light mode nếu chưa có thiết lập
+        InitializeTheme();
+        
         Debug.WriteLine("✅ App initialized successfully");
+    }
+
+    private async void InitializeTheme()
+    {
+        var isDarkStr = await _dbService.GetSettingAsync("IsDarkMode", "false");
+        bool isDark = bool.Parse(isDarkStr);
+        UserAppTheme = isDark ? AppTheme.Dark : AppTheme.Light;
     }
 
     protected override Window CreateWindow(IActivationState? activationState)
