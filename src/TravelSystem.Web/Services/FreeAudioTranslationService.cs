@@ -25,10 +25,35 @@ namespace TravelSystem.Web.Services
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
-                    // Google returns a weird nested array: [[["Hello","Xin chào",null,null,10]],null,"vi",null,null,null,1,[]]
+                    // Google returns a nested array of translated segments.
+                    // We must join all segments instead of taking only the first one.
                     using var doc = JsonDocument.Parse(content);
-                    var translatedText = doc.RootElement[0][0][0].GetString();
-                    return translatedText ?? $"[{targetLanguageCode}] {text}";
+                    if (doc.RootElement.ValueKind == JsonValueKind.Array && doc.RootElement.GetArrayLength() > 0)
+                    {
+                        var segments = doc.RootElement[0];
+                        if (segments.ValueKind == JsonValueKind.Array)
+                        {
+                            var parts = new List<string>();
+                            foreach (var segment in segments.EnumerateArray())
+                            {
+                                if (segment.ValueKind != JsonValueKind.Array || segment.GetArrayLength() == 0)
+                                {
+                                    continue;
+                                }
+
+                                var piece = segment[0].GetString();
+                                if (!string.IsNullOrWhiteSpace(piece))
+                                {
+                                    parts.Add(piece.Trim());
+                                }
+                            }
+
+                            if (parts.Count > 0)
+                            {
+                                return string.Join(" ", parts);
+                            }
+                        }
+                    }
                 }
             }
             catch (Exception)

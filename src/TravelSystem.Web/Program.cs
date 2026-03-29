@@ -77,6 +77,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseStaticFiles();
 app.MapStaticAssets();
 app.MapControllers();
 

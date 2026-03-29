@@ -1,10 +1,13 @@
 using Microsoft.Extensions.DependencyInjection;
 using TravelSystem.Mobile.Services;
+using System.ComponentModel;
 
 namespace TravelSystem.Mobile;
 
 public partial class AppShell : Shell
 {
+    private readonly LocalizationManager _localizationManager = LocalizationManager.Instance;
+
 	public AppShell()
 	{
 		InitializeComponent();
@@ -13,6 +16,9 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(nameof(Views.LanguageSelectionPage), typeof(Views.LanguageSelectionPage));
         Routing.RegisterRoute(nameof(Views.TourDetailPage), typeof(Views.TourDetailPage));
         Routing.RegisterRoute(nameof(Views.ZoneDetailPage), typeof(Views.ZoneDetailPage));
+
+        _localizationManager.PropertyChanged += OnLocalizationChanged;
+        UpdateLocalizedShellText();
 	}
 
 	private bool _isCheckedOnboarding = false;
@@ -37,4 +43,27 @@ public partial class AppShell : Shell
 			}
 		}
 	}
+
+    private void OnLocalizationChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != "Item[]" && e.PropertyName != "Item" && e.PropertyName != string.Empty)
+            return;
+
+        if (MainThread.IsMainThread)
+        {
+            UpdateLocalizedShellText();
+            return;
+        }
+
+        MainThread.BeginInvokeOnMainThread(UpdateLocalizedShellText);
+    }
+
+    private void UpdateLocalizedShellText()
+    {
+        Title = _localizationManager["app_name"];
+
+        if (HomeTab != null) HomeTab.Title = _localizationManager["tab_home"];
+        if (SavedTab != null) SavedTab.Title = _localizationManager["tab_saved"];
+        if (SettingsTab != null) SettingsTab.Title = _localizationManager["tab_settings"];
+    }
 }

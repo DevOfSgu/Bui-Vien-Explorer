@@ -73,12 +73,8 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
-
-            var narration = await _db.Narrations.FindAsync(id);
-            if (narration == null) return NotFound();
-
-            ViewBag.Zones = _db.Zones.ToList();
-            return View(narration);
+            TempData["Error"] = "Editing is disabled in Admin. You can review, approve or reject only.";
+            return RedirectToAction(nameof(Details), new { id = id.Value });
         }
 
         // POST: Admin/Narrations/Edit/5
@@ -86,19 +82,24 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, TravelSystem.Shared.Models.Narration narration)
         {
-            if (id != narration.Id) return NotFound();
+            TempData["Error"] = "Editing is disabled in Admin. Ask vendor to resubmit changes.";
+            return RedirectToAction(nameof(Index));
+        }
 
-            var dbNarration = await _db.Narrations.FindAsync(id);
-            if(dbNarration != null) {
-                dbNarration.ZoneId = narration.ZoneId;
-                dbNarration.Language = narration.Language;
-                dbNarration.Text = narration.Text;
-                dbNarration.VoiceId = narration.VoiceId;
-                dbNarration.UpdatedAt = DateTime.UtcNow;
-                await _db.SaveChangesAsync();
-            }
+        // GET: Admin/Narrations/Details/5
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null) return NotFound();
 
-            return RedirectToAction(nameof(Index), new { zoneId = narration.ZoneId });
+            var narration = await _db.Narrations.FindAsync(id);
+            if (narration == null) return NotFound();
+
+            ViewBag.ZoneName = await _db.Zones
+                .Where(z => z.Id == narration.ZoneId)
+                .Select(z => z.Name)
+                .FirstOrDefaultAsync();
+
+            return View(narration);
         }
 
         // POST: Admin/Narrations/Approve/5
@@ -110,6 +111,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             if (narration != null && narration.ApprovalStatus != "Approved")
             {
                 narration.ApprovalStatus = "Approved";
+                narration.UpdatedAt = DateTime.UtcNow;
 
                 // Generate TTS for original language
                 narration.FileUrl = await _audioService.GenerateTtsAsync(narration.Text, narration.Language, narration.ZoneId, _env.WebRootPath);
@@ -117,35 +119,13 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
 
                 if (narration.Language.ToLower() == "vi")
                 {
-                    // Generate English Translation and Audio
+                    // Upsert English translation/audio
                     var enText = await _audioService.TranslateAsync(narration.Text, "en");
-                    var enNarration = new TravelSystem.Shared.Models.Narration
-                    {
-                        ZoneId = narration.ZoneId,
-                        Language = "en",
-                        Text = enText,
-                        ApprovalStatus = "Approved"
-                    };
-                    _db.Narrations.Add(enNarration);
-                    await _db.SaveChangesAsync(); // Save to generate ID
-                    
-                    enNarration.FileUrl = await _audioService.GenerateTtsAsync(enText, "en", enNarration.ZoneId, _env.WebRootPath);
-                    enNarration.AudioStatus = "ready";
+                    await UpsertTranslatedNarrationAsync(narration.ZoneId, "en", enText);
 
-                    // Generate Japanese Translation and Audio
+                    // Upsert Japanese translation/audio
                     var jaText = await _audioService.TranslateAsync(narration.Text, "ja");
-                    var jaNarration = new TravelSystem.Shared.Models.Narration
-                    {
-                        ZoneId = narration.ZoneId,
-                        Language = "ja",
-                        Text = jaText,
-                        ApprovalStatus = "Approved"
-                    };
-                    _db.Narrations.Add(jaNarration);
-                    await _db.SaveChangesAsync(); // Save to generate ID
-                    
-                    jaNarration.FileUrl = await _audioService.GenerateTtsAsync(jaText, "ja", jaNarration.ZoneId, _env.WebRootPath);
-                    jaNarration.AudioStatus = "ready";
+                    await UpsertTranslatedNarrationAsync(narration.ZoneId, "ja", jaText);
                 }
 
                 await _db.SaveChangesAsync();
@@ -165,6 +145,40 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 await _db.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index), new { zoneId = narration?.ZoneId });
+        }
+
+        private async Task UpsertTranslatedNarrationAsync(int zoneId, string language, string text)
+        {
+            var existing = await _db.Narrations
+                .Where(n => n.ZoneId == zoneId && n.Language == language)
+                .OrderByDescending(n => n.UpdatedAt)
+                .ThenByDescending(n => n.Id)
+                .FirstOrDefaultAsync();
+
+            if (existing == null)
+            {
+                existing = new TravelSystem.Shared.Models.Narration
+                {
+                    ZoneId = zoneId,
+                    Language = language,
+                    Text = text,
+                    ApprovalStatus = "Approved",
+                    AudioStatus = "pending",
+                    UpdatedAt = DateTime.UtcNow
+                };
+                _db.Narrations.Add(existing);
+                await _db.SaveChangesAsync(); // ensure Id before generating file naming
+            }
+            else
+            {
+                existing.Text = text;
+                existing.ApprovalStatus = "Approved";
+                existing.AudioStatus = "pending";
+                existing.UpdatedAt = DateTime.UtcNow;
+            }
+
+            existing.FileUrl = await _audioService.GenerateTtsAsync(text, language, zoneId, _env.WebRootPath);
+            existing.AudioStatus = "ready";
         }
     }
 }

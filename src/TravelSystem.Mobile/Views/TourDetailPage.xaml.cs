@@ -28,19 +28,18 @@ public partial class TourDetailPage : ContentPage
     // Mapsui layers (Style = null để tắt điểm tròn trắng mặc định)
     private readonly MemoryLayer _poiLayer   = new() { Name = "PoiLayer", Style = null };
     private readonly MemoryLayer _userLayer  = new() { Name = "UserLayer", Style = null };
-    private readonly MemoryLayer _routeLayer = new() 
-    { 
+    private readonly MemoryLayer _routeLayer = new()
+    {
         Name = "RouteLayer",
-        Style = new Mapsui.Styles.VectorStyle 
-        { 
-            Line = new Mapsui.Styles.Pen(Mapsui.Styles.Color.FromArgb(200, 76, 175, 80), 4) // Green for walking
-        } 
+        Style = new Mapsui.Styles.VectorStyle
+        {
+            Line = new Mapsui.Styles.Pen(Mapsui.Styles.Color.FromArgb(200, 76, 175, 80), 4)
+        }
     };
 
     private readonly TourDetailViewModel _viewModel;
     private readonly IAudioGuideService _audioService;
     private readonly DatabaseService _dbService;
-    private MapControl? _mapControl;
     private Mapsui.Navigator? _trackedNavigator;
 
     private Router? _router;
@@ -48,7 +47,8 @@ public partial class TourDetailPage : ContentPage
     private bool _isRoutingInitialized;
 
     private string? _defaultSvg;
-    private string? _selectedSvg;
+    private string? _mainSvg;
+    private string? _subSvg;
     private CancellationTokenSource? _renderCts;
     private CancellationTokenSource? _viewportRenderCts;
 
@@ -62,35 +62,44 @@ public partial class TourDetailPage : ContentPage
     private static readonly List<IFeature> EmptyFeatures = [];
 
     // ─── Bottom Sheet ────────────────────────────────────────────────────────
-    // 3 snap points (tỉ lệ chiều cao màn hình: 0=top, 1=bottom), tăng dần
     private static readonly double[] SnapPoints = { 0.1, 0.75, 0.94 };
 
-    private double _sheetSnapY     = 0.94;  // snap hiện tại (bắt đầu ở Collapsed)
-    private double _panStartTransY = 0;     // TranslationY lúc bắt đầu kéo
-    private double _lastPanTotalY  = 0;     // TotalY tích luỹ gesture hiện tại
+    private double _sheetSnapY     = 0.94;
+    private double _panStartTransY = 0;
+    private double _lastPanTotalY  = 0;
     private bool   _isPanning      = false;
 
 
     public TourDetailPage(TourDetailViewModel viewModel, IAudioGuideService audioService, DatabaseService dbService)
     {
-        InitializeComponent();
+        Debug.WriteLine("[MAP_CRASH_DEBUG] 1. Constructor START");
+        try
+        {
+            InitializeComponent();
+            Debug.WriteLine("[MAP_CRASH_DEBUG] 2. InitializeComponent OK");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[MAP_CRASH_DEBUG] ‼️ XAML_ERROR: {ex}");
+            throw;
+        }
+
         _viewModel = viewModel;
         _audioService = audioService;
         _dbService = dbService;
         BindingContext = _viewModel;
         Shell.SetTabBarIsVisible(this, false);
 
-        // --- DEBUG: BẮT LỖI NGẦM TỪ BÊN TRONG MAPSUI VÀ BRUTILE ---
         Mapsui.Logging.Logger.LogDelegate += (level, message, exception) =>
         {
-            Debug.WriteLine($"[MAPSUI_CRASH_LOG] Level: {level} | Msg: {message} | Ex: {exception}");
+            Debug.WriteLine($"[MAPSUI_INTERNAL] Level: {level} | Msg: {message} | Ex: {exception}");
         };
 
-        // Subscribe to See Details request from Audio Player Popup
-        AudioPlayer.SeeDetailsRequested += (stop) => 
+        AudioPlayer.SeeDetailsRequested += (stop) =>
         {
-            _viewModel.NavigateToZoneDetailCommand.Execute(stop); // Navigate directly
+            _viewModel.NavigateToZoneDetailCommand.Execute(stop);
         };
+        Debug.WriteLine("[MAP_CRASH_DEBUG] 3. Constructor FINISHED");
     }
 
     // ─── Bottom Sheet Drag ───────────────────────────────────────────────────
@@ -99,9 +108,8 @@ public partial class TourDetailPage : ContentPage
     {
         base.OnSizeAllocated(width, height);
         if (width <= 0 || height <= 0 || BottomSheet == null) return;
-        if (_isPanning) return; // không reset khi đang kéo
+        if (_isPanning) return;
 
-        // WidthProportional: width=1.0 luôn = 100% màn hình → không bị cắt
         AbsoluteLayout.SetLayoutFlags(BottomSheet, Microsoft.Maui.Layouts.AbsoluteLayoutFlags.WidthProportional);
         AbsoluteLayout.SetLayoutBounds(BottomSheet, new Rect(0, _sheetSnapY * height, 1.0, height));
         BottomSheet.TranslationY = 0;
@@ -127,8 +135,8 @@ public partial class TourDetailPage : ContentPage
 
                 var raw      = _panStartTransY + e.TotalY;
                 var baseY    = _sheetSnapY * pageH;
-                var minTrans = SnapPoints[0] * pageH - baseY;      // giới hạn Expanded
-                var maxTrans = SnapPoints[^1] * pageH - baseY;     // giới hạn Collapsed
+                var minTrans = SnapPoints[0] * pageH - baseY;
+                var maxTrans = SnapPoints[^1] * pageH - baseY;
                 BottomSheet.TranslationY = Math.Clamp(raw, minTrans, maxTrans);
                 break;
 
@@ -141,20 +149,19 @@ public partial class TourDetailPage : ContentPage
         }
     }
 
-    // Snap theo HƯỚNG kéo thay vì vị trí gần nhất
     private void SnapByDirection(double pageH, double dragTotalY)
     {
-        const double threshold = 40; // px tối thiểu để chuyển sang state khác
+        const double threshold = 40;
 
         var currentIdx = Array.IndexOf(SnapPoints, _sheetSnapY);
         double target;
 
         if (dragTotalY < -threshold && currentIdx > 0)
-            target = SnapPoints[currentIdx - 1];          // kéo LÊN → mở rộng
+            target = SnapPoints[currentIdx - 1];
         else if (dragTotalY > threshold && currentIdx < SnapPoints.Length - 1)
-            target = SnapPoints[currentIdx + 1];          // kéo XUỐNG → thu nhỏ
+            target = SnapPoints[currentIdx + 1];
         else
-            target = _sheetSnapY;                         // kéo nhẹ → giữ nguyên
+            target = _sheetSnapY;
 
         var fromY = _sheetSnapY * pageH + BottomSheet.TranslationY;
         _sheetSnapY = target;
@@ -197,37 +204,47 @@ public partial class TourDetailPage : ContentPage
     {
         base.OnAppearing();
         Shell.SetTabBarIsVisible(this, false);
+
         _viewModel.StopSelected -= OnStopSelected;
         _viewModel.StopSelected += OnStopSelected;
-
         _viewModel.MapDataChanged -= OnMapDataChanged;
         _viewModel.MapDataChanged += OnMapDataChanged;
-        _viewModel.StartForegroundTracking();
 
-        if (_isMapInitialized)
+        _viewModel.StartForegroundTracking();
+        _ = _viewModel.LoadData();
+
+        if (!_isMapInitialized)
         {
-            // Quay lại trang → reset key để bắt buộc vẽ lại
-            _lastStaticMapKey = null;
-            RenderMap();
-            FocusOnBuiVienAnchor();
+            // ✅ FIX: Bắt exception thay vì nuốt im khi fire & forget
+            _mapInitTask ??= InitializeMapAsync().ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                    Debug.WriteLine($"[MAP] ❌ Init failed: {t.Exception?.Flatten().InnerException?.Message}");
+            }, TaskScheduler.Default);
         }
         else
         {
-            _mapInitTask ??= InitializeMapAsync();
-        }
-
-        if (!_isRoutingInitialized)
-        {
-            _ = Task.Run(InitializeRoutingAsync);
+            _lastStaticMapKey = null;
+            Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(150), () =>
+            {
+                RenderMap();
+                FocusOnBuiVienAnchor();
+            });
         }
     }
 
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
+        Debug.WriteLine("[MAP_CRASH_DEBUG] 22. Disappearing - Cleaning up");
+
         _viewModel.StopForegroundTracking();
         _viewModel.MapDataChanged -= OnMapDataChanged;
         _viewModel.StopSelected -= OnStopSelected;
+
+        // ✅ FIX: Cancel background tasks TRƯỚC
+        CancelAndDispose(ref _renderCts);
+        CancelAndDispose(ref _viewportRenderCts);
 
         if (_trackedNavigator != null)
         {
@@ -235,8 +252,21 @@ public partial class TourDetailPage : ContentPage
             _trackedNavigator = null;
         }
 
-        CancelAndDispose(ref _renderCts);
-        CancelAndDispose(ref _viewportRenderCts);
+        // ✅ FIX: Set flag false TRƯỚC để RenderMap guard kịp bắt
+        _isMapInitialized = false;
+        _mapInitTask = null;
+
+        // ✅ FIX: Null map SAU CÙNG trên main thread, sau khi flag đã false
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            if (MapControlView != null)
+            {
+                MapControlView.Info -= OnMapInfo;
+                MapControlView.Map = null;
+            }
+        });
+
+        Debug.WriteLine("[MAP_CRASH_DEBUG] 23. Cleanup FINISHED");
     }
 
     // ─── Map Init ────────────────────────────────────────────────────────────
@@ -245,100 +275,101 @@ public partial class TourDetailPage : ContentPage
     {
         if (_isMapInitialized) return;
 
-        Debug.WriteLine("[MAP_INIT] 1. Chờ MapHelper...");
-        try 
+        Debug.WriteLine("[MAP_CRASH_DEBUG] 7. InitializeMapAsync ENTERED");
+        await Task.Delay(250);
+
+        // ✅ FIX: Chạy heavy IO trên background thread, KHÔNG trên Main Thread
+        string? mapPath = null;
+        bool offlineMapExists = false;
+
+        try
         {
-            await Services.MapHelper.EnsureOfflineMapExistsAsync().WaitAsync(TimeSpan.FromSeconds(5));
+            await Services.MapHelper.EnsureOfflineMapExistsAsync();
+            mapPath = Services.MapHelper.GetOfflineMapPath();
+            offlineMapExists = System.IO.File.Exists(mapPath);
+            Debug.WriteLine($"[MAP_CRASH_DEBUG] 9. MapHelper FINISHED, offline={offlineMapExists}");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[MAP_INIT] ❌ Lỗi MapHelper: {ex.Message}");
+            Debug.WriteLine($"[MAP_CRASH_DEBUG] ❌ Lỗi MapHelper: {ex.Message}");
         }
 
-        try 
+        // ✅ FIX: Chỉ đưa việc tạo UI object lên Main Thread
+        await MainThread.InvokeOnMainThreadAsync(async () =>
         {
-            await MainThread.InvokeOnMainThreadAsync(() =>
+            if (_isMapInitialized) return;
+            Debug.WriteLine("[MAP_CRASH_DEBUG] 11. Đang khởi tạo bản đồ trên Main Thread...");
+
+            try
             {
-                if (_isMapInitialized) return;
-                Debug.WriteLine("[MAP_INIT] 4. Đang khởi tạo bản đồ Offline...");
+                var map = new Mapsui.Map { CRS = "EPSG:3857" };
+                bool offlineLoaded = false;
 
-                try 
+                if (offlineMapExists && mapPath != null)
                 {
-                    var map = new Mapsui.Map();
-                    map.CRS = "EPSG:3857";
-                    
-                    string mapPath = Services.MapHelper.GetOfflineMapPath();
-                    bool offlineLoaded = false;
-
-                    if (System.IO.File.Exists(mapPath))
+                    try
                     {
-                        try 
-                        {
-                            var connString = new SQLite.SQLiteConnectionString(mapPath, false);
-                            var mbTilesSource = new BruTile.MbTiles.MbTilesTileSource(connString);
-                            var offlineLayer = new Mapsui.Tiling.Layers.TileLayer(mbTilesSource) { Name = "OfflineMap" };
-                            map.Layers.Add(offlineLayer);
-                            offlineLoaded = true;
-                            Debug.WriteLine($"[MAP_INIT] 5. Đã nạp thành công: {mapPath}");
-                        }
-                        catch (Exception ex)
-                        {
-                            Debug.WriteLine($"[MAP_INIT] ❌ Lỗi nạp MBTiles: {ex.Message}");
-                        }
+                        var connString = new SQLite.SQLiteConnectionString(mapPath, false);
+                        var mbTilesSource = new BruTile.MbTiles.MbTilesTileSource(connString);
+                        var offlineLayer = new Mapsui.Tiling.Layers.TileLayer(mbTilesSource) { Name = "OfflineMap" };
+                        map.Layers.Add(offlineLayer);
+                        offlineLoaded = true;
+                        Debug.WriteLine("[MAP_CRASH_DEBUG] 13. MBTiles layer ADDED");
                     }
-
-                    // Nếu không nạp được Offline (file thiếu hoặc lỗi) thì mới dùng OSM làm nền trắng
-                    if (!offlineLoaded)
+                    catch (Exception ex)
                     {
-                        map.Layers.Add(Mapsui.Tiling.OpenStreetMap.CreateTileLayer());
-                        Debug.WriteLine("[MAP_INIT] 5. Không tìm thấy Offline, dùng OSM fallback.");
+                        Debug.WriteLine($"[MAP_CRASH_DEBUG] ❌ Lỗi nạp MBTiles: {ex.Message}");
                     }
-
-                    map.Layers.Add(_routeLayer);
-                    map.Layers.Add(_poiLayer);
-                    map.Layers.Add(_userLayer);
-                    map.Widgets.Clear();
-
-                    if (offlineLoaded && map.Layers.FirstOrDefault() is Mapsui.Tiling.Layers.TileLayer tileLayer)
-                    {
-                        // Khóa xoay bản đồ
-                        map.Navigator.RotationLock = true;
-
-                        // Đã bỏ giới hạn Zoom/Pan theo yêu cầu để người dùng có thể dùng 2 lớp layer hiển thị rộng hơn.
-                    }
-
-                    _trackedNavigator = map.Navigator;
-                    _trackedNavigator.ViewportChanged += OnViewportChanged;
-
-                    _mapControl = new MapControl { Map = map };
-                    _mapControl.BackgroundColor = Microsoft.Maui.Graphics.Colors.White;
-                    
-                    _mapControl.Info += OnMapInfo;
-                    MapHost.Content = _mapControl;
-                    _isMapInitialized = true;
-                    Debug.WriteLine("[MAP_INIT] 7. Hoàn tất setup MapControl.");
-
-                    // Nạp icon mới
-                    _ = Task.Run(LoadIconsAsync);
                 }
-                catch (Exception ex)
+
+                if (!offlineLoaded)
                 {
-                    Debug.WriteLine($"[MAP_INIT] ‼️ Crash trong MainThread: {ex}");
+                    Debug.WriteLine("[MAP_CRASH_DEBUG] 14. Fallback to OSM");
+                    map.Layers.Add(Mapsui.Tiling.OpenStreetMap.CreateTileLayer());
                 }
-            });
-        }
-        catch (Exception ex)
+
+                map.Layers.Add(_routeLayer);
+                map.Layers.Add(_poiLayer);
+                map.Layers.Add(_userLayer);
+                map.Widgets.Clear();
+
+                if (offlineLoaded)
+                    map.Navigator.RotationLock = true;
+
+                _trackedNavigator = map.Navigator;
+                _trackedNavigator.ViewportChanged += OnViewportChanged;
+
+                MapControlView.Map = map;
+                MapControlView.BackgroundColor = Microsoft.Maui.Graphics.Colors.White;
+                MapControlView.Info += OnMapInfo;
+
+                _isMapInitialized = true;
+                Debug.WriteLine("[MAP_CRASH_DEBUG] 17. Map State set to TRUE");
+
+                // Load icons ngay trên main thread (chỉ đọc file nhỏ)
+                await LoadIconsAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MAP_CRASH_DEBUG] ‼️ CRITICAL_INIT_FAIL: {ex}");
+            }
+        });
+
+        // ✅ FIX: Routing chạy hoàn toàn trên background thread
+        if (!_isRoutingInitialized)
         {
-            Debug.WriteLine($"[MAP_INIT] ‼️ Lỗi InvokeOnMainThread: {ex.Message}");
+            Debug.WriteLine("[MAP_CRASH_DEBUG] 19. Initializing Routing on background...");
+            await Task.Run(InitializeRoutingAsync);
         }
 
+        // ✅ FIX: Render chỉ sau khi tất cả xong và map vẫn còn initialized
         if (_isMapInitialized)
         {
-            Debug.WriteLine("[MAP_INIT] 8. Gọi RenderMap.");
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
                 RenderMap();
                 FocusOnBuiVienAnchor();
+                Debug.WriteLine("[MAP_CRASH_DEBUG] 21. ALL INIT STEPS FINISHED");
             });
         }
     }
@@ -348,20 +379,17 @@ public partial class TourDetailPage : ContentPage
         try
         {
             Debug.WriteLine("[MAP_ICONS] Loading SVG icons from package...");
-            
+
             using var s1 = await FileSystem.OpenAppPackageFileAsync("location.svg");
             using var r1 = new StreamReader(s1);
             _defaultSvg = await r1.ReadToEndAsync();
+            _mainSvg = RecolorLocationSvg(_defaultSvg, "#FF4B4B"); // Main = đỏ
+            _subSvg = RecolorLocationSvg(_defaultSvg, "#F59E0B");  // Sub = cam
 
-            using var s2 = await FileSystem.OpenAppPackageFileAsync("located.svg");
-            using var r2 = new StreamReader(s2);
-            _selectedSvg = await r2.ReadToEndAsync();
-            
-            Debug.WriteLine($"[MAP_ICONS] Loaded SVG content (default={_defaultSvg?.Length}, selected={_selectedSvg?.Length})");
-            
-            if (!string.IsNullOrEmpty(_defaultSvg) || !string.IsNullOrEmpty(_selectedSvg))
+            Debug.WriteLine($"[MAP_ICONS] Loaded SVG (base={_defaultSvg?.Length}, main={_mainSvg?.Length}, sub={_subSvg?.Length})");
+
+            if (!string.IsNullOrEmpty(_mainSvg) || !string.IsNullOrEmpty(_subSvg))
             {
-                // Bắt buộc vẽ lại bản đồ vì dữ liệu icon đã có
                 _lastStaticMapKey = null;
                 MainThread.BeginInvokeOnMainThread(RenderMap);
             }
@@ -372,6 +400,14 @@ public partial class TourDetailPage : ContentPage
         }
     }
 
+    private static string? RecolorLocationSvg(string? svg, string colorHex)
+    {
+        if (string.IsNullOrWhiteSpace(svg)) return null;
+
+        // location.svg hiện dùng fill="#FF4B4B"; giữ nguyên hình và chỉ đổi màu.
+        return svg.Replace("fill=\"#FF4B4B\"", $"fill=\"{colorHex}\"", StringComparison.OrdinalIgnoreCase);
+    }
+
     private async Task InitializeRoutingAsync()
     {
         if (_isRoutingInitialized) return;
@@ -379,9 +415,8 @@ public partial class TourDetailPage : ContentPage
 
         try
         {
-            // Thử nạp hcm_route.routerdb từ Assets
             string routerDbName = "hcm_route.routerdb";
-            
+
             using var stream = await FileSystem.OpenAppPackageFileAsync(routerDbName);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
@@ -389,34 +424,26 @@ public partial class TourDetailPage : ContentPage
 
             var routerDb = RouterDb.Deserialize(ms);
             _router = new Router(routerDb);
-            
-            // Log all profile names to debug why they were appearing empty
+
             var profiles = routerDb.GetSupportedProfiles();
             foreach (var p in profiles)
-            {
                 Debug.WriteLine($"[ROUTING] Profile found: Name='{p.Name}', FullName='{p.FullName}'");
-            }
 
-            // More robust profile selection
             _routingProfile = profiles.FirstOrDefault(p => p.FullName.Contains("pedestrian", StringComparison.OrdinalIgnoreCase))
                            ?? profiles.FirstOrDefault(p => p.Name.Contains("pedestrian", StringComparison.OrdinalIgnoreCase))
                            ?? profiles.FirstOrDefault(p => p.FullName.Contains("car", StringComparison.OrdinalIgnoreCase))
                            ?? profiles.FirstOrDefault();
 
             if (_routingProfile == null)
-            {
                 throw new Exception("RouterDb contains no routing profiles.");
-            }
-            
+
             Debug.WriteLine($"[ROUTING] Using profile: {_routingProfile.FullName ?? _routingProfile.Name}");
             _isRoutingInitialized = true;
             Debug.WriteLine("[ROUTING] ✅ Itinero initialized successfully.");
-            
-            // Kích hoạt vẽ lại bản đồ nếu đã init xong
+
+            // Trigger vẽ lại route sau khi routing xong
             if (_isMapInitialized)
-            {
                 MainThread.BeginInvokeOnMainThread(RenderMap);
-            }
         }
         catch (FileNotFoundException)
         {
@@ -431,24 +458,18 @@ public partial class TourDetailPage : ContentPage
     }
 
     // ─── Event Handlers ──────────────────────────────────────────────────────
+
     private async void OnStopSelected(object? sender, PoiStopItem stop)
     {
-        // 1. Focus map vào stop đó
         MainThread.BeginInvokeOnMainThread(() =>
         {
             FocusOnStop(stop);
-
-            // 2. Scroll card lên đầu
             StopsCollectionView?.ScrollTo(stop, position: ScrollToPosition.Start, animate: true);
 
-            // 3. Tự động đẩy lên mức giữa nếu đang ở mức thấp
             if (_sheetSnapY > 0.75)
-            {
                 SnapToHalf();
-            }
         });
 
-        // 4. Show Audio Narration Popup
         await ShowAudioNarrationAsync(stop);
     }
 
@@ -461,13 +482,11 @@ public partial class TourDetailPage : ContentPage
 
         try
         {
-            // Luôn lấy ngôn ngữ mới nhất từ DB mỗi khi hiển thị popup
             var lang = await _dbService.GetSettingAsync("Language", "vi");
             Debug.WriteLine($"[TOUR_PAGE] Current app language from DB: {lang}");
-            
+
             var narration = await _dbService.GetNarrationAsync(stop.ZoneId, lang);
 
-            // Khởi tạo AudioPlayer với ngôn ngữ đã lưu
             AudioPlayer.Initialize(_audioService, stop, lang);
             _ = AudioPlayer.ShowAsync();
         }
@@ -481,27 +500,23 @@ public partial class TourDetailPage : ContentPage
         }
     }
 
-
-
-
     private void FocusOnStop(PoiStopItem stop)
     {
-        if (!_isMapInitialized || _mapControl == null) return;
+        if (!_isMapInitialized || MapControlView?.Map == null) return;
 
         var (cx, cy) = SphericalMercator.FromLonLat(stop.Longitude, stop.Latitude);
-        var half = 50d; // zoom vào vùng 200m quanh stop
-        _mapControl.Map?.Navigator?.ZoomToBox(
+        var half = 50d;
+        MapControlView.Map?.Navigator?.ZoomToBox(
             new MRect(cx - half, cy - half, cx + half, cy + half),
             MBoxFit.Fit, 0, null);
-        _mapControl.Refresh();
+        MapControlView.Refresh();
     }
+
     private void OnMapDataChanged(object? sender, EventArgs e)
     {
         if (!_isMapInitialized) return;
 
         Debug.WriteLine($"[EVENT] MapDataChanged fired, stops={_viewModel.PoiStops.Count}");
-
-        // Reset key để RenderMap luôn vẽ lại khi data thay đổi
         _lastStaticMapKey = null;
 
         CancelAndDispose(ref _renderCts);
@@ -524,7 +539,6 @@ public partial class TourDetailPage : ContentPage
     {
         if (!_isMapInitialized) return;
 
-        // Skip nếu viewport chưa thay đổi đáng kể
         var current = GetViewportExtent();
         if (current != null && _lastViewportExtent != null)
         {
@@ -560,7 +574,8 @@ public partial class TourDetailPage : ContentPage
 
     private void RenderMap()
     {
-        if (!_isMapInitialized || _mapControl == null) return;
+        // ✅ FIX: Thêm Map null check để tránh NullReferenceException
+        if (!_isMapInitialized || MapControlView?.Map == null) return;
 
         Debug.WriteLine($"[RENDER][{DateTime.Now:HH:mm:ss.fff}] start — stops={_viewModel.PoiStops.Count}");
 
@@ -572,7 +587,7 @@ public partial class TourDetailPage : ContentPage
             _userLayer.DataHasChanged();
             _lastStaticMapKey = null;
             _lastRenderedUserLocation = null;
-            _mapControl.Refresh();
+            MapControlView.Refresh();
             return;
         }
 
@@ -580,25 +595,17 @@ public partial class TourDetailPage : ContentPage
         var orderedStops = _viewModel.PoiStops.OrderBy(x => x.OrderIndex).ToList();
         var viewportExtent = GetViewportExtent();
 
-        // BUG FIX #1: FilterStopsByViewport trả về list mới (không dùng shared buffer)
-        // → tránh mutation khi Add(selectedStop) bên dưới
         var visibleStops = FilterStopsByViewport(orderedStops, viewportExtent, 450);
 
-        // Đảm bảo stop đang chọn luôn có trong danh sách
         if (selectedStop != null && visibleStops.All(x => x.ZoneId != selectedStop.ZoneId))
             visibleStops.Add(selectedStop);
 
-        // Nếu không có stop nào visible → lấy tất cả (viewport chưa đúng vị trí)
         if (visibleStops.Count == 0)
             visibleStops = orderedStops;
 
-        // Sort lại sau khi có thể đã Add
         visibleStops = visibleStops.OrderBy(x => x.OrderIndex).ToList();
 
         var selectedZoneId = selectedStop?.ZoneId ?? -1;
-
-        // Key chỉ dựa vào data, không có viewport
-        // → tránh vẽ lại vô tận khi user pan/zoom
         var staticMapKey = BuildStaticMapKey(visibleStops, selectedZoneId);
         var staticChanged = staticMapKey != _lastStaticMapKey;
 
@@ -607,13 +614,11 @@ public partial class TourDetailPage : ContentPage
         if (staticChanged)
         {
             RenderPoiLayer(visibleStops);
-            RenderRouteLayer(orderedStops); // Vẽ tuyến đường nối tất cả các điểm theo lộ trình
+            RenderRouteLayer(orderedStops);
             _lastStaticMapKey = staticMapKey;
         }
         else if (_isRoutingInitialized && (_routeLayer.Features == null || !_routeLayer.Features.Any()))
         {
-            // Trường hợp user không đổi selection nhưng routing vừa init xong 
-            // Vẫn cần vẽ route nếu layer đang rỗng
             RenderRouteLayer(orderedStops);
         }
 
@@ -640,10 +645,9 @@ public partial class TourDetailPage : ContentPage
         if (staticChanged || userChanged || didFocus)
         {
             Debug.WriteLine($"[RENDER] Refresh — static={staticChanged} user={userChanged} focus={didFocus}");
-            _mapControl.Refresh();
+            MapControlView.Refresh();
         }
     }
-
 
     private void RenderPoiLayer(List<PoiStopItem> visibleStops)
     {
@@ -652,63 +656,59 @@ public partial class TourDetailPage : ContentPage
         foreach (var stop in visibleStops)
         {
             Debug.WriteLine($"[RENDER][POI] Point: {stop.Name} - Lat: {stop.Latitude}, Lon: {stop.Longitude}");
-            // BUG FIX #2: destructure tuple, tạo MPoint tường minh
             var (mx, my) = SphericalMercator.FromLonLat(stop.Longitude, stop.Latitude);
             var point = new MPoint(mx, my);
             var feature = new PointFeature(point)
             {
-                ["Label"] = stop.Name,
+                ["Label"]    = stop.Name,
                 ["Distance"] = stop.DistanceText,
-                ["ZoneId"] = stop.ZoneId
+                ["ZoneId"]   = stop.ZoneId
             };
 
             IStyle iconStyle;
 
-        if (!string.IsNullOrEmpty(_defaultSvg) && !string.IsNullOrEmpty(_selectedSvg))
-        {
-            // CHỈ DÙNG SVG
-            iconStyle = new ImageStyle
+            if (!string.IsNullOrEmpty(_mainSvg) && !string.IsNullOrEmpty(_subSvg))
             {
-                Image = "svg-content://" + (stop.IsSelected ? _selectedSvg : _defaultSvg),
-                SymbolScale = stop.IsSelected ? 1.4 : 1.1,
-                Offset = new Offset(0, 0)
-            };
-        }
-        else
-        {
-            // CHỈ DÙNG CHẤM TRÒN KHI SVG LỖI
-            iconStyle = new SymbolStyle
+                var svg = stop.IsMain ? _mainSvg : _subSvg;
+
+                // Main marker lớn hơn Sub marker; selected phóng nhẹ để nổi bật.
+                var baseScale = stop.IsMain ? 1.35 : 0.95;
+                iconStyle = new ImageStyle
+                {
+                    Image = "svg-content://" + svg,
+                    SymbolScale = stop.IsSelected ? baseScale + 0.18 : baseScale,
+                    Offset = new Offset(0, 0)
+                };
+            }
+            else
             {
-                SymbolType = SymbolType.Ellipse,
-                Fill = new Mapsui.Styles.Brush(stop.IsSelected 
-                    ? Mapsui.Styles.Color.FromArgb(255, 67, 160, 71) 
-                    : Mapsui.Styles.Color.FromArgb(255, 255, 75, 75)),
-                Outline = new Pen(Mapsui.Styles.Color.Transparent, 0), // Dùng trong suốt 0px thay vì null
-                
-                SymbolScale = 0,
-                Opacity = 0
-            };
-        }
+                iconStyle = new SymbolStyle
+                {
+                    SymbolType = SymbolType.Ellipse,
+                    Fill = new Mapsui.Styles.Brush(stop.IsSelected
+                        ? Mapsui.Styles.Color.FromArgb(255, 67, 160, 71)
+                        : Mapsui.Styles.Color.FromArgb(255, 255, 75, 75)),
+                    Outline  = new Pen(Mapsui.Styles.Color.Transparent, 0),
+                    SymbolScale = 0,
+                    Opacity  = 0
+                };
+            }
 
-        // Làm sạch style cũ trước khi add mới
-        feature.Styles.Clear();
-
-        // Chỉ add MỘT Style đại diện cho Icon/Chấm
-        feature.Styles.Add(iconStyle);
+            feature.Styles.Clear();
+            feature.Styles.Add(iconStyle);
 
             feature.Styles.Add(new LabelStyle
             {
-                Text = stop.Name,
-                MaxVisible = 2.0, // Only show if zoomed in (resolution < 2.0)
-                CollisionDetection = true, // Hide if overlapping with other labels
-                // Ép halo về hoàn toàn vô hình
-                Halo = new Mapsui.Styles.Pen(Mapsui.Styles.Color.Transparent, 0),
-                BackColor = null, // Thử để null thay vì Transparent Brush
-                ForeColor = Mapsui.Styles.Color.Black,
+                Text       = stop.Name,
+                MaxVisible = 2.0,
+                CollisionDetection = true,
+                Halo       = new Mapsui.Styles.Pen(Mapsui.Styles.Color.Transparent, 0),
+                BackColor  = null,
+                ForeColor  = Mapsui.Styles.Color.Black,
                 HorizontalAlignment = LabelStyle.HorizontalAlignmentEnum.Left,
-                VerticalAlignment = LabelStyle.VerticalAlignmentEnum.Center,
-                Offset = new Offset(15, 0), // GG Map style: to the right
-                Font = new Mapsui.Styles.Font { Size = 11, Bold = true }
+                VerticalAlignment   = LabelStyle.VerticalAlignmentEnum.Center,
+                Offset = new Offset(15, 0),
+                Font   = new Mapsui.Styles.Font { Size = 11, Bold = true }
             });
 
             poiFeatures.Add(feature);
@@ -737,14 +737,12 @@ public partial class TourDetailPage : ContentPage
             for (int i = 0; i < allStops.Count - 1; i++)
             {
                 var start = allStops[i];
-                var end = allStops[i + 1];
+                var end   = allStops[i + 1];
 
-                // Calculate straight-line distance in meters for comparison
                 var (sx, sy) = SphericalMercator.FromLonLat(start.Longitude, start.Latitude);
                 var (ex, ey) = SphericalMercator.FromLonLat(end.Longitude, end.Latitude);
                 double directDistance = Math.Sqrt(Math.Pow(ex - sx, 2) + Math.Pow(ey - sy, 2));
 
-                // Resolve points on road network (1000m radius)
                 var p1 = _router.Resolve(_routingProfile, (float)start.Latitude, (float)start.Longitude, 1000);
                 var p2 = _router.Resolve(_routingProfile, (float)end.Latitude, (float)end.Longitude, 1000);
 
@@ -762,10 +760,9 @@ public partial class TourDetailPage : ContentPage
                     if (!routeResult.IsError)
                     {
                         route = routeResult.Value;
-                        // If the route distance is more than 3x the direct distance, it's likely an OSM detour/one-way issue
                         if (route.TotalDistance > directDistance * 3)
                         {
-                            Debug.WriteLine($"[RENDER][ROUTE] ℹ️ Segment {i + 1} detour detected ({route.TotalDistance:F0}m vs {directDistance:F0}m). Using straight line.");
+                            Debug.WriteLine($"[RENDER][ROUTE] ℹ️ Segment {i + 1} detour detected. Using straight line.");
                             useStraightLine = true;
                         }
                     }
@@ -778,16 +775,18 @@ public partial class TourDetailPage : ContentPage
 
                 if (useStraightLine)
                 {
-                    var line = new LineString(new[] { 
-                        new NetTopologySuite.Geometries.Coordinate(sx, sy), 
-                        new NetTopologySuite.Geometries.Coordinate(ex, ey) 
+                    var line = new LineString(new[]
+                    {
+                        new NetTopologySuite.Geometries.Coordinate(sx, sy),
+                        new NetTopologySuite.Geometries.Coordinate(ex, ey)
                     });
                     routeFeatures.Add(new GeometryFeature(line));
                     successCount++;
                 }
                 else if (route?.Shape != null)
                 {
-                    var coordinates = route.Shape.Select(p => {
+                    var coordinates = route.Shape.Select(p =>
+                    {
                         var (nx, ny) = SphericalMercator.FromLonLat(p.Longitude, p.Latitude);
                         return new NetTopologySuite.Geometries.Coordinate(nx, ny);
                     }).ToArray();
@@ -841,9 +840,9 @@ public partial class TourDetailPage : ContentPage
         var userFeature = new PointFeature(new MPoint(ux, uy));
         userFeature.Styles.Add(new SymbolStyle
         {
-            SymbolType = SymbolType.Ellipse,
-            Fill = new Mapsui.Styles.Brush(Mapsui.Styles.Color.FromArgb(255, 33, 150, 243)),
-            Outline = new Pen(Mapsui.Styles.Color.White, 2),
+            SymbolType  = SymbolType.Ellipse,
+            Fill        = new Mapsui.Styles.Brush(Mapsui.Styles.Color.FromArgb(255, 33, 150, 243)),
+            Outline     = new Pen(Mapsui.Styles.Color.White, 2),
             SymbolScale = 1.0
         });
 
@@ -857,29 +856,28 @@ public partial class TourDetailPage : ContentPage
 
     private void FocusOnSelectedStop()
     {
-        if (!_isMapInitialized || _mapControl == null) return;
+        if (!_isMapInitialized || MapControlView?.Map == null) return;
         if (_viewModel.PoiStops.Count == 0) return;
         MoveToFitRegion(_viewModel.PoiStops.FirstOrDefault(x => x.IsSelected));
-        _mapControl.Refresh();
+        MapControlView.Refresh();
     }
 
     private void FocusOnBuiVienAnchor()
     {
-        if (!_isMapInitialized || _mapControl == null) return;
+        if (!_isMapInitialized || MapControlView?.Map == null) return;
 
         var (cx, cy) = SphericalMercator.FromLonLat(BuiVienLongitude, BuiVienLatitude);
         var half = MinFocusMeters / 2d;
-        _mapControl.Map?.Navigator?.ZoomToBox(
+        MapControlView.Map?.Navigator?.ZoomToBox(
             new MRect(cx - half, cy - half, cx + half, cy + half),
             MBoxFit.Fit, 0, null);
-        _mapControl.Refresh();
+        MapControlView.Refresh();
     }
 
     private void MoveToFitRegion(PoiStopItem? _)
     {
-        if (!_isMapInitialized || _mapControl == null) return;
+        if (!_isMapInitialized || MapControlView?.Map == null) return;
 
-        // BUG FIX #2: destructure rõ ràng, dùng MPoint(x,y)
         var points = _viewModel.PoiStops
             .Select(s =>
             {
@@ -892,7 +890,7 @@ public partial class TourDetailPage : ContentPage
         {
             var (cx, cy) = SphericalMercator.FromLonLat(BuiVienLongitude, BuiVienLatitude);
             var half = MinFocusMeters / 2d;
-            _mapControl.Map?.Navigator?.ZoomToBox(
+            MapControlView.Map?.Navigator?.ZoomToBox(
                 new MRect(cx - half, cy - half, cx + half, cy + half),
                 MBoxFit.Fit, 0, null);
             return;
@@ -906,15 +904,14 @@ public partial class TourDetailPage : ContentPage
         var padX = Math.Max((maxX - minX) * 0.35, MinFocusMeters / 2d);
         var padY = Math.Max((maxY - minY) * 0.35, MinFocusMeters / 2d);
 
-        _mapControl.Map?.Navigator?.ZoomToBox(
+        MapControlView.Map?.Navigator?.ZoomToBox(
             new MRect(minX - padX, minY - padY, maxX + padX, maxY + padY),
             MBoxFit.Fit, 0, null);
     }
 
     private MRect? GetViewportExtent()
     {
-        // Viewport là struct — không dùng ?. được
-        var navigator = _mapControl?.Map?.Navigator;
+        var navigator = MapControlView?.Map?.Navigator;
         if (navigator == null) return null;
         return navigator.Viewport.ToExtent();
     }
@@ -932,15 +929,13 @@ public partial class TourDetailPage : ContentPage
         => $"{_isRoutingInitialized}|{selectedZoneId}|{string.Join(';', stops.Select(s =>
             $"{s.ZoneId}:{s.OrderIndex}:{s.Latitude:0.000000}:{s.Longitude:0.000000}"))}";
 
-    // BUG FIX #1: trả về List MỚI thay vì shared buffer
-    // → tránh mutation khi caller gọi visibleStops.Add() / .OrderBy()
     private static List<PoiStopItem> FilterStopsByViewport(
         IEnumerable<PoiStopItem> source,
         MRect? viewportExtent,
         double paddingMeters)
     {
         if (viewportExtent == null)
-            return source.ToList(); // bản sao mới
+            return source.ToList();
 
         var padded = new MRect(
             viewportExtent.MinX - paddingMeters,
@@ -957,18 +952,15 @@ public partial class TourDetailPage : ContentPage
         }
         return result;
     }
+
     private void OnMapInfo(object? sender, Mapsui.MapInfoEventArgs e)
     {
-        // Trong Mapsui 5, GetMapInfo yêu cầu danh sách layer để query (thay cho IsMapInfoLayer)
-        var mapInfo = e.GetMapInfo(_mapControl?.Map?.Layers);
+        var mapInfo = e.GetMapInfo(MapControlView?.Map?.Layers);
         if (mapInfo?.Feature == null) return;
-
-        // Tìm feature thuộc POI layer
         if (mapInfo.Layer?.Name != "PoiLayer") return;
 
         var feature = mapInfo.Feature;
-        
-        // Cách 1: Tìm theo ZoneId (ổn định nhất)
+
         if (feature["ZoneId"] is int zoneId)
         {
             var stopById = _viewModel.PoiStops.FirstOrDefault(s => s.ZoneId == zoneId);
@@ -979,7 +971,6 @@ public partial class TourDetailPage : ContentPage
             }
         }
 
-        // Cách 2: Fallback tìm theo label (nếu ZoneId null)
         var label = feature["Label"]?.ToString();
         if (string.IsNullOrEmpty(label)) return;
 
@@ -993,13 +984,8 @@ public partial class TourDetailPage : ContentPage
     {
         MainThread.BeginInvokeOnMainThread(() =>
         {
-            // Select stop trong ViewModel
             _viewModel.SelectStopByZoneId(stop.ZoneId);
-
-            // Focus map
             FocusOnStop(stop);
-
-            // Scroll card lên đầu
             StopsCollectionView?.ScrollTo(stop, position: ScrollToPosition.Start, animate: true);
         });
     }

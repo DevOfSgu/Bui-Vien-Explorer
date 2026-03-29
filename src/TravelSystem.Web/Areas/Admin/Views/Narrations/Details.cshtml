@@ -1,0 +1,67 @@
+@model TravelSystem.Shared.Models.Narration
+@{
+    ViewData["Title"] = "Narration Details";
+}
+
+<div class="header-actions">
+    <div class="d-flex align-items-center gap-3">
+        <a asp-action="Index" asp-route-zoneId="@Model.ZoneId" class="btn btn-outline-secondary" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <div class="page-title">Narration Details</div>
+    </div>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger d-flex align-items-center" style="border-radius: 10px;">
+        <i class="fa-solid fa-circle-exclamation me-2"></i>
+        <span>@TempData["Error"]</span>
+    </div>
+}
+
+<div class="card-custom">
+    <div class="row g-4">
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Assigned Zone</label>
+            <input type="text" class="form-control" value="@(ViewBag.ZoneName ?? "Unknown")" readonly />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Language</label>
+            <input type="text" class="form-control" value="@Model.Language" readonly />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Status</label>
+            <input type="text" class="form-control" value="@Model.ApprovalStatus" readonly />
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <label class="form-label fw-bold">Narration Text</label>
+        <textarea class="form-control" rows="14" readonly>@Model.Text</textarea>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+        @if (Model.ApprovalStatus == "Pending")
+        {
+            <form asp-action="Approve" method="post" style="display:inline;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-success">
+                    <i class="fa-solid fa-check me-1"></i> Approve
+                </button>
+            </form>
+            <form asp-action="Reject" method="post" style="display:inline;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-danger">
+                    <i class="fa-solid fa-xmark me-1"></i> Reject
+                </button>
+            </form>
+        }
+        else
+        {
+            <span class="text-muted">This script is already @Model.ApprovalStatus.ToLowerInvariant().</span>
+        }
+    </div>
+</div>

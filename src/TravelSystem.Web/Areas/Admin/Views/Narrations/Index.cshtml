@@ -23,6 +23,14 @@
     </div>
 </div>
 
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger d-flex align-items-center" style="border-radius: 10px;">
+        <i class="fa-solid fa-circle-exclamation me-2"></i>
+        <span>@TempData["Error"]</span>
+    </div>
+}
+
 <div class="card-custom">
     <!-- Filter Row -->
     <div class="d-flex justify-content-between mb-4 pb-3 border-bottom border-light">
@@ -87,21 +95,26 @@
                         <td>
                             <div class="d-flex gap-2">
                                 @if (item.ApprovalStatus == "Pending") {
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" style="border-radius: 6px;">
+                                        <i class="fa-solid fa-eye"></i> View
+                                    </a>
                                     <form asp-action="Approve" method="post" style="display:inline;">
+                                        @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@item.Id" />
                                         <button type="submit" class="btn btn-sm btn-success" style="border-radius: 6px;">
                                             <i class="fa-solid fa-check"></i> Approve
                                         </button>
                                     </form>
                                     <form asp-action="Reject" method="post" style="display:inline;">
+                                        @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@item.Id" />
                                         <button type="submit" class="btn btn-sm btn-danger" style="border-radius: 6px;">
                                             <i class="fa-solid fa-xmark"></i> Reject
                                         </button>
                                     </form>
                                 } else {
-                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" style="border-radius: 6px;">
-                                        <i class="fa-solid fa-pen"></i> Edit Task
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" style="border-radius: 6px;">
+                                        <i class="fa-solid fa-eye"></i> View
                                     </a>
                                 }
                             </div>

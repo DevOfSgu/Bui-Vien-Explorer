@@ -4,8 +4,9 @@
              x:Class="TravelSystem.Mobile.Views.ZoneDetailPage"
              xmlns:vm="clr-namespace:TravelSystem.Mobile.ViewModels"
              xmlns:views="clr-namespace:TravelSystem.Mobile.Views"
+             xmlns:services="clr-namespace:TravelSystem.Mobile.Services"
              x:DataType="vm:ZoneDetailViewModel"
-             BackgroundColor="White"
+             BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark=#000000}"
              Shell.TabBarIsVisible="False"
              Shell.NavBarIsVisible="False">
 
@@ -17,8 +18,6 @@
                        Aspect="AspectFill"
                        HorizontalOptions="Fill"
                        VerticalOptions="Fill"/>
-                
-                <BoxView Opacity="0.1" BackgroundColor="Black" />
 
                 <!-- Top Overlay Buttons -->
                 <Grid VerticalOptions="Start" Padding="20,50,20,0" ColumnDefinitions="Auto,*,Auto,Auto">
@@ -61,6 +60,9 @@
                                 StrokeShape="RoundRectangle 20"
                                 Padding="8">
                             <Image Source="home.svg" />
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding GoHomeCommand}" />
+                            </Border.GestureRecognizers>
                         </Border>
                     </HorizontalStackLayout>
                 </Grid>
@@ -76,7 +78,7 @@
             <!-- Bottom Content -->
             <Border Grid.Row="1"
                     Margin="0,-24,0,0"
-                    BackgroundColor="White"
+                    BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark=#000000}"
                     StrokeThickness="0"
                     StrokeShape="RoundRectangle 24,24,0,0">
                 <ScrollView Padding="24">
@@ -85,28 +87,85 @@
                             <Label Text="{Binding Name}"
                                    FontSize="28"
                                    FontAttributes="Bold"
-                                   TextColor="#1F2937"
+                                   TextColor="{AppThemeBinding Light=#111111, Dark=#F5F5F5}"
                                    FontFamily="SpaceGroteskBold" />
                             
                             <Border Grid.Column="1"
-                                    BackgroundColor="#FFF1F2"
+                                    BackgroundColor="{Binding OpenStatusBackgroundColor}"
                                     StrokeThickness="0"
                                     StrokeShape="RoundRectangle 16"
                                     Padding="12,6">
-                                <Label Text="OPEN NOW" TextColor="#FF4B4B" FontSize="12" FontAttributes="Bold" />
+                                <Label Text="{Binding OpenStatusText}" TextColor="{Binding OpenStatusTextColor}" FontSize="12" FontAttributes="Bold" />
                             </Border>
                         </Grid>
 
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="14" Margin="0,4,0,0">
+                            <Border Grid.Column="0"
+                                    Stroke="{AppThemeBinding Light=#D1D5DB, Dark=#2A2A2E}"
+                                    StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 20"
+                                    BackgroundColor="{AppThemeBinding Light=White, Dark=#141417}"
+                                    Padding="14">
+                                <VerticalStackLayout Spacing="8">
+                                    <Image Source="location.svg"
+                                           WidthRequest="18"
+                                           HeightRequest="18"
+                                           HorizontalOptions="Start" />
+                                    <Label Text="{Binding [zone_address], Source={x:Static services:LocalizationManager.Instance}}"
+                                           FontSize="12"
+                                           FontAttributes="Bold"
+                                           CharacterSpacing="1.2"
+                                           TextColor="{AppThemeBinding Light=#444444, Dark=#8A8A8A}" />
+                                    <Label Text="{Binding AddressText}"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           LineBreakMode="WordWrap"
+                                           TextColor="{AppThemeBinding Light=#111111, Dark=#F5F5F5}" />
+                                </VerticalStackLayout>
+                            </Border>
 
+                            <Border Grid.Column="1"
+                                    Stroke="{AppThemeBinding Light=#D1D5DB, Dark=#2A2A2E}"
+                                    StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 20"
+                                    BackgroundColor="{AppThemeBinding Light=White, Dark=#141417}"
+                                    Padding="14">
+                                <VerticalStackLayout Spacing="8">
+                                    <Image Source="timer.svg"
+                                           WidthRequest="18"
+                                           HeightRequest="18"
+                                           HorizontalOptions="Start" />
+                                    <Label Text="{Binding [zone_hours], Source={x:Static services:LocalizationManager.Instance}}"
+                                           FontSize="12"
+                                           FontAttributes="Bold"
+                                           CharacterSpacing="1.2"
+                                           TextColor="{AppThemeBinding Light=#444444, Dark=#8A8A8A}" />
+                                    <Label Text="{Binding HoursText}"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           LineBreakMode="WordWrap"
+                                           TextColor="{AppThemeBinding Light=#111111, Dark=#F5F5F5}" />
+                                </VerticalStackLayout>
+                            </Border>
+                        </Grid>
 
-                        <HorizontalStackLayout Spacing="8">
-                            <Image Source="location.svg" WidthRequest="16" HeightRequest="16" />
-                            <Label Text="4.8" FontAttributes="Bold" />
-                            <Label Text="{Binding DistanceText, StringFormat='• {0} away'}" TextColor="#6B7280" />
-                        </HorizontalStackLayout>
-
-                        <Label Text="About" FontSize="18" FontAttributes="Bold" Margin="0,8,0,0" />
-                        <Label Text="{Binding Description}" FontSize="15" TextColor="#4B5563" LineHeight="1.5" />
+                        <Border Stroke="{AppThemeBinding Light=#D1D5DB, Dark=#2A2A2E}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 20"
+                                BackgroundColor="{AppThemeBinding Light=White, Dark=#111114}"
+                                Padding="16"
+                                Margin="0,8,0,0">
+                            <VerticalStackLayout Spacing="10">
+                                <Label Text="{Binding [zone_about], Source={x:Static services:LocalizationManager.Instance}}"
+                                       FontSize="18"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light=#111111, Dark=#F5F5F5}" />
+                                <Label Text="{Binding Description}"
+                                       FontSize="15"
+                                       TextColor="{AppThemeBinding Light=#222222, Dark=#A3A3A3}"
+                                       LineHeight="1.5" />
+                            </VerticalStackLayout>
+                        </Border>
                     </VerticalStackLayout>
                 </ScrollView>
             </Border>

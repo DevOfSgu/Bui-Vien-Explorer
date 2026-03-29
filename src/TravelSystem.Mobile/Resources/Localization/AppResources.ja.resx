@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="app_name" xml:space="preserve"><value>Bui Vien Explorer</value></data>
+  <data name="tab_home" xml:space="preserve"><value>ホーム</value></data>
+  <data name="tab_saved" xml:space="preserve"><value>お気に入り</value></data>
+  <data name="tab_settings" xml:space="preserve"><value>設定</value></data>
+  <data name="main_discover" xml:space="preserve"><value>ブイビエンを探索</value></data>
+  <data name="main_tours_available" xml:space="preserve"><value>{0}件のツアー</value></data>
+  <data name="main_stops_count" xml:space="preserve"><value>{0}スポット</value></data>
+  <data name="main_minutes" xml:space="preserve"><value>{0}分</value></data>
+  <data name="main_no_tours_found" xml:space="preserve"><value>ツアーが見つかりませんでした。</value></data>
+  <data name="main_load_failed" xml:space="preserve"><value>データを読み込めません</value></data>
+  <data name="main_opening_tour" xml:space="preserve"><value>ツアー詳細を開いています...</value></data>
+  <data name="saved_nav_title" xml:space="preserve"><value>保存した場所</value></data>
+  <data name="saved_title" xml:space="preserve"><value>お気に入り</value></data>
+  <data name="saved_subtitle" xml:space="preserve"><value>保存した場所の一覧</value></data>
+  <data name="saved_empty" xml:space="preserve"><value>お気に入りがまだありません。</value></data>
+  <data name="settings_title" xml:space="preserve"><value>設定</value></data>
+  <data name="settings_guest" xml:space="preserve"><value>ゲスト</value></data>
+  <data name="settings_sign_in_hint" xml:space="preserve"><value>タップしてログインまたは登録</value></data>
+  <data name="settings_preferences" xml:space="preserve"><value>設定項目</value></data>
+  <data name="settings_language" xml:space="preserve"><value>言語</value></data>
+  <data name="settings_dark_mode" xml:space="preserve"><value>ダークモード</value></data>
+  <data name="settings_choose_language" xml:space="preserve"><value>言語を選択</value></data>
+  <data name="settings_close" xml:space="preserve"><value>閉じる</value></data>
+  <data name="settings_notice_title" xml:space="preserve"><value>お知らせ</value></data>
+  <data name="settings_signin_dev" xml:space="preserve"><value>ログイン機能は開発中です。</value></data>
+  <data name="settings_help_title" xml:space="preserve"><value>ヘルプ</value></data>
+  <data name="settings_help_msg" xml:space="preserve"><value>ヘルプとFAQを開いています...</value></data>
+  <data name="settings_terms_title" xml:space="preserve"><value>利用規約</value></data>
+  <data name="settings_terms_msg" xml:space="preserve"><value>利用規約とポリシーを開いています...</value></data>
+  <data name="tour_stops" xml:space="preserve"><value>ツアーストップ</value></data>
+  <data name="tour_stops_count" xml:space="preserve"><value>{0}スポット</value></data>
+  <data name="tour_loading" xml:space="preserve"><value>ツアー詳細を読み込み中...</value></data>
+  <data name="zone_open_now" xml:space="preserve"><value>営業中</value></data>
+  <data name="zone_closed_now" xml:space="preserve"><value>営業時間外</value></data>
+  <data name="zone_address" xml:space="preserve"><value>住所</value></data>
+  <data name="zone_hours" xml:space="preserve"><value>営業時間</value></data>
+  <data name="zone_about" xml:space="preserve"><value>紹介</value></data>
+  <data name="zone_away" xml:space="preserve"><value>離れています</value></data>
+  <data name="audio_guide" xml:space="preserve"><value>音声ガイド</value></data>
+  <data name="audio_view_detail" xml:space="preserve"><value>詳細を見る</value></data>
+  <data name="lang_tagline" xml:space="preserve"><value>オーディオガイド体験</value></data>
+  <data name="lang_choose" xml:space="preserve"><value>言語を選択</value></data>
+  <data name="lang_get_started" xml:space="preserve"><value>はじめる   ➔</value></data>
+  <data name="lang_developed_by" xml:space="preserve"><value>Developed by Hao and Phong</value></data>
+</root>

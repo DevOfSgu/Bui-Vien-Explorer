@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 using TravelSystem.Web.Data;
 using TravelSystem.Web.Models;
 
@@ -60,12 +61,97 @@ public class ToursController : ControllerBase
                 Description = tz.Zone != null ? tz.Zone.Description : string.Empty,
                 ImageUrl = tz.Zone != null ? tz.Zone.ImageUrl : null,
                 Latitude = tz.Zone != null ? tz.Zone.Latitude : 0,
-                Longitude = tz.Zone != null ? tz.Zone.Longitude : 0
+                Longitude = tz.Zone != null ? tz.Zone.Longitude : 0,
+                Radius = tz.Zone != null ? tz.Zone.Radius : 0,
+                ShopId = tz.Zone != null ? tz.Zone.ShopId : null,
+                IsMain = tz.Zone != null && tz.Zone.IsMain
             })
             .ToListAsync();
 
-        return Ok(stops);
+        var shopIds = stops
+            .Where(s => s.ShopId.HasValue)
+            .Select(s => s.ShopId!.Value)
+            .Distinct()
+            .ToList();
+
+        var shopAddressMap = new Dictionary<int, string?>();
+        var shopHoursMap = new Dictionary<int, string>();
+
+        if (shopIds.Count > 0)
+        {
+            shopAddressMap = await _db.Shops
+                .AsNoTracking()
+                .Where(s => shopIds.Contains(s.Id))
+                .ToDictionaryAsync(s => s.Id, s => s.Address);
+
+            var rawHours = await _db.ShopHours
+                .AsNoTracking()
+                .Where(h => shopIds.Contains(h.ShopId))
+                .Select(h => new ShopHourView(h.ShopId, h.DayOfWeek, h.OpenTime, h.CloseTime))
+                .ToListAsync();
+
+            shopHoursMap = rawHours
+                .GroupBy(h => h.ShopId)
+                .ToDictionary(g => g.Key, g => FormatHours(g));
+        }
+
+        var response = stops.Select(s => new
+        {
+            s.ZoneId,
+            s.OrderIndex,
+            s.Name,
+            s.Description,
+            s.ImageUrl,
+            s.Latitude,
+            s.Longitude,
+            s.Radius,
+            s.IsMain,
+            Address = s.ShopId.HasValue && shopAddressMap.TryGetValue(s.ShopId.Value, out var address) ? address : null,
+            Hours = s.ShopId.HasValue && shopHoursMap.TryGetValue(s.ShopId.Value, out var hours) ? hours : null
+        });
+
+        return Ok(response);
     }
+
+    private static string FormatHours(IEnumerable<ShopHourView> hours)
+    {
+        var hourItems = hours
+            .OrderBy(h => h.DayOfWeek)
+            .ThenBy(h => h.OpenTime)
+            .ToList();
+
+        if (hourItems.Count == 0)
+        {
+            return "--";
+        }
+
+        var first = hourItems[0];
+        var sameTimeForAllDays = hourItems.All(h => h.OpenTime == first.OpenTime
+            && h.CloseTime == first.CloseTime);
+
+        if (sameTimeForAllDays)
+        {
+            return $"{FormatTime(first.OpenTime)} - {FormatTime(first.CloseTime)}";
+        }
+
+        // Fallback: show today's schedule if present, otherwise earliest schedule.
+        var today = DateTime.Now.DayOfWeek switch
+        {
+            DayOfWeek.Sunday => 7,
+            _ => (int)DateTime.Now.DayOfWeek
+        };
+
+        var todaySlot = hourItems.FirstOrDefault(h => h.DayOfWeek == today) ?? first;
+        return $"{FormatTime(todaySlot.OpenTime)} - {FormatTime(todaySlot.CloseTime)}";
+    }
+
+    private static string FormatTime(TimeSpan time)
+    {
+        var dateTime = DateTime.Today.Add(time);
+        return dateTime.ToString("h:mm tt", CultureInfo.InvariantCulture);
+    }
+
+    private sealed record ShopHourView(int ShopId, int DayOfWeek, TimeSpan OpenTime, TimeSpan CloseTime);
     [HttpGet("{id:int}/route")]
     public async Task<IActionResult> GetRoute(int id)
     {

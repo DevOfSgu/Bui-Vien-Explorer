@@ -4,31 +4,35 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:views="clr-namespace:TravelSystem.Mobile.Views"
-    Shell.BackgroundColor="{AppThemeBinding Light=White, Dark=#121212}"
-    Shell.ForegroundColor="{AppThemeBinding Light=#111827, Dark=White}"
+    xmlns:services="clr-namespace:TravelSystem.Mobile.Services"
+    Shell.BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource DarkNavBar}}"
+    Shell.ForegroundColor="{AppThemeBinding Light=#111827, Dark={StaticResource DarkAccent}}"
     Shell.TitleColor="{AppThemeBinding Light=#111827, Dark=White}"
-    Shell.TabBarBackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
-    Shell.TabBarForegroundColor="{AppThemeBinding Light=#FF4B4B, Dark=#FF4B4B}"
-    Shell.TabBarTitleColor="{AppThemeBinding Light=#FF4B4B, Dark=#FF4B4B}"
-    Shell.TabBarUnselectedColor="{AppThemeBinding Light=#94A3B8, Dark=#94A3B8}"
-    Title="Bùi Viện Explorer">
+    Shell.TabBarBackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource DarkTabBar}}"
+    Shell.TabBarForegroundColor="{AppThemeBinding Light=#FF4B4B, Dark={StaticResource DarkAccent}}"
+    Shell.TabBarTitleColor="{AppThemeBinding Light=#FF4B4B, Dark={StaticResource DarkAccent}}"
+    Shell.TabBarUnselectedColor="{AppThemeBinding Light=#94A3B8, Dark={StaticResource Gray500}}"
+    Title="{Binding [app_name], Source={x:Static services:LocalizationManager.Instance}}">
 
     <TabBar Route="MainTabs">
         <ShellContent
-            Title="Home"
+            x:Name="HomeTab"
+            Title="{Binding [tab_home], Source={x:Static services:LocalizationManager.Instance}}"
             Icon="home.png"
             ContentTemplate="{DataTemplate views:MainPage}"
             Route="MainPage" />
 
         <ShellContent
-            Title="Yêu thích"
+            x:Name="SavedTab"
+            Title="{Binding [tab_saved], Source={x:Static services:LocalizationManager.Instance}}"
             Icon="favourite.png"
             ContentTemplate="{DataTemplate views:SavedPage}"
             Route="SavedPage" />
 
 
         <ShellContent
-            Title="Settings"
+            x:Name="SettingsTab"
+            Title="{Binding [tab_settings], Source={x:Static services:LocalizationManager.Instance}}"
             Icon="setting.png"
             ContentTemplate="{DataTemplate views:SettingsPage}"
             Route="SettingsPage" />

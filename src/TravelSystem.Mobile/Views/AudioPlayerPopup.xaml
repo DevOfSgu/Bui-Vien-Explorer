@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:TravelSystem.Mobile.ViewModels"
              xmlns:toolkit="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui.MediaElement"
+             xmlns:services="clr-namespace:TravelSystem.Mobile.Services"
              x:Class="TravelSystem.Mobile.Views.AudioPlayerPopup"
              BackgroundColor="#80000000"
              IsVisible="False">
@@ -19,7 +20,7 @@
                 HorizontalOptions="Center" 
                 Margin="20"
                 Padding="25"
-                BackgroundColor="White"
+                BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource DarkSurface}}"
                 WidthRequest="340">
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="25"/>
@@ -40,11 +41,7 @@
                                  Padding="8"
                                  CornerRadius="18"
                                  Clicked="OnCloseClicked"
-                                 BackgroundColor="#F5F5F5">
-                        <ImageButton.Shadow>
-                            <Shadow Brush="Black" Offset="0,2" Radius="4" Opacity="0.1"/>
-                        </ImageButton.Shadow>
-                    </ImageButton>
+                                 BackgroundColor="Transparent"/>
                 </Grid>
 
                 <!-- Zone Image -->
@@ -65,20 +62,20 @@
                            Text="Sahara Beer Club" 
                            FontSize="22" 
                            FontAttributes="Bold" 
-                           TextColor="#2C3E50" 
+                           TextColor="{AppThemeBinding Light=#2C3E50, Dark=White}" 
                            HorizontalOptions="Center"/>
-                    <Label Text="Audio Guide" 
+                    <Label Text="{Binding [audio_guide], Source={x:Static services:LocalizationManager.Instance}}" 
                            FontSize="14" 
-                           TextColor="#7F8C8D" 
+                           TextColor="{AppThemeBinding Light=#7F8C8D, Dark={StaticResource Gray500}}" 
                            HorizontalOptions="Center"/>
                 </StackLayout>
 
                 <!-- Seek Bar -->
                 <Grid Grid.Row="3" Margin="0,5,0,10">
                     <Slider x:Name="AudioSlider"
-                            MinimumTrackColor="#3498DB"
-                            MaximumTrackColor="#ECF0F1"
-                            ThumbColor="#3498DB"
+                            MinimumTrackColor="{AppThemeBinding Light=#3498DB, Dark={StaticResource DarkAccent}}"
+                            MaximumTrackColor="{AppThemeBinding Light=#ECF0F1, Dark=#333333}"
+                            ThumbColor="{AppThemeBinding Light=#3498DB, Dark={StaticResource DarkAccent}}"
                             DragStarted="OnSliderDragStarted"
                             DragCompleted="OnSliderDragCompleted"
                             ValueChanged="OnSliderValueChanged"/>
@@ -95,7 +92,7 @@
                                      HeightRequest="50"
                                      Padding="12"
                                      CornerRadius="25"
-                                     BackgroundColor="#F0F3F5"/>
+                                     BackgroundColor="{AppThemeBinding Light=#F0F3F5, Dark=#333333}"/>
 
                         <ImageButton x:Name="PlayPauseButton" 
                                      Grid.Column="1"
@@ -105,17 +102,17 @@
                                      HeightRequest="65"
                                      Padding="15"
                                      CornerRadius="32"
-                                     BackgroundColor="#3498DB"/>
+                                     BackgroundColor="{AppThemeBinding Light=#3498DB, Dark={StaticResource DarkAccent}}"/>
 
                         <Button Grid.Column="2"
-                                Text="Xem chi tiết"
+                                Text="{Binding [audio_view_detail], Source={x:Static services:LocalizationManager.Instance}}"
                                 Clicked="OnSeeDetailsClicked"
                                 FontSize="16"
                                 FontAttributes="Bold"
                                 HeightRequest="65"
                                 CornerRadius="32"
-                                BackgroundColor="#2ECC71"
-                                TextColor="White"/>
+                                BackgroundColor="{AppThemeBinding Light=#2ECC71, Dark={StaticResource DarkAccentMuted}}"
+                                TextColor="{AppThemeBinding Light=White, Dark={StaticResource DarkAccent}}"/>
                     </Grid>
 
                     <!-- Speed Selection -->
@@ -142,8 +139,8 @@
                 <Setter Property="Padding" Value="10,0"/>
                 <Setter Property="Margin" Value="4"/>
                 <Setter Property="CornerRadius" Value="16"/>
-                <Setter Property="BackgroundColor" Value="#F4F7F9"/>
-                <Setter Property="TextColor" Value="#34495E"/>
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#F4F7F9, Dark=#333333}"/>
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#34495E, Dark=White}"/>
                 <Setter Property="FontAttributes" Value="Bold"/>
             </Style>
         </ResourceDictionary>

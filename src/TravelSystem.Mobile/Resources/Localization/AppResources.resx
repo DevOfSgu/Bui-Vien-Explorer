@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="app_name" xml:space="preserve"><value>Bùi Viện Explorer</value></data>
+  <data name="tab_home" xml:space="preserve"><value>Trang chủ</value></data>
+  <data name="tab_saved" xml:space="preserve"><value>Yêu thích</value></data>
+  <data name="tab_settings" xml:space="preserve"><value>Cài đặt</value></data>
+  <data name="main_discover" xml:space="preserve"><value>Khám phá Bùi Viện</value></data>
+  <data name="main_tours_available" xml:space="preserve"><value>{0} tour có sẵn</value></data>
+  <data name="main_stops_count" xml:space="preserve"><value>{0} điểm dừng</value></data>
+  <data name="main_minutes" xml:space="preserve"><value>{0} phút</value></data>
+  <data name="main_no_tours_found" xml:space="preserve"><value>Không có tour nào được tìm thấy.</value></data>
+  <data name="main_load_failed" xml:space="preserve"><value>Không thể tải dữ liệu</value></data>
+  <data name="main_opening_tour" xml:space="preserve"><value>Đang mở chi tiết tour...</value></data>
+  <data name="saved_nav_title" xml:space="preserve"><value>Địa điểm đã lưu</value></data>
+  <data name="saved_title" xml:space="preserve"><value>Yêu thích</value></data>
+  <data name="saved_subtitle" xml:space="preserve"><value>Danh sách các địa điểm bạn đã lưu</value></data>
+  <data name="saved_empty" xml:space="preserve"><value>Chưa có địa điểm yêu thích nào.</value></data>
+  <data name="settings_title" xml:space="preserve"><value>Cài đặt</value></data>
+  <data name="settings_guest" xml:space="preserve"><value>Khách du lịch</value></data>
+  <data name="settings_sign_in_hint" xml:space="preserve"><value>NHẤN ĐỂ ĐĂNG NHẬP HOẶC ĐĂNG KÝ</value></data>
+  <data name="settings_preferences" xml:space="preserve"><value>TÙY CHỌN</value></data>
+  <data name="settings_language" xml:space="preserve"><value>Ngôn ngữ</value></data>
+  <data name="settings_dark_mode" xml:space="preserve"><value>Chế độ tối</value></data>
+  <data name="settings_choose_language" xml:space="preserve"><value>Chọn ngôn ngữ</value></data>
+  <data name="settings_close" xml:space="preserve"><value>Đóng</value></data>
+  <data name="settings_notice_title" xml:space="preserve"><value>Thông báo</value></data>
+  <data name="settings_signin_dev" xml:space="preserve"><value>Chức năng đăng nhập đang được phát triển.</value></data>
+  <data name="settings_help_title" xml:space="preserve"><value>Trợ giúp</value></data>
+  <data name="settings_help_msg" xml:space="preserve"><value>Đang mở trang trợ giúp &amp; FAQ...</value></data>
+  <data name="settings_terms_title" xml:space="preserve"><value>Điều khoản</value></data>
+  <data name="settings_terms_msg" xml:space="preserve"><value>Đang mở Điều khoản &amp; Chính sách...</value></data>
+  <data name="tour_stops" xml:space="preserve"><value>Điểm dừng tour</value></data>
+  <data name="tour_stops_count" xml:space="preserve"><value>{0} điểm</value></data>
+  <data name="tour_loading" xml:space="preserve"><value>Đang tải chi tiết tour...</value></data>
+  <data name="zone_open_now" xml:space="preserve"><value>ĐANG MỞ CỬA</value></data>
+  <data name="zone_closed_now" xml:space="preserve"><value>ĐANG ĐÓNG CỬA</value></data>
+  <data name="zone_address" xml:space="preserve"><value>ĐỊA CHỈ</value></data>
+  <data name="zone_hours" xml:space="preserve"><value>GIỜ MỞ CỬA</value></data>
+  <data name="zone_about" xml:space="preserve"><value>Giới thiệu</value></data>
+  <data name="zone_away" xml:space="preserve"><value>cách đây</value></data>
+  <data name="audio_guide" xml:space="preserve"><value>Hướng dẫn audio</value></data>
+  <data name="audio_view_detail" xml:space="preserve"><value>Xem chi tiết</value></data>
+  <data name="lang_tagline" xml:space="preserve"><value>TRẢI NGHIỆM HƯỚNG DẪN AUDIO</value></data>
+  <data name="lang_choose" xml:space="preserve"><value>Chọn ngôn ngữ</value></data>
+  <data name="lang_get_started" xml:space="preserve"><value>BẮT ĐẦU   ➔</value></data>
+  <data name="lang_developed_by" xml:space="preserve"><value>Developed by Hao and Phong</value></data>
+</root>

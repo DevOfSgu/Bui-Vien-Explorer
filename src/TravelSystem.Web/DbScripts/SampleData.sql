@@ -32,7 +32,7 @@ IF OBJECT_ID('Users','U') IS NOT NULL DBCC CHECKIDENT ('Users', RESEED, 0);
 -- ============================================================
 INSERT INTO Shops (Name, Address, PhoneNumber, ImageUrl)
 VALUES (
-        N'The Hideout Bar',
+        N'Bún chả 145',
         N'11 Bùi Viện, Q1, TP.HCM',
         N'028-3838-1111',
         NULL
@@ -68,25 +68,25 @@ VALUES (
         NULL
     ),
     (
-        N'Broma Not A Bar',
+        N'Five Boys Number One',
         N'41 Bùi Viện, Q1, TP.HCM',
         N'028-3838-7777',
         NULL
     ),
     (
-        N'Phatty''s Bar',
+        N'Big Night Out - Bar & Lounge',
         N'95 Bùi Viện, Q1, TP.HCM',
         N'028-3838-8888',
         NULL
     ),
     (
-        N'Bobby Brewers',
+        N'Đậu hũ nóng cô Thủy',
         N'45 Bùi Viện, Q1, TP.HCM',
         N'028-3838-9999',
         NULL
     ),
     (
-        N'Champion Sports Bar',
+        N'Nông Thôn Đại Việt - The rice restaurant',
         N'45 Bùi Viện, Q1, TP.HCM',
         N'028-3838-0000',
         NULL
@@ -98,7 +98,7 @@ VALUES (
         NULL
     ),
     (
-        N'Knock Knock Bar',
+        N'Baba''s Kitchen Restaurant',
         N'139 Bùi Viện, Q1, TP.HCM',
         N'028-3838-2233',
         NULL
@@ -110,13 +110,13 @@ VALUES (
         NULL
     ),
     (
-        N'Le Pub',
+        N'BBQ Saigon Night',
         N'175 Bùi Viện, Q1, TP.HCM',
         N'028-3838-4455',
         NULL
     ),
     (
-        N'Quán ăn vỉa hè Bùi Viện',
+        N'Bánh Căn Bùi Viện',
         N'155 Bùi Viện, Q1, TP.HCM',
         N'028-3838-5566',
         NULL
@@ -128,7 +128,7 @@ VALUES (
         NULL
     ),
     (
-        N'Light Pub',
+        N'Station sport bar',
         N'115 Bùi Viện, Q1, TP.HCM',
         N'028-3838-7788',
         NULL
@@ -192,6 +192,27 @@ VALUES (N'admin', N'123456', N'Admin User', N'admin@buivienexplorer.com', 0, NUL
     (N'vendor17', N'123456', N'Vendor 17', N'vendor17@example.com', 1, 17, 1),
     (N'vendor18', N'123456', N'Vendor 18', N'vendor18@example.com', 1, 18, 1);
 
+-- Re-map vendor1..vendor18 to the first 18 shops by actual Id order.
+-- This avoids identity-offset issues (e.g., when Shops starts at 0).
+;WITH shops_ranked AS (
+    SELECT Id, ROW_NUMBER() OVER (ORDER BY Id) AS rn
+    FROM Shops
+),
+vendors_ranked AS (
+    SELECT
+        u.Id,
+        TRY_CONVERT(INT, SUBSTRING(u.Username, 7, 20)) AS vendor_no
+    FROM Users u
+    WHERE u.Role = 1
+      AND u.Username LIKE N'vendor%'
+)
+UPDATE u
+SET u.ShopId = s.Id
+FROM Users u
+JOIN vendors_ranked v ON v.Id = u.Id
+JOIN shops_ranked s ON s.rn = v.vendor_no
+WHERE v.vendor_no BETWEEN 1 AND 18;
+
 -- ============================================================
 -- 3. (Routes removed)
 -- ============================================================
@@ -235,8 +256,8 @@ VALUES (
     (
         1,
 
-        N'The Hideout Bar',
-        N'Quán bar lâu đời.',
+        N'Bún chả 145',
+        N'Quán bún chả nổi tiếng, đông khách và dễ nhận diện ngay mặt tiền Bùi Viện.',
         10.76765,
         106.69380,
         15,
@@ -347,8 +368,8 @@ VALUES (
     (
         7,
 
-        N'Broma Not A Bar',
-        N'Cocktail bar nổi tiếng với đồ uống sáng tạo, không gian nghệ thuật.',
+        N'Five Boys Number One',
+        N'Quán burger ăn đêm quen thuộc, được nhiều khách quốc tế lựa chọn.',
         10.76724,
         106.69188,
         15,
@@ -363,8 +384,8 @@ VALUES (
     (
         8,
 
-        N'Phatty''s Bar',
-        N'Bar lâu đời, không gian nhỏ ấm cúng, bia rẻ nhất phố.',
+        N'Big Night Out - Bar & Lounge',
+        N'Bar & lounge sôi động, phù hợp đi nhóm và giải trí về đêm.',
         10.76720,
         106.69170,
         15,
@@ -379,8 +400,8 @@ VALUES (
     (
         9,
 
-        N'Bobby Brewers',
-        N'Craft beer tươi, không gian thoáng mát ngay trên Bùi Viện.',
+        N'Đậu hũ nóng cô Thủy',
+        N'Điểm ăn vặt bình dân nổi tiếng với đậu hũ nóng và món Việt dân dã.',
         10.76716,
         106.69148,
         15,
@@ -395,8 +416,8 @@ VALUES (
     (
         10,
 
-        N'Champion Sports Bar',
-        N'Nơi xem bóng đá ngoại hạng Anh tốt nhất.',
+        N'Nông Thôn Đại Việt - The rice restaurant',
+        N'Nhà hàng cơm Việt với món quê truyền thống, phù hợp khách gia đình.',
         10.76712,
         106.69128,
         15,
@@ -427,8 +448,8 @@ VALUES (
     (
         12,
 
-        N'Knock Knock Bar',
-        N'Bar phong cách trẻ, menu đồ uống đa dạng.',
+        N'Baba''s Kitchen Restaurant',
+        N'Nhà hàng phục vụ món quốc tế và món Việt dễ ăn, không gian thân thiện.',
         10.76704,
         106.69088,
         15,
@@ -459,8 +480,8 @@ VALUES (
     (
         14,
 
-        N'Le Pub',
-        N'Khách Tây hay ngồi vỉa hè.',
+        N'BBQ Saigon Night',
+        N'Quán BBQ về đêm với các món nướng đậm vị, không khí nhộn nhịp.',
         10.76696,
         106.69048,
         15,
@@ -475,8 +496,8 @@ VALUES (
     (
         15,
 
-        N'Quán ăn vỉa hè Bùi Viện',
-        N'Khu ẩm thực đường phố sầm uất với các món Việt Nam.',
+        N'Bánh Căn Bùi Viện',
+        N'Điểm ăn vặt chuyên bánh căn nóng giòn, phù hợp trải nghiệm street food.',
         10.76692,
         106.69028,
         15,
@@ -507,8 +528,8 @@ VALUES (
     (
         17,
 
-        N'Light Pub',
-        N'Pub nhỏ xinh với nhạc Acoustic và ấm cúng.',
+        N'Station sport bar',
+        N'Sports bar có màn hình lớn, phù hợp xem trận đấu và tụ tập bạn bè.',
         10.76684,
         106.68988,
         15,
@@ -588,7 +609,7 @@ VALUES (
     (
         @z2,
         N'vi',
-        N'Đây là The Hideout Bar, luôn là điểm nhậu lý tưởng của khách phương xa.',
+        N'Đây là Bún chả 145, quán ăn Việt nổi tiếng với hương vị đậm đà và đông khách mỗi tối.',
         N'vi-VN-Standard-A',
         N'/uploads/audio/2_vi.mp3',
         N'ready'
@@ -644,7 +665,7 @@ VALUES (
     (
         @z9,
         N'en',
-        N'Broma Not A Bar is famous for its creative cocktails and artistic space.',
+        N'Five Boys Number One is a late-night burger spot popular with international visitors.',
         N'en-US-Standard-C',
         NULL,
         N'pending'
@@ -652,7 +673,7 @@ VALUES (
     (
         @z10,
         N'en',
-        N'Phatty''s Bar is the cheapest bar in town. Perfect for backpackers.',
+        N'Big Night Out - Bar & Lounge is a lively nightlife stop for groups and late-evening hangouts.',
         N'en-US-Standard-C',
         NULL,
         N'pending'
@@ -660,7 +681,7 @@ VALUES (
     (
         @z11,
         N'vi',
-        N'Bobby Brewers mang đến bia thủ công tươi ngay trên phố Bùi Viện.',
+        N'Đậu hũ nóng cô Thủy là điểm ăn vặt bình dân nổi tiếng với món nóng và hương vị quen thuộc.',
         N'vi-VN-Standard-A',
         NULL,
         N'pending'
@@ -668,7 +689,7 @@ VALUES (
     (
         @z12,
         N'vi',
-        N'Nếu bạn mê bóng đá, hãy dừng chân tại Champion Sports Bar vào cuối tuần.',
+        N'Nông Thôn Đại Việt - The rice restaurant phục vụ cơm Việt và món quê truyền thống trong không gian ấm cúng.',
         N'vi-VN-Standard-A',
         NULL,
         N'pending'
@@ -684,7 +705,7 @@ VALUES (
     (
         @z14,
         N'en',
-        N'Knock Knock Bar has a youthful style and diverse drink menu.',
+        N'Baba''s Kitchen Restaurant serves approachable international and Vietnamese dishes in a friendly setting.',
         N'en-US-Standard-C',
         NULL,
         N'pending'
@@ -700,7 +721,7 @@ VALUES (
     (
         @z16,
         N'vi',
-        N'Le Pub là nơi giao thoa văn hóa đường phố rất tuyệt vời.',
+        N'BBQ Saigon Night là nơi giao thoa văn hóa đường phố rất tuyệt vời.',
         N'vi-VN-Standard-A',
         NULL,
         N'pending'
@@ -708,7 +729,7 @@ VALUES (
     (
         @z17,
         N'en',
-        N'Khu quán ăn vỉa hè này có bánh tráng trộn, bò nướng lá lốt ngon xuất sắc.',
+        N'Bánh Căn Bùi Viện is a street-food stop known for hot, crispy mini pancakes served with dipping sauce.',
         N'en-US-Standard-C',
         NULL,
         N'pending'
@@ -724,7 +745,7 @@ VALUES (
     (
         @z19,
         N'vi',
-        N'Light Pub nhỏ xinh, ấm cúng với nhạc Acoustic mỗi tối.',
+        N'Station sport bar là điểm tụ tập xem thể thao với không khí sôi động vào buổi tối.',
         N'vi-VN-Standard-A',
         NULL,
         N'pending'
@@ -780,5 +801,6 @@ UNION ALL SELECT N'Shops', COUNT(*) FROM Shops
 UNION ALL SELECT N'Users', COUNT(*) FROM Users
 UNION ALL SELECT N'Tours', COUNT(*) FROM Tours
 UNION ALL SELECT N'TourZones', COUNT(*) FROM TourZones;
+
 
 

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:services="clr-namespace:TravelSystem.Mobile.Services"
              x:Class="TravelSystem.Mobile.Views.LanguageSelectionPage"
              BackgroundColor="#FAF8F5"
              Shell.TabBarIsVisible="False">
@@ -18,7 +19,7 @@
                         <Border.Shadow>
                             <Shadow Brush="#E5E5EA" Offset="0,5" Radius="10" Opacity="0.3" />
                         </Border.Shadow>
-                        <Image Source="logoapp.png" Aspect="AspectFit" WidthRequest="100" HeightRequest="180" HorizontalOptions="Center" Margin="16" />
+                        <Image Source="logoapp_ui.svg" Aspect="AspectFit" WidthRequest="52" HeightRequest="52" HorizontalOptions="Center" Margin="8" />
                     </Border>
 
                     <VerticalStackLayout Spacing="-8" HorizontalOptions="Center">
@@ -26,10 +27,10 @@
                         <Label Text="Explorer" FontSize="36" FontFamily="SpaceGroteskBold" FontAttributes="Bold" TextColor="#1C1C1E" HorizontalOptions="Center" />
                     </VerticalStackLayout>
 
-                    <Label Text="AUDIO GUIDE EXPERIENCE" FontSize="11" FontAttributes="Bold" TextColor="#8E8E93" CharacterSpacing="1.5" HorizontalOptions="Center" Margin="0, 8, 0, 0" />
+                    <Label Text="{Binding [lang_tagline], Source={x:Static services:LocalizationManager.Instance}}" FontSize="11" FontAttributes="Bold" TextColor="#8E8E93" CharacterSpacing="1.5" HorizontalOptions="Center" Margin="0, 8, 0, 0" />
                 </VerticalStackLayout>
 
-                <Label Text="Choose Your Language" FontSize="18" FontFamily="SpaceGroteskBold" FontAttributes="Bold" TextColor="#1C1C1E" HorizontalOptions="Center" />
+                <Label Text="{Binding [lang_choose], Source={x:Static services:LocalizationManager.Instance}}" FontSize="18" FontFamily="SpaceGroteskBold" FontAttributes="Bold" TextColor="#1C1C1E" HorizontalOptions="Center" />
 
                 <VerticalStackLayout Spacing="16" x:Name="LanguageList">
 
@@ -121,7 +122,7 @@
         </BoxView>
 
         <VerticalStackLayout Grid.Row="1" Spacing="20" Margin="0, 20, 0, 0">
-            <Button Text="GET STARTED   ➔" FontAttributes="Bold" FontSize="16" TextColor="White" 
+            <Button Text="{Binding [lang_get_started], Source={x:Static services:LocalizationManager.Instance}}" FontAttributes="Bold" FontSize="16" TextColor="White" 
                     BackgroundColor="#FF4B4B" CornerRadius="28" HeightRequest="60" 
                     Command="{Binding GetStartedCommand}">
                 <Button.Shadow>
@@ -129,7 +130,7 @@
                 </Button.Shadow>
             </Button>
 
-            <Label Text="Developed by Hao and Phong" 
+            <Label Text="{Binding [lang_developed_by], Source={x:Static services:LocalizationManager.Instance}}" 
                    FontSize="9" TextColor="#AEAEB2" FontAttributes="Bold" HorizontalOptions="Center" HorizontalTextAlignment="Center" CharacterSpacing="0.8" LineHeight="1.5" />
         </VerticalStackLayout>
 

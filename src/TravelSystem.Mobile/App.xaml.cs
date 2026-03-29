@@ -13,19 +13,37 @@ public partial class App : Application
     private readonly ApiService _apiService;
     private readonly TourDetailViewModel _tourDetailViewModel;
     private readonly AudioPreloadService _audioPreloadService;
+    private readonly LocalizationManager _localizationManager = LocalizationManager.Instance;
 
     public App(DatabaseService dbService, ApiService apiService, TourDetailViewModel tourDetailViewModel, AudioPreloadService audioPreloadService)
     {
+        RegisterGlobalExceptionHandlers();
         InitializeComponent();
         _dbService = dbService;
         _apiService = apiService;
         _tourDetailViewModel = tourDetailViewModel;
         _audioPreloadService = audioPreloadService;
         
-        // Mặc định là Light mode nếu chưa có thiết lập
+        // Mặc định là Light mode
+        UserAppTheme = AppTheme.Light;
         InitializeTheme();
+        _ = InitializeLanguageAsync();
         
         Debug.WriteLine("✅ App initialized successfully");
+    }
+
+    private static void RegisterGlobalExceptionHandlers()
+    {
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            Debug.WriteLine($"[FATAL][AppDomain] {args.ExceptionObject}");
+        };
+
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            Debug.WriteLine($"[FATAL][TaskScheduler] {args.Exception}");
+            args.SetObserved();
+        };
     }
 
     private async void InitializeTheme()
@@ -33,6 +51,12 @@ public partial class App : Application
         var isDarkStr = await _dbService.GetSettingAsync("IsDarkMode", "false");
         bool isDark = bool.Parse(isDarkStr);
         UserAppTheme = isDark ? AppTheme.Dark : AppTheme.Light;
+    }
+
+    private async Task InitializeLanguageAsync()
+    {
+        var langCode = await _dbService.GetSettingAsync("Language", "vi");
+        _localizationManager.SetLanguage(langCode);
     }
 
     protected override Window CreateWindow(IActivationState? activationState)

@@ -1,22 +1,20 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:TravelSystem.Mobile.ViewModels"
+             xmlns:services="clr-namespace:TravelSystem.Mobile.Services"
              x:Class="TravelSystem.Mobile.Views.SavedPage"
              BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark=#121212}"
-             Title="Địa điểm đã lưu"
+             Title="{Binding SavedNavTitle}"
              x:DataType="vm:SavedPageViewModel">
 
     <Shell.TitleView>
         <HorizontalStackLayout Spacing="10" Padding="12,4" VerticalOptions="Center">
-            <Border StrokeShape="RoundRectangle 8"
-                    StrokeThickness="0"
-                    BackgroundColor="{AppThemeBinding Light=White, Dark=#121212}"
-                    Padding="2"
-                    HeightRequest="36"
-                    WidthRequest="36">
-                <Image Source="logoapp.png" Aspect="AspectFit"/>
-            </Border>
-            <Label Text="Bùi Viện Explorer"
+            <Image Source="logoapp_ui.svg"
+                   Aspect="AspectFit"
+                   HeightRequest="34"
+                   WidthRequest="34"
+                   VerticalOptions="Center" />
+            <Label Text="{Binding [app_name], Source={x:Static services:LocalizationManager.Instance}}"
                    TextColor="{AppThemeBinding Light=#111827, Dark=White}"
                    FontAttributes="Bold"
                    FontSize="18"
@@ -32,14 +30,14 @@
         <Grid RowDefinitions="Auto,*">
             
             <VerticalStackLayout Padding="22,18,22,10" Spacing="2">
-                <Label Text="Yêu thích"
+                <Label Text="{Binding SavedTitleText}"
                        FontSize="32"
                        FontFamily="SpaceGroteskBold"
                        FontAttributes="Bold"
-                       TextColor="#1F2937" />
-                <Label Text="Danh sách các địa điểm bạn đã lưu"
+                       TextColor="{AppThemeBinding Light=#1F2937, Dark=White}" />
+                <Label Text="{Binding SavedSubtitleText}"
                        FontSize="14"
-                       TextColor="#98A2B3" />
+                       TextColor="{AppThemeBinding Light=#98A2B3, Dark={StaticResource Gray500}}" />
             </VerticalStackLayout>
 
             <ScrollView Grid.Row="1">
@@ -53,7 +51,7 @@
                         
                         <Label Text="{Binding EmptyStateMessage}"
                                FontSize="16"
-                               TextColor="#98A2B3"
+                               TextColor="{AppThemeBinding Light=#98A2B3, Dark={StaticResource Gray500}}"
                                HorizontalOptions="Center" />
                     </VerticalStackLayout>
 
@@ -63,26 +61,30 @@
                         </CollectionView.ItemsLayout>
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="vm:ZoneCardItem">
-                                <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
-                                        Stroke="{AppThemeBinding Light=#ECEEF2, Dark=#2D2D2D}"
-                                        StrokeThickness="1"
-                                        StrokeShape="RoundRectangle 22">
-                                    <Grid Padding="16" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="15">
-                                        <Border WidthRequest="50" HeightRequest="50"
-                                                BackgroundColor="#F3F4F6"
-                                                StrokeThickness="0"
-                                                StrokeShape="RoundRectangle 12">
+                                 <Border BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource DarkSurface}}"
+                                         Stroke="{AppThemeBinding Light=#ECEEF2, Dark={StaticResource DarkSurface}}"
+                                         StrokeThickness="1"
+                                         StrokeShape="RoundRectangle 22">
+                                     <Border.GestureRecognizers>
+                                         <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.OpenZoneDetailCommand}"
+                                                               CommandParameter="{Binding .}" />
+                                     </Border.GestureRecognizers>
+                                     <Grid Padding="16" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="15">
+                                         <Border WidthRequest="50" HeightRequest="50"
+                                                 BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark=#333333}"
+                                                 StrokeThickness="0"
+                                                 StrokeShape="RoundRectangle 12">
                                             <Image Source="{Binding ImageUrl}" Aspect="AspectFill" />
                                         </Border>
 
-                                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
-                                            <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" TextColor="#1F2937" />
-                                            <Label Text="{Binding Description}" FontSize="13" TextColor="#98A2B3" MaxLines="1" LineBreakMode="TailTruncation" />
-                                        </VerticalStackLayout>
+                                         <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                                             <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#1F2937, Dark=White}" />
+                                             <Label Text="{Binding Description}" FontSize="13" TextColor="{AppThemeBinding Light=#98A2B3, Dark={StaticResource Gray500}}" MaxLines="1" LineBreakMode="TailTruncation" />
+                                         </VerticalStackLayout>
 
                                         <HorizontalStackLayout Grid.Column="2" Spacing="10" VerticalOptions="Center">
                                             <ImageButton Source="favourited.png"
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SavedPageViewModel}}, Path=RemoveFavoriteCommand}"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.RemoveFavoriteCommand}"
                                                     CommandParameter="{Binding .}"
                                                     BackgroundColor="Transparent"
                                                     BorderWidth="0"
@@ -92,7 +94,7 @@
                                                     MinimumHeightRequest="0"
                                                     Padding="0" />
 
-                                            <Image Source="arrow_forward_icon.png"                   
+                                            <Image Source="arrow_forward_icon.svg"                   
                                                     WidthRequest="20"
                                                     HeightRequest="20"
                                                     VerticalOptions="Center" />

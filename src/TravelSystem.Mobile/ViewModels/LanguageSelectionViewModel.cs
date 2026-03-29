@@ -9,6 +9,7 @@ namespace TravelSystem.Mobile.ViewModels;
 public partial class LanguageSelectionViewModel : ObservableObject
 {
     private readonly DatabaseService _dbService;
+    private readonly LocalizationManager _localizationManager;
     private string _selectedLanguage = "vi";
 
     public IRelayCommand<string> SelectLanguageCommand { get; }
@@ -23,6 +24,7 @@ public partial class LanguageSelectionViewModel : ObservableObject
     public LanguageSelectionViewModel(DatabaseService dbService)
     {
         _dbService = dbService;
+        _localizationManager = LocalizationManager.Instance;
         SelectLanguageCommand = new RelayCommand<string>(SelectLanguage);
         GetStartedCommand = new AsyncRelayCommand(GetStarted);
     }
@@ -33,12 +35,14 @@ public partial class LanguageSelectionViewModel : ObservableObject
             return;
 
         SelectedLanguage = langCode;
+        _localizationManager.SetLanguage(langCode);
         Debug.WriteLine($"Selected language: {SelectedLanguage}");
     }
 
     private async Task GetStarted()
     {
         await _dbService.SetSettingAsync("Language", SelectedLanguage);
+        _localizationManager.SetLanguage(SelectedLanguage);
 
         await Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(async () =>
         {

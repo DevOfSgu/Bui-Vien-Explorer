@@ -3,6 +3,8 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Devices.Sensors;
 using System.Diagnostics;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using TravelSystem.Mobile.Services;
 
 namespace TravelSystem.Mobile.ViewModels;
@@ -11,6 +13,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
 {
     private readonly ApiService _apiService;
     private readonly DatabaseService _dbService;
+    private readonly LocalizationManager _localizationManager;
     private readonly SemaphoreSlim _loadLock = new(1, 1);
     private readonly SemaphoreSlim _permissionLock = new(1, 1);
     private readonly HashSet<int> _favoritePendingZoneIds = new();
@@ -53,6 +56,8 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     public Location? UserLocation { get; private set; }
 
     public event EventHandler? MapDataChanged;
+    public string TourStopsTitle => _localizationManager["tour_stops"];
+    public string StopsCountText => _localizationManager.Format("tour_stops_count", PoiStops.Count);
 
     private static void Trace(string message)
     {
@@ -63,13 +68,29 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     {
         _apiService = apiService;
         _dbService = dbService;
+        _localizationManager = LocalizationManager.Instance;
         LoadDataCommand = new AsyncRelayCommand(LoadData);
         ToggleFavoriteCommand = new AsyncRelayCommand<PoiStopItem>(ToggleFavorite);
         SelectStopCommand = new RelayCommand<PoiStopItem>(stop => SelectStop(stop));
         NavigateToZoneDetailCommand = new AsyncRelayCommand<PoiStopItem>(NavigateToZoneDetail);
+
+        PoiStops.CollectionChanged += OnPoiStopsCollectionChanged;
+        _localizationManager.PropertyChanged += OnLocalizationChanged;
     }
 
     public IAsyncRelayCommand<PoiStopItem> NavigateToZoneDetailCommand { get; }
+
+    private void OnPoiStopsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(StopsCountText));
+    }
+
+    private void OnLocalizationChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != "Item[]") return;
+        OnPropertyChanged(nameof(TourStopsTitle));
+        OnPropertyChanged(nameof(StopsCountText));
+    }
 
     private async Task NavigateToZoneDetail(PoiStopItem stop)
     {
@@ -87,7 +108,9 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             { "latitude", stop.Latitude },
             { "longitude", stop.Longitude },
             { "isFavorite", stop.IsFavorite },
-            { "distance", Uri.EscapeDataString(stop.DistanceText) }
+            { "distance", Uri.EscapeDataString(stop.DistanceText) },
+            { "address", Uri.EscapeDataString(stop.Address) },
+            { "hours", Uri.EscapeDataString(stop.Hours) }
         };
 
         await Shell.Current.GoToAsync(nameof(Views.ZoneDetailPage), parameters);
@@ -211,6 +234,9 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
                         Latitude = stop.Latitude,
                         Longitude = stop.Longitude,
                         Radius = stop.Radius,
+                        IsMain = stop.IsMain,
+                        Address = stop.Address ?? "--",
+                        Hours = stop.Hours ?? "--",
                         IsFavorite = favoriteZoneIds.Contains(stop.ZoneId)
                     });
                 }
@@ -584,6 +610,9 @@ public class PoiStopItem : ObservableObject
     public double Latitude { get; init; }
     public double Longitude { get; init; }
     public int Radius { get; init; }
+    public bool IsMain { get; init; }
+    public string Address { get; init; } = "--";
+    public string Hours { get; init; } = "--";
 
     public bool IsSelected
     {

@@ -7,6 +7,8 @@ namespace TravelSystem.Mobile.ViewModels;
 
 public partial class SettingsViewModel : ObservableObject
 {
+    private readonly LocalizationManager _localizationManager;
+
     [ObservableProperty]
     private string _currentLanguage = "English";
 
@@ -24,6 +26,7 @@ public partial class SettingsViewModel : ObservableObject
     public SettingsViewModel(DatabaseService dbService)
     {
         _dbService = dbService;
+        _localizationManager = LocalizationManager.Instance;
         
         // Mặc định ban đầu luôn là False cho Dark Mode
         IsDarkMode = false;
@@ -38,20 +41,16 @@ public partial class SettingsViewModel : ObservableObject
         IsDarkMode = bool.Parse(isDarkStr);
 
         var langCode = await _dbService.GetSettingAsync("Language", "en");
-        CurrentLanguage = langCode switch
-        {
-            "vi" => "Tiếng Việt",
-            "en" => "English",
-            "ja" => "日本語",
-            _ => "English"
-        };
+        _localizationManager.SetLanguage(langCode);
+        CurrentLanguage = _localizationManager.GetLanguageDisplayName(langCode);
     }
 
     // Được gọi từ code-behind của SettingsPage
-    public async void SetLanguage(string langCode, string displayName)
+    public async void SetLanguage(string langCode)
     {
-        CurrentLanguage = displayName;
+        CurrentLanguage = _localizationManager.GetLanguageDisplayName(langCode);
         await _dbService.SetSettingAsync("Language", langCode);
+        _localizationManager.SetLanguage(langCode);
         Debug.WriteLine($"[SETTINGS] Saved Language: {langCode}");
     }
 
@@ -73,18 +72,27 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private async Task SignInOut()
     {
-        await Shell.Current.DisplayAlert("Thông báo", "Chức năng đăng nhập đang được phát triển.", "OK");
+        await Shell.Current.DisplayAlert(
+            _localizationManager["settings_notice_title"],
+            _localizationManager["settings_signin_dev"],
+            "OK");
     }
 
     [RelayCommand]
     private async Task OpenHelp()
     {
-        await Shell.Current.DisplayAlert("Trợ giúp", "Đang mở trang trợ giúp & FAQ...", "OK");
+        await Shell.Current.DisplayAlert(
+            _localizationManager["settings_help_title"],
+            _localizationManager["settings_help_msg"],
+            "OK");
     }
 
     [RelayCommand]
     private async Task OpenTerms()
     {
-        await Shell.Current.DisplayAlert("Điều khoản", "Đang mở Điều khoản & Chính sách...", "OK");
+        await Shell.Current.DisplayAlert(
+            _localizationManager["settings_terms_title"],
+            _localizationManager["settings_terms_msg"],
+            "OK");
     }
 }

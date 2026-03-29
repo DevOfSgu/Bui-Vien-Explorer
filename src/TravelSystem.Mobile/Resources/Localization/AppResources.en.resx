@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="app_name" xml:space="preserve"><value>Bui Vien Explorer</value></data>
+  <data name="tab_home" xml:space="preserve"><value>Home</value></data>
+  <data name="tab_saved" xml:space="preserve"><value>Favorites</value></data>
+  <data name="tab_settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="main_discover" xml:space="preserve"><value>Discover Bui Vien</value></data>
+  <data name="main_tours_available" xml:space="preserve"><value>{0} tours available</value></data>
+  <data name="main_stops_count" xml:space="preserve"><value>{0} stops</value></data>
+  <data name="main_minutes" xml:space="preserve"><value>{0} min</value></data>
+  <data name="main_no_tours_found" xml:space="preserve"><value>No tours were found.</value></data>
+  <data name="main_load_failed" xml:space="preserve"><value>Failed to load data</value></data>
+  <data name="main_opening_tour" xml:space="preserve"><value>Opening tour details...</value></data>
+  <data name="saved_nav_title" xml:space="preserve"><value>Saved places</value></data>
+  <data name="saved_title" xml:space="preserve"><value>Favorites</value></data>
+  <data name="saved_subtitle" xml:space="preserve"><value>Places you have saved</value></data>
+  <data name="saved_empty" xml:space="preserve"><value>No favorite places yet.</value></data>
+  <data name="settings_title" xml:space="preserve"><value>Settings</value></data>
+  <data name="settings_guest" xml:space="preserve"><value>Guest Traveler</value></data>
+  <data name="settings_sign_in_hint" xml:space="preserve"><value>TAP TO SIGN IN OR REGISTER</value></data>
+  <data name="settings_preferences" xml:space="preserve"><value>PREFERENCES</value></data>
+  <data name="settings_language" xml:space="preserve"><value>Language</value></data>
+  <data name="settings_dark_mode" xml:space="preserve"><value>Dark Mode</value></data>
+  <data name="settings_choose_language" xml:space="preserve"><value>Choose language</value></data>
+  <data name="settings_close" xml:space="preserve"><value>Close</value></data>
+  <data name="settings_notice_title" xml:space="preserve"><value>Notice</value></data>
+  <data name="settings_signin_dev" xml:space="preserve"><value>Sign-in is under development.</value></data>
+  <data name="settings_help_title" xml:space="preserve"><value>Help</value></data>
+  <data name="settings_help_msg" xml:space="preserve"><value>Opening help center &amp; FAQ...</value></data>
+  <data name="settings_terms_title" xml:space="preserve"><value>Terms</value></data>
+  <data name="settings_terms_msg" xml:space="preserve"><value>Opening Terms &amp; Policy...</value></data>
+  <data name="tour_stops" xml:space="preserve"><value>Tour Stops</value></data>
+  <data name="tour_stops_count" xml:space="preserve"><value>{0} stops</value></data>
+  <data name="tour_loading" xml:space="preserve"><value>Loading tour details...</value></data>
+  <data name="zone_open_now" xml:space="preserve"><value>OPEN NOW</value></data>
+  <data name="zone_closed_now" xml:space="preserve"><value>CLOSED NOW</value></data>
+  <data name="zone_address" xml:space="preserve"><value>ADDRESS</value></data>
+  <data name="zone_hours" xml:space="preserve"><value>HOURS</value></data>
+  <data name="zone_about" xml:space="preserve"><value>About</value></data>
+  <data name="zone_away" xml:space="preserve"><value>away</value></data>
+  <data name="audio_guide" xml:space="preserve"><value>Audio Guide</value></data>
+  <data name="audio_view_detail" xml:space="preserve"><value>View details</value></data>
+  <data name="lang_tagline" xml:space="preserve"><value>AUDIO GUIDE EXPERIENCE</value></data>
+  <data name="lang_choose" xml:space="preserve"><value>Choose your language</value></data>
+  <data name="lang_get_started" xml:space="preserve"><value>GET STARTED   ➔</value></data>
+  <data name="lang_developed_by" xml:space="preserve"><value>Developed by Hao and Phong</value></data>
+</root>

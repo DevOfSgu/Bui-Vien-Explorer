@@ -2,22 +2,20 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:TravelSystem.Mobile.ViewModels"
+             xmlns:services="clr-namespace:TravelSystem.Mobile.Services"
              x:Class="TravelSystem.Mobile.Views.MainPage"
 
-             BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark=#121212}"
+             BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark={StaticResource OffBlack}}"
              x:DataType="vm:MainPageViewModel">
 
     <Shell.TitleView>
         <HorizontalStackLayout Spacing="10" Padding="12,4" VerticalOptions="Center">
-            <Border StrokeShape="RoundRectangle 8"
-                    StrokeThickness="0"
-                    BackgroundColor="{AppThemeBinding Light=White, Dark=#121212}"
-                    Padding="2"
-                    HeightRequest="36"
-                    WidthRequest="36">
-                <Image Source="logoapp.png" Aspect="AspectFit"/>
-            </Border>
-            <Label Text="Bùi Viện Explorer"
+            <Image Source="logoapp_ui.svg"
+                   Aspect="AspectFit"
+                   HeightRequest="34"
+                   WidthRequest="34"
+                   VerticalOptions="Center" />
+            <Label Text="{Binding [app_name], Source={x:Static services:LocalizationManager.Instance}}"
                    TextColor="{AppThemeBinding Light=#111827, Dark=White}"
                    FontAttributes="Bold"
                    FontSize="18"
@@ -34,14 +32,14 @@
             <CollectionView.Header>
                 <VerticalStackLayout Spacing="14" Margin="0,0,0,14">
                     <VerticalStackLayout Spacing="2">
-                        <Label Text="Khám phá Bùi Viện"
+                        <Label Text="{Binding MainDiscoverText}"
                                FontSize="32"
                                FontFamily="SpaceGroteskBold"
                                FontAttributes="Bold"
-                               TextColor="#1F2937" />
+                               TextColor="{AppThemeBinding Light=#1F2937, Dark=White}" />
                         <Label Text="{Binding ZonesAvailableText}"
                                FontSize="14"
-                               TextColor="#98A2B3" />
+                               TextColor="{AppThemeBinding Light=#98A2B3, Dark={StaticResource Gray500}}" />
                     </VerticalStackLayout>
 
                     <Label Text="{Binding ErrorMessage}"
@@ -57,8 +55,8 @@
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="vm:ZoneCardItem">
 
-                    <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
-                            Stroke="{AppThemeBinding Light=#ECEEF2, Dark=#2D2D2D}"
+                    <Border BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource DarkSurface}}"
+                            Stroke="{AppThemeBinding Light=#ECEEF2, Dark={StaticResource DarkSurface}}"
                             StrokeThickness="1"
                             StrokeShape="RoundRectangle 22">
                         <Border.GestureRecognizers>
@@ -67,9 +65,8 @@
                         </Border.GestureRecognizers>
 
                         <Grid RowDefinitions="170,Auto">
-                            <Grid>
+                            <Grid BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark={StaticResource Gray900}}">
                                 <Image Source="{Binding ImageUrl}" Aspect="AspectFill" />
-                                <Border BackgroundColor="#22000000" StrokeThickness="0" />
                             </Grid>
 
                             <Grid Grid.Row="1"
@@ -85,21 +82,21 @@
 
                                 <HorizontalStackLayout Grid.Column="1" Spacing="15" VerticalOptions="Center">
 
-                                    <Image Source="arrow_forward_icon.png"                   
+                                    <Image Source="arrow_forward_icon.svg"                   
                                                 WidthRequest="20"
                                                 HeightRequest="20"
                                                 VerticalOptions="Center" />
                                     </HorizontalStackLayout>
 
                                 <HorizontalStackLayout Grid.Row="1" Spacing="10">
-                                    <Label Text="📍" FontSize="12" TextColor="#98A2B3" />
+                                    <Label Text="📍" FontSize="12" TextColor="{AppThemeBinding Light=#98A2B3, Dark={StaticResource Gray500}}" />
                                     <Label Text="{Binding StopsText}"
                                            FontSize="13"
-                                           TextColor="{AppThemeBinding Light=#98A2B3, Dark=#CCCCCC}" />
-                                    <Label Text="•" FontSize="14" TextColor="#98A2B3" />
+                                           TextColor="{AppThemeBinding Light=#98A2B3, Dark={StaticResource Gray500}}" />
+                                    <Label Text="•" FontSize="14" TextColor="{AppThemeBinding Light=#98A2B3, Dark={StaticResource Gray500}}" />
                                     <Label Text="{Binding MinutesText, StringFormat='~{0}'}"
                                            FontSize="13"
-                                           TextColor="#98A2B3" />
+                                           TextColor="{AppThemeBinding Light=#98A2B3, Dark={StaticResource Gray500}}" />
                                 </HorizontalStackLayout>
                             </Grid>
 
@@ -121,7 +118,7 @@
                                    Color="White"
                                    WidthRequest="40"
                                    HeightRequest="40" />
-                <Label Text="Đang mở chi tiết tour..."
+                <Label Text="{Binding MainOpeningTourText}"
                        TextColor="White"
                        FontSize="14"
                        HorizontalTextAlignment="Center" />

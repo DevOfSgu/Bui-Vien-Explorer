@@ -22,12 +22,19 @@ public class NarrationsController : ControllerBase
         {
             if (zoneId == null || zoneId == 0)
             {
-                var allNarrations = await _db.Narrations.ToListAsync();
+                var allNarrations = await _db.Narrations
+                    .Where(n => n.ApprovalStatus == "Approved")
+                    .ToListAsync();
                 return Ok(allNarrations);
             }
 
             var narration = await _db.Narrations
-                .FirstOrDefaultAsync(n => n.ZoneId == zoneId.Value && n.Language == language);
+                .Where(n => n.ZoneId == zoneId.Value
+                    && n.Language == language
+                    && n.ApprovalStatus == "Approved")
+                .OrderByDescending(n => n.UpdatedAt)
+                .ThenByDescending(n => n.Id)
+                .FirstOrDefaultAsync();
 
             if (narration == null)
                 return NotFound(new { message = $"Không tìm thấy narration cho zone {zoneId} / ngôn ngữ '{language}'." });
@@ -46,7 +53,9 @@ public class NarrationsController : ControllerBase
     public async Task<IActionResult> GetAllByZone(int zoneId)
     {
         var narrations = await _db.Narrations
-            .Where(n => n.ZoneId == zoneId)
+            .Where(n => n.ZoneId == zoneId && n.ApprovalStatus == "Approved")
+            .OrderByDescending(n => n.UpdatedAt)
+            .ThenByDescending(n => n.Id)
             .ToListAsync();
         return Ok(narrations);
     }

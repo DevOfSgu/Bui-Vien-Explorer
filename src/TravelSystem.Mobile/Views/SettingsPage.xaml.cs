@@ -22,24 +22,24 @@ public partial class SettingsPage : ContentPage
 
     private void OnSelectVietnamese(object sender, EventArgs e)
     {
-        SelectLanguage("vi", "Tiếng Việt");
+        SelectLanguage("vi");
     }
 
     private void OnSelectEnglish(object sender, EventArgs e)
     {
-        SelectLanguage("en", "English");
+        SelectLanguage("en");
     }
 
     private void OnSelectJapanese(object sender, EventArgs e)
     {
-        SelectLanguage("ja", "日本語");
+        SelectLanguage("ja");
     }
 
-    private void SelectLanguage(string langCode, string displayName)
+    private void SelectLanguage(string langCode)
     {
         if (BindingContext is SettingsViewModel vm)
         {
-            vm.SetLanguage(langCode, displayName);
+            vm.SetLanguage(langCode);
         }
         LanguageOverlay.IsVisible = false;
     }

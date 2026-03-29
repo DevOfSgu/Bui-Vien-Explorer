@@ -40,7 +40,7 @@ public static class MauiProgram
 		// Register ViewModels
 		builder.Services.AddSingleton<ViewModels.MainPageViewModel>();
 		builder.Services.AddSingleton<ViewModels.SavedPageViewModel>();
-        builder.Services.AddSingleton<ViewModels.TourDetailViewModel>();
+        builder.Services.AddTransient<ViewModels.TourDetailViewModel>();
         builder.Services.AddTransient<ViewModels.ZoneDetailViewModel>();
 		builder.Services.AddTransient<ViewModels.LanguageSelectionViewModel>();
 		builder.Services.AddTransient<ViewModels.SettingsViewModel>();
@@ -50,7 +50,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<MainPage>();
 		builder.Services.AddTransient<AppShell>();
         builder.Services.AddTransient<SavedPage>();
-        builder.Services.AddSingleton<TourDetailPage>();
+        builder.Services.AddTransient<TourDetailPage>();
         builder.Services.AddTransient<ZoneDetailPage>();
 		builder.Services.AddTransient<SettingsPage>();
         builder.Services.AddTransient<LanguageSelectionPage>();

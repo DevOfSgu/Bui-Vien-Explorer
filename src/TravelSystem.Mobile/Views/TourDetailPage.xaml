@@ -2,8 +2,10 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:TravelSystem.Mobile.Views"
+             xmlns:maps="clr-namespace:Mapsui.UI.Maui;assembly=Mapsui.UI.Maui"
+             xmlns:services="clr-namespace:TravelSystem.Mobile.Services"
              x:Class="TravelSystem.Mobile.Views.TourDetailPage"
-             BackgroundColor="#F3F4F6"
+             BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark={StaticResource OffBlack}}"
              Title="{Binding TourName}"
              Shell.TabBarIsVisible="False">
 
@@ -11,9 +13,9 @@
     <AbsoluteLayout x:Name="RootLayout">
 
         <!-- Bản đồ chiếm toàn màn hình -->
-        <ContentView x:Name="MapHost"
-                     AbsoluteLayout.LayoutFlags="All"
-                     AbsoluteLayout.LayoutBounds="0,0,1,1" />
+        <maps:MapControl x:Name="MapControlView"
+                         AbsoluteLayout.LayoutFlags="All"
+                         AbsoluteLayout.LayoutBounds="0,0,1,1" />
 
         <!-- Nút Focus (overlay góc phải trên) -->
         <Grid AbsoluteLayout.LayoutFlags="All"
@@ -28,7 +30,7 @@
                          WidthRequest="44"
                          HeightRequest="44"
                          Padding="11"
-                         BackgroundColor="#FFFFFF"
+                         BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark={StaticResource DarkSurface}}"
                          BorderWidth="0"
                          CornerRadius="22"
                          Shadow="{x:Null}"
@@ -37,7 +39,7 @@
 
         <!-- Bottom Sheet Panel -->
         <Border x:Name="BottomSheet"
-                BackgroundColor="White"
+                BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource DarkSurface}}"
                 StrokeThickness="0"
                 StrokeShape="RoundRectangle 24,24,0,0"
                 AbsoluteLayout.LayoutFlags="WidthProportional"
@@ -59,7 +61,7 @@
                     <BoxView HeightRequest="5"
                              WidthRequest="44"
                              CornerRadius="3"
-                             BackgroundColor="#9CA3AF"
+                             BackgroundColor="{AppThemeBinding Light=#9CA3AF, Dark={StaticResource Gray600}}"
                              HorizontalOptions="Center"
                              VerticalOptions="Center" />
                     <Grid.GestureRecognizers>
@@ -72,16 +74,16 @@
                       ColumnDefinitions="*,Auto"
                       Padding="18,0,18,10">
                     <Label Grid.Column="0"
-                           Text="Tour Stops"
+                           Text="{Binding TourStopsTitle}"
                            FontFamily="SpaceGroteskBold"
                            FontAttributes="Bold"
                            FontSize="22"
-                           TextColor="#1F2937"
+                           TextColor="{AppThemeBinding Light=#1F2937, Dark=White}"
                            VerticalOptions="Center" />
                     <Label Grid.Column="1"
-                           Text="{Binding PoiStops.Count, StringFormat='{0} điểm'}"
+                           Text="{Binding StopsCountText}"
                            FontSize="13"
-                           TextColor="#6B7280"
+                           TextColor="{AppThemeBinding Light=#6B7280, Dark={StaticResource Gray500}}"
                            VerticalOptions="Center" />
                     <Grid.GestureRecognizers>
                         <PanGestureRecognizer PanUpdated="OnBottomSheetPanUpdated" />
@@ -99,32 +101,32 @@
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
                             <Border Padding="10"
-                                    Stroke="#EBEEF3"
+                                    Stroke="{AppThemeBinding Light=#EBEEF3, Dark={StaticResource Gray900}}"
                                     StrokeThickness="1"
                                     StrokeShape="RoundRectangle 14"
-                                    BackgroundColor="#FFFFFF">
+                                    BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark={StaticResource OffBlack}}">
                                 <Border.Triggers>
                                     <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                        <Setter Property="BackgroundColor" Value="#E9F8EE" />
-                                        <Setter Property="Stroke" Value="#43A047" />
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#E9F8EE, Dark={StaticResource DarkAccentMuted}}" />
+                                        <Setter Property="Stroke" Value="{AppThemeBinding Light=#43A047, Dark={StaticResource DarkAccent}}" />
                                     </DataTrigger>
                                 </Border.Triggers>
 
                                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
                                     <Grid WidthRequest="50" HeightRequest="50">
-                                        <Border StrokeThickness="0" BackgroundColor="#F3F4F6" StrokeShape="RoundRectangle 25">
+                                        <Border StrokeThickness="0" BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark={StaticResource Gray900}}" StrokeShape="RoundRectangle 25">
                                             <Image Source="{Binding ImageUrl}" Aspect="AspectFill" />
                                         </Border>
                                     </Grid>
 
                                     <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
                                         <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
-                                            <Label Text="{Binding Name}" FontSize="16" FontAttributes="Bold" TextColor="#1F2937" VerticalOptions="Center" />
+                                            <Label Text="{Binding Name}" FontSize="16" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#1F2937, Dark=White}" VerticalOptions="Center" />
                                         </HorizontalStackLayout>
-                                        <Label Text="{Binding DistanceText}" FontSize="12" TextColor="#98A2B3" />
+                                        <Label Text="{Binding DistanceText}" FontSize="12" TextColor="{AppThemeBinding Light=#98A2B3, Dark={StaticResource Gray500}}" />
                                     </VerticalStackLayout>
 
-                                    <Image Grid.Column="2" Source="arrow_forward_icon.png"
+                                    <Image Grid.Column="2" Source="arrow_forward_icon.svg"
                                            WidthRequest="18" HeightRequest="18"
                                            VerticalOptions="Center" Opacity="0.5" />
                                 </Grid>
@@ -152,7 +154,7 @@
                                    Color="White"
                                    WidthRequest="40"
                                    HeightRequest="40" />
-                <Label Text="Đang tải chi tiết tour..."
+                <Label Text="{Binding [tour_loading], Source={x:Static services:LocalizationManager.Instance}}"
                        TextColor="White"
                        FontSize="14"
                        HorizontalTextAlignment="Center" />

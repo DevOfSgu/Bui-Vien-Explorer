@@ -13,25 +13,31 @@
 </div>
 
 <div class="card-custom">
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger d-flex align-items-center" style="border-radius: 10px;">
+            <i class="fa-solid fa-circle-exclamation me-2"></i>
+            <span>@TempData["Error"]</span>
+        </div>
+    }
+
     <form asp-action="Edit" method="post">
         <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="ZoneId" />
+        <input type="hidden" asp-for="Language" value="vi" />
         <div class="row">
             <div class="col-md-8">
                 <div class="mb-4">
                     <label class="form-label fw-bold">Select Active Zone (POI)</label>
-                    <select asp-for="ZoneId" class="form-select" asp-items="@(new SelectList(ViewBag.Zones, "Id", "Name", Model.ZoneId))" required>
+                    <select asp-for="ZoneId" class="form-select" asp-items="@(new SelectList(ViewBag.Zones, "Id", "Name", Model.ZoneId))" disabled>
                     </select>
                 </div>
 
                 <div class="row mb-4">
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">Select Language</label>
-                        <select asp-for="Language" class="form-select" required>
-                            <option value="vi">Vietnamese (vi)</option>
-                            <option value="en">English (en)</option>
-                            <option value="ko">Korean (ko)</option>
-                            <option value="ja">Japanese (ja)</option>
-                        </select>
+                        <label class="form-label fw-bold">Source Language</label>
+                        <input type="text" class="form-control" value="Vietnamese (vi)" readonly />
+                        <small class="text-muted">Only Vietnamese source script can be edited by vendor.</small>
                     </div>
                 </div>
 

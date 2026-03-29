@@ -74,75 +74,6 @@
         background-color: #fff;
     }
 
-    /* Media Upload Area */
-    .upload-box {
-        background-color: #f8fafc;
-        border: 1px dashed #cbd5e1;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-    }
-
-    .upload-logo {
-        width: 140px;
-        height: 140px;
-        border-radius: 50%;
-        margin-bottom: 10px;
-    }
-
-    .upload-icon-overlay {
-        position: absolute;
-        bottom: 5px;
-        right: 15px;
-        background-color: #ef4444;
-        color: white;
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        border: 2px solid white;
-        cursor: pointer;
-    }
-
-    .upload-helper-text {
-        font-size: 10px;
-        color: #94a3b8;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        margin-top: 15px;
-    }
-
-    .upload-gallery-add {
-        width: 140px;
-        height: 140px;
-        border-radius: 12px;
-    }
-
-    .upload-gallery-add i {
-        color: #94a3b8;
-        font-size: 24px;
-        margin-bottom: 8px;
-    }
-
-    .upload-gallery-add span {
-        font-size: 11px;
-        color: #94a3b8;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-    }
-
-    .gallery-preview {
-        width: 140px;
-        height: 140px;
-        border-radius: 12px;
-        object-fit: cover;
-    }
-
     /* Location & Hours */
     .geo-row {
         display: flex;
@@ -231,6 +162,16 @@
         color: #16a34a;
     }
 
+    .status-closed {
+        background-color: #fee2e2;
+        color: #dc2626;
+    }
+
+    .status-inactive {
+        background-color: #e2e8f0;
+        color: #475569;
+    }
+
     /* Floating Save Button */
     .floating-save-btn {
         position: fixed;
@@ -255,12 +196,86 @@
         background-color: #dc2626;
         transform: translateY(-2px);
     }
+
+    .password-modal-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+    }
+
+    .password-modal-icon {
+        width: 56px;
+        height: 56px;
+        background-color: #ffe8e8;
+        color: #ff4d4f;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        margin: 0 auto 16px;
+    }
+
+    .password-input-wrapper {
+        position: relative;
+    }
+
+    .password-input-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #adb5bd;
+        z-index: 2;
+    }
+
+    .password-input {
+        border-radius: 8px;
+        padding: 12px 15px 12px 40px;
+        border: 1px solid #e9ecef;
+        font-size: 0.95rem;
+        background-color: #f8f9fa;
+    }
+
+    .password-input:focus {
+        box-shadow: 0 0 0 3px rgba(255, 77, 79, 0.1);
+        border-color: #ff4d4f;
+        background-color: #ffffff;
+    }
+
+    .btn-password-submit {
+        background-color: #ff4d4f;
+        border: none;
+        border-radius: 8px;
+        padding: 12px;
+        font-weight: 600;
+    }
+
+    .btn-password-submit:hover {
+        background-color: #ff3333;
+    }
 </style>
 
 <div class="settings-header">
     <h3 class="fw-bold mb-0 text-dark">Store Settings</h3>
     <p>Manage your club profile, media, and operating hours.</p>
 </div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success d-flex align-items-center" style="border-radius: 10px;">
+        <i class="fa-solid fa-circle-check me-2"></i>
+        <span>@TempData["Success"]</span>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger d-flex align-items-center" style="border-radius: 10px;">
+        <i class="fa-solid fa-circle-exclamation me-2"></i>
+        <span>@TempData["Error"]</span>
+    </div>
+}
 
 <form method="post" asp-action="Index" asp-controller="Settings" asp-area="Vendor" enctype="multipart/form-data">
 
@@ -304,55 +319,6 @@
     
 </div>
 
-<!-- Media -->
-<div class="settings-card">
-    <div class="card-title-row">
-        <div class="card-title-icon"><i class="fa-regular fa-image"></i></div>
-        <h4 class="card-title-text">Media</h4>
-    </div>
-    
-    <div class="row g-4">
-        <div class="col-md-3">
-            <div class="form-group">
-                <label>Store Logo</label>
-                <div class="d-flex flex-column align-items-center mt-2">
-                    <div class="position-relative" style="cursor: pointer;" onclick="document.getElementById('logoInput').click();">
-                        <div class="upload-box upload-logo" id="logoPreview">
-                            @if (!string.IsNullOrEmpty(shop.ImageUrl))
-                            {
-                                <img src="@shop.ImageUrl" class="upload-logo" style="margin-bottom: 0; object-fit: cover;" alt="Logo" />
-                            }
-                            else
-                            {
-                                <i class="fa-solid fa-store" style="font-size: 30px; color: #94a3b8;"></i>
-                            }
-                        </div>
-                        <div class="upload-icon-overlay">
-                            <i class="fa-solid fa-cloud-arrow-up"></i>
-                        </div>
-                    </div>
-                    <input type="file" id="logoInput" name="logoFile" accept="image/png,image/jpeg" style="display: none;" onchange="handleLogoUpload(event)" />
-                    <span class="upload-helper-text">PNG, JPG UP TO 2MB</span>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-9">
-            <div class="form-group">
-                <label>Store Gallery</label>
-                <div class="d-flex gap-3 flex-wrap mt-2" id="galleryContainer">
-                    <div class="upload-box upload-gallery-add flex-column" style="cursor: pointer;" onclick="document.getElementById('galleryInput').click();">
-                        <i class="fa-regular fa-image"></i>
-                        <span class="text-uppercase">Add Photo</span>
-                    </div>
-                    <input type="file" id="galleryInput" accept="image/png,image/jpeg" multiple style="display: none;" onchange="handleGalleryUpload(event)" />
-                    <!-- Images will be listed here after being added -->
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Location & Hours -->
 <div class="settings-card">
     <div class="card-title-row">
@@ -379,56 +345,79 @@
                     </thead>
                     <tbody>
                         @{
-                            string[] days = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
-                            string[] dayRanges = { "Sunday", "Monday", "Tue - Wed", "Tue - Wed", "Tue - Wed", "Fri", "Fri - Sat" };
-                            
-                            // Group hours by day
-                            var mondayHour = hours.FirstOrDefault(h => h.DayOfWeek == 1);
-                            var tueThuHour = hours.FirstOrDefault(h => h.DayOfWeek == 2);
-                            var friSunHour = hours.FirstOrDefault(h => h.DayOfWeek == 5);
+                            // Keep 3 editable groups in UI, with safe defaults if DB data is missing.
+                            var mondayHour = hours.FirstOrDefault(h => h.DayOfWeek == 1)
+                                ?? new TravelSystem.Shared.Models.ShopHour { DayOfWeek = 1, OpenTime = new TimeSpan(8, 0, 0), CloseTime = new TimeSpan(23, 0, 0) };
+                            var tueThuHour = hours.FirstOrDefault(h => h.DayOfWeek is >= 2 and <= 4)
+                                ?? new TravelSystem.Shared.Models.ShopHour { DayOfWeek = 2, OpenTime = new TimeSpan(8, 0, 0), CloseTime = new TimeSpan(23, 0, 0) };
+                            var friSunHour = hours.FirstOrDefault(h => h.DayOfWeek is >= 5 and <= 7)
+                                ?? new TravelSystem.Shared.Models.ShopHour { DayOfWeek = 5, OpenTime = new TimeSpan(8, 0, 0), CloseTime = new TimeSpan(23, 0, 0) };
+
+                            var now = DateTime.Now;
+                            var today = now.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)now.DayOfWeek;
+                            var currentTime = now.TimeOfDay;
+
+                            static bool IsOpenNow(TimeSpan open, TimeSpan close, TimeSpan current)
+                            {
+                                if (close <= open)
+                                {
+                                    return current >= open || current < close;
+                                }
+
+                                return current >= open && current < close;
+                            }
+
+                            static (string Text, string Css) GetStatusLabel(bool appliesToday, bool isOpen)
+                            {
+                                if (!appliesToday) return ("SCHEDULED", "status-inactive");
+                                return isOpen ? ("OPEN", "status-open") : ("CLOSED", "status-closed");
+                            }
+
+                            var mondayStatus = GetStatusLabel(
+                                appliesToday: today == 1,
+                                isOpen: IsOpenNow(mondayHour.OpenTime, mondayHour.CloseTime, currentTime));
+
+                            var tueThuStatus = GetStatusLabel(
+                                appliesToday: today is >= 2 and <= 4,
+                                isOpen: IsOpenNow(tueThuHour.OpenTime, tueThuHour.CloseTime, currentTime));
+
+                            var friSunStatus = GetStatusLabel(
+                                appliesToday: today is >= 5 and <= 7,
+                                isOpen: IsOpenNow(friSunHour.OpenTime, friSunHour.CloseTime, currentTime));
                         }
-                        
-                        @if (mondayHour != null)
-                        {
-                            <tr>
-                                <td>Monday</td>
-                                <td>
-                                    <input type="time" name="hours[0].OpenTime" class="form-control-custom" style="width: 120px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;" value="@mondayHour.OpenTime.ToString(@"hh\:mm")" />
-                                </td>
-                                <td>
-                                    <input type="time" name="hours[0].CloseTime" class="form-control-custom" style="width: 120px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;" value="@mondayHour.CloseTime.ToString(@"hh\:mm")" />
-                                </td>
-                                <td class="text-end"><span class="status-badge status-open">OPEN</span></td>
-                            </tr>
-                        }
-                        
-                        @if (tueThuHour != null)
-                        {
-                            <tr>
-                                <td>Tue - Thu</td>
-                                <td>
-                                    <input type="time" name="hours[1].OpenTime" class="form-control-custom" style="width: 120px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;" value="@tueThuHour.OpenTime.ToString(@"hh\:mm")" />
-                                </td>
-                                <td>
-                                    <input type="time" name="hours[1].CloseTime" class="form-control-custom" style="width: 120px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;" value="@tueThuHour.CloseTime.ToString(@"hh\:mm")" />
-                                </td>
-                                <td class="text-end"><span class="status-badge status-open">OPEN</span></td>
-                            </tr>
-                        }
-                        
-                        @if (friSunHour != null)
-                        {
-                            <tr>
-                                <td>Fri - Sun</td>
-                                <td>
-                                    <input type="time" name="hours[2].OpenTime" class="form-control-custom" style="width: 120px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;" value="@friSunHour.OpenTime.ToString(@"hh\:mm")" />
-                                </td>
-                                <td>
-                                    <input type="time" name="hours[2].CloseTime" class="form-control-custom" style="width: 120px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;" value="@friSunHour.CloseTime.ToString(@"hh\:mm")" />
-                                </td>
-                                <td class="text-end"><span class="status-badge status-open">OPEN</span></td>
-                            </tr>
-                        }
+                        <tr>
+                            <td>Monday</td>
+                            <td>
+                                <input type="hidden" name="hours[0].DayOfWeek" value="1" />
+                                <input type="time" name="hours[0].OpenTime" class="form-control-custom" style="width: 120px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;" value="@mondayHour.OpenTime.ToString(@"hh\:mm")" />
+                            </td>
+                            <td>
+                                <input type="time" name="hours[0].CloseTime" class="form-control-custom" style="width: 120px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;" value="@mondayHour.CloseTime.ToString(@"hh\:mm")" />
+                            </td>
+                            <td class="text-end"><span class="status-badge @mondayStatus.Css">@mondayStatus.Text</span></td>
+                        </tr>
+                        <tr>
+                            <td>Tue - Thu</td>
+                            <td>
+                                <input type="hidden" name="hours[1].DayOfWeek" value="2" />
+                                <input type="time" name="hours[1].OpenTime" class="form-control-custom" style="width: 120px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;" value="@tueThuHour.OpenTime.ToString(@"hh\:mm")" />
+                            </td>
+                            <td>
+                                <input type="time" name="hours[1].CloseTime" class="form-control-custom" style="width: 120px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;" value="@tueThuHour.CloseTime.ToString(@"hh\:mm")" />
+                            </td>
+                            <td class="text-end"><span class="status-badge @tueThuStatus.Css">@tueThuStatus.Text</span></td>
+                        </tr>
+                        <tr>
+                            <td>Fri - Sun</td>
+                            <td>
+                                <input type="hidden" name="hours[2].DayOfWeek" value="5" />
+                                <input type="time" name="hours[2].OpenTime" class="form-control-custom" style="width: 120px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;" value="@friSunHour.OpenTime.ToString(@"hh\:mm")" />
+                            </td>
+                            <td>
+                                <input type="time" name="hours[2].CloseTime" class="form-control-custom" style="width: 120px; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;" value="@friSunHour.CloseTime.ToString(@"hh\:mm")" />
+                            </td>
+                            <td class="text-end"><span class="status-badge @friSunStatus.Css">@friSunStatus.Text</span></td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -449,7 +438,13 @@
             <p class="text-muted mb-0" style="font-size: 13px;">Update your account password or manage store visibility.</p>
         </div>
         <div class="d-flex gap-4 align-items-center">
-            <button class="btn border fw-bold text-dark" style="background-color: #f8fafc; font-size: 13px;">Change Password</button>
+            <button type="button"
+                    class="btn border fw-bold text-dark"
+                    style="background-color: #f8fafc; font-size: 13px;"
+                    data-bs-toggle="modal"
+                    data-bs-target="#changePasswordModal">
+                Change Password
+            </button>
             <a href="#" class="text-decoration-none" style="color: #94a3b8; font-size: 13px;">Deactivate Store</a>
         </div>
     </div>
@@ -461,39 +456,71 @@
 </button>
 </form>
 
-<script>
-    function handleLogoUpload(event) {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const logoPreview = document.getElementById('logoPreview');
-                logoPreview.innerHTML = '<img src="' + e.target.result + '" class="upload-logo" style="border-radius: 50%; margin-bottom: 0;" alt="Logo Preview" />';
-                const overlay = document.createElement('div');
-                overlay.className = 'upload-icon-overlay';
-                overlay.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i>';
-                logoPreview.appendChild(overlay);
-            };
-            reader.readAsDataURL(file);
-        }
-    }
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content password-modal-card">
+            <div class="modal-body p-4 p-md-5">
+                <div class="password-modal-icon">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h5 class="fw-bold text-center mb-1">Change Password</h5>
+                <p class="text-muted text-center mb-4" style="font-size: 0.92rem;">
+                    Update your account password to keep your vendor portal secure.
+                </p>
 
-    function handleGalleryUpload(event) {
-        const files = event.target.files;
-        if (files) {
-            const galleryContainer = document.getElementById('galleryContainer');
-            for (let i = 0; i < files.length; i++) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.className = 'gallery-preview';
-                    img.alt = 'Gallery Image ' + (i + 1);
-                    galleryContainer.appendChild(img);
-                };
-                reader.readAsDataURL(files[i]);
-            }
-        }
-        event.target.value = '';
-    }
-</script>
+                @if (TempData["ChangePasswordError"] != null)
+                {
+                    <div class="alert alert-danger py-2" style="border-radius: 8px; font-size: 0.9rem;">
+                        <i class="fa-solid fa-circle-exclamation me-2"></i>@TempData["ChangePasswordError"]
+                    </div>
+                }
+
+                <form method="post" asp-action="ChangePassword" asp-controller="Settings" asp-area="Vendor">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label class="form-label">Current Password</label>
+                        <div class="password-input-wrapper">
+                            <i class="fa-solid fa-lock password-input-icon"></i>
+                            <input type="password" name="currentPassword" class="form-control password-input" placeholder="Enter current password" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">New Password</label>
+                        <div class="password-input-wrapper">
+                            <i class="fa-solid fa-key password-input-icon"></i>
+                            <input type="password" name="newPassword" class="form-control password-input" placeholder="Enter new password" required minlength="6" />
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Confirm New Password</label>
+                        <div class="password-input-wrapper">
+                            <i class="fa-solid fa-key password-input-icon"></i>
+                            <input type="password" name="confirmPassword" class="form-control password-input" placeholder="Confirm new password" required minlength="6" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-light w-50 border" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-password-submit text-white w-50">Update Password</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (TempData["OpenChangePasswordModal"] != null)
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var modalEl = document.getElementById("changePasswordModal");
+            if (!modalEl) return;
+            var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        });
+    </script>
+}
+

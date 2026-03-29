@@ -263,6 +263,15 @@
     </style>
 </head>
 <body>
+    @{
+        var vendorDisplayName = User.Identity?.Name;
+        if (string.IsNullOrWhiteSpace(vendorDisplayName))
+        {
+            vendorDisplayName = "Vendor";
+        }
+
+        var vendorAvatarName = Uri.EscapeDataString(vendorDisplayName);
+    }
 
     <!-- Sidebar -->
     <div id="sidebar">
@@ -298,18 +307,11 @@
         </ul>
 
         <div class="sidebar-footer border-top mt-auto p-3">
-            <div class="d-flex justify-content-center mb-2">
-                <button class="notification-btn position-relative p-2 border-0 bg-transparent text-muted hover-text-danger transition-all">
-                    <i class="fa-regular fa-bell fs-5"></i>
-                    <span class="notification-badge" style="width: 8px; height: 8px; top: 8px; right: 8px; background-color: #ef4444; position: absolute; border-radius: 50%;"></span>
-                </button>
-            </div>
-
             <div class="d-flex align-items-center justify-content-between bg-light p-2 rounded-3 shadow-sm" style="background-color: #f8fafc !important;">
                 <div class="d-flex align-items-center gap-2 overflow-hidden">
-                    <img src="https://ui-avatars.com/api/?name=Alex+Sahara&background=fed7aa&color=c2410c&rounded=true&bold=true" alt="User" style="width: 32px; height: 32px; border-radius: 50%;">
+                    <img src="https://ui-avatars.com/api/?name=@vendorAvatarName&background=fed7aa&color=c2410c&rounded=true&bold=true" alt="Vendor" style="width: 32px; height: 32px; border-radius: 50%;">
                     <div class="overflow-hidden">
-                        <div class="fw-bold small text-dark text-truncate" style="font-size: 12px;">Alex Sahara</div>
+                        <div class="fw-bold small text-dark text-truncate" style="font-size: 12px;">@vendorDisplayName</div>
                     </div>
                 </div>
                 <a asp-area="Vendor" asp-controller="Auth" asp-action="Logout" class="btn btn-sm btn-outline-danger border-0 p-1 px-2" title="Đăng xuất">

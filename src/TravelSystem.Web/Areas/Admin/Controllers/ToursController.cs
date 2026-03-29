@@ -100,7 +100,10 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
 
             if (ModelState.IsValid)
             {
-                var dbTour = await _db.Tours.FindAsync(id);
+                var dbTour = await _db.Tours
+                    .Include(t => t.TourZones)
+                    .FirstOrDefaultAsync(t => t.Id == id);
+                    
                 if (dbTour == null) return NotFound();
 
                 // Handle Image Upload
@@ -118,21 +121,41 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 dbTour.Description = tour.Description;
                 dbTour.Duration = tour.Duration;
                 dbTour.UpdatedAt = DateTime.UtcNow;
+                // Update Zones: Sử dụng so sánh để tránh xung đột khóa chính (Tracking collision)
+                var currentTourZones = dbTour.TourZones.ToList();
+                var selectedIds = selectedZoneIds?.ToList() ?? new List<int>();
 
-                // Update Zones
-                var existingZones = _db.TourZones.Where(tz => tz.TourId == id);
-                _db.TourZones.RemoveRange(existingZones);
+                // 1. Xóa các điểm không còn trong danh sách chọn
+                foreach (var tz in currentTourZones)
+                {
+                    if (!selectedIds.Contains(tz.ZoneId))
+                    {
+                        dbTour.TourZones.Remove(tz);
+                    }
+                }
 
+                // 2. Thêm hoặc cập nhật (thứ tự) các điểm đã chọn
                 if (selectedZoneIds != null)
                 {
                     for (int i = 0; i < selectedZoneIds.Length; i++)
                     {
-                        _db.TourZones.Add(new TourZone
+                        var zoneId = selectedZoneIds[i];
+                        var existing = currentTourZones.FirstOrDefault(tz => tz.ZoneId == zoneId);
+                        
+                        if (existing != null)
                         {
-                            TourId = tour.Id,
-                            ZoneId = selectedZoneIds[i],
-                            OrderIndex = i + 1
-                        });
+                            // Điểm đã tồn tại -> Chỉ cập nhật thứ tự
+                            existing.OrderIndex = i + 1;
+                        }
+                        else
+                        {
+                            // Điểm mới -> Thêm vào collection
+                            dbTour.TourZones.Add(new TourZone
+                            {
+                                ZoneId = zoneId,
+                                OrderIndex = i + 1
+                            });
+                        }
                     }
                 }
 

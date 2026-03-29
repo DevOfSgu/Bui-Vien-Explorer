@@ -115,7 +115,8 @@ public class ApiService
 
     private Uri GetBaseUri() => new(ApiConstants.GetBaseApiUrl(), UriKind.Absolute);
     private Uri BuildUri(string relativePath) => new(GetBaseUri(), relativePath);
-    private static string TourStopsCacheKey(int tourId) => $"cache_tour_stops_{tourId}_v1";
+    private static string TourStopsCacheKey(int tourId) => $"cache_tour_stops_{tourId}_v3";
+    private static string ZoneDetailCacheKey(int zoneId) => $"cache_zone_detail_{zoneId}_v1";
 
     private async Task<IReadOnlyList<T>?> LoadCachedListAsync<T>(string key)
     {
@@ -140,6 +141,36 @@ public class ApiService
         try
         {
             var json = JsonSerializer.Serialize(items, CacheJsonOptions);
+            await _dbService.SetSettingAsync(key, json);
+        }
+        catch
+        {
+        }
+    }
+
+    private async Task<T?> LoadCachedItemAsync<T>(string key)
+    {
+        try
+        {
+            var json = await _dbService.GetSettingAsync(key, string.Empty);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return default;
+            }
+
+            return JsonSerializer.Deserialize<T>(json, CacheJsonOptions);
+        }
+        catch
+        {
+            return default;
+        }
+    }
+
+    private async Task SaveCachedItemAsync<T>(string key, T item)
+    {
+        try
+        {
+            var json = JsonSerializer.Serialize(item, CacheJsonOptions);
             await _dbService.SetSettingAsync(key, json);
         }
         catch
@@ -360,6 +391,46 @@ public class ApiService
             _logger.LogError(ex, "[API] Error while loading zones");
             return null;
         }
+    }
+
+    public async Task<ZoneDetailDto?> GetZoneDetailAsync(int zoneId, CancellationToken cancellationToken = default)
+    {
+        var cacheKey = ZoneDetailCacheKey(zoneId);
+
+        try
+        {
+            if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
+            {
+                var zoneDetailUri = BuildUri($"{ApiConstants.ZonesEndpoint}/{zoneId}/detail");
+                var detail = await _httpClient.GetFromJsonAsync<ZoneDetailDto>(zoneDetailUri, cancellationToken);
+                if (detail != null)
+                {
+                    detail.ImageUrl = NormalizeImageUrl(detail.ImageUrl);
+                    await SaveCachedItemAsync(cacheKey, detail);
+                    return detail;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[API] Error loading zone detail {ZoneId} from server, falling back to cache", zoneId);
+        }
+
+        try
+        {
+            var cached = await LoadCachedItemAsync<ZoneDetailDto>(cacheKey);
+            if (cached != null)
+            {
+                cached.ImageUrl = NormalizeImageUrl(cached.ImageUrl);
+                return cached;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[API] Error loading zone detail {ZoneId} from cache", zoneId);
+        }
+
+        return null;
     }
 
     private const string GuestIdKey = "current_guest_id";
@@ -671,5 +742,21 @@ public class TourStopDto
     public double Latitude { get; set; }
     public double Longitude { get; set; }
     public int Radius { get; set; }
+    public bool IsMain { get; set; }
+    public string? Address { get; set; }
+    public string? Hours { get; set; }
+}
+
+public class ZoneDetailDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string? ImageUrl { get; set; }
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+    public int Radius { get; set; }
+    public string? Address { get; set; }
+    public string? Hours { get; set; }
 }
 
