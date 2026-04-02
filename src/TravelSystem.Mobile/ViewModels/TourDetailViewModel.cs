@@ -59,7 +59,9 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     private const double MaxGpsAccuracyCompensationMeters = 35;
     private const double MaxEntryAccuracyCompensationMeters = 4;
     private const double EntryAccuracyCompensationEligibleMeters = 12;
-    private const double AutoSwitchRequireDistanceMeters = 14;
+    private const double AutoSwitchRequireDistanceMeters = 20;
+    private const double FastAutoSelectDistanceMeters = 10;
+    private const double FastAutoSelectMaxAccuracyMeters = 8;
     private const int CurrentZoneExitConfirmSamples = 2;
     private const int CandidateEnterConfirmSamples = 2;
     private const double MapRefreshMoveThresholdMeters = 2.5;
@@ -81,8 +83,9 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     private static readonly TimeSpan StationaryLockDebounce = TimeSpan.FromSeconds(6);
     private static readonly TimeSpan StationaryRelockCooldown = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan LocationPingInterval = TimeSpan.FromSeconds(60);
-    private static readonly TimeSpan AutoSelectDebounce = TimeSpan.FromSeconds(3);
-    private static readonly TimeSpan AutoSelectSwitchDebounce = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan AutoSelectDebounce = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan AutoSelectSwitchDebounce = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan FastAutoSelectDebounce = TimeSpan.FromSeconds(1.2);
     private static readonly TimeSpan AutoSelectCooldown = TimeSpan.FromSeconds(6);
     private static readonly TimeSpan AutoSelectSuppressAfterManualSelection = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan StreamFreshWindow = TimeSpan.FromSeconds(2.6);
@@ -936,6 +939,23 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         var nowUtc = DateTime.UtcNow;
         var isSwitchingBetweenStops = currentSelected != null && currentSelected.ZoneId != nearestStop.ZoneId;
         var requiredDebounce = isSwitchingBetweenStops ? AutoSelectSwitchDebounce : AutoSelectDebounce;
+        var requiredInsideSamples = CandidateEnterConfirmSamples;
+
+        // Fast path: allow quicker capture when user is very close to POI and GPS quality is good.
+        var displayAccuracy = GetLocationAccuracyMeters(userLocation);
+        var rawAccuracy = rawLocation == null ? 0 : GetLocationAccuracyMeters(rawLocation);
+        var bestAccuracy = displayAccuracy > 0 && rawAccuracy > 0
+            ? Math.Min(displayAccuracy, rawAccuracy)
+            : Math.Max(displayAccuracy, rawAccuracy);
+        if (adjustedDistanceMeters <= FastAutoSelectDistanceMeters
+            && bestAccuracy > 0
+            && bestAccuracy <= FastAutoSelectMaxAccuracyMeters)
+        {
+            requiredDebounce = requiredDebounce <= FastAutoSelectDebounce
+                ? requiredDebounce
+                : FastAutoSelectDebounce;
+            requiredInsideSamples = 1;
+        }
 
         if (isSwitchingBetweenStops && adjustedDistanceMeters > AutoSwitchRequireDistanceMeters)
         {
@@ -955,7 +975,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         }
 
         _candidateInsideSamples += 1;
-        if (_candidateInsideSamples < CandidateEnterConfirmSamples)
+        if (_candidateInsideSamples < requiredInsideSamples)
         {
             return false;
         }
