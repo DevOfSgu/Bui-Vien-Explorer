@@ -73,7 +73,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
-            TempData["Error"] = "Editing is disabled in Admin. You can review, approve or reject only.";
+            TempData["Error"] = "Admin không được chỉnh sửa trực tiếp. Chỉ có thể xem, duyệt hoặc từ chối.";
             return RedirectToAction(nameof(Details), new { id = id.Value });
         }
 
@@ -82,7 +82,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, TravelSystem.Shared.Models.Narration narration)
         {
-            TempData["Error"] = "Editing is disabled in Admin. Ask vendor to resubmit changes.";
+            TempData["Error"] = "Admin không được chỉnh sửa trực tiếp. Hãy yêu cầu vendor gửi lại bản cập nhật.";
             return RedirectToAction(nameof(Index));
         }
 

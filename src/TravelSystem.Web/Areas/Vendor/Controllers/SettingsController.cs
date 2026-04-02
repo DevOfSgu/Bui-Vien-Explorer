@@ -41,7 +41,7 @@ namespace TravelSystem.Web.Areas.Vendor.Controllers
         public async Task<IActionResult> Index(Shop shop, List<ShopHour> hours, IFormFile? logoFile)
         {
             var username = User.Identity?.Name;
-            var vendor = await _db.Users.FirstOrDefaultAsync(u => u.Username == username);
+            var vendor = await _db.Users.FirstOrDefaultAsync(u => u.Username == username && u.Role == 1);
             if (vendor == null || vendor.ShopId == null) return NotFound();
 
             var dbShop = await _db.Shops.FindAsync(vendor.ShopId);
@@ -110,7 +110,7 @@ namespace TravelSystem.Web.Areas.Vendor.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            if (!string.Equals(vendor.PasswordHash, currentPassword, StringComparison.Ordinal))
+            if (!Helpers.PasswordHelper.VerifyPassword(vendor, currentPassword, out _))
             {
                 TempData["ChangePasswordError"] = "Current password is incorrect.";
                 TempData["OpenChangePasswordModal"] = "1";
@@ -138,7 +138,7 @@ namespace TravelSystem.Web.Areas.Vendor.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            vendor.PasswordHash = newPassword;
+            vendor.PasswordHash = Helpers.PasswordHelper.HashPassword(vendor, newPassword);
             _db.Users.Update(vendor);
             await _db.SaveChangesAsync();
 

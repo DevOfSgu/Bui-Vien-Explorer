@@ -1,12 +1,12 @@
 @model IEnumerable<TravelSystem.Shared.Models.User>
 
 @{
-    ViewData["Title"] = "User Management";
+    ViewData["Title"] = "Quản lý người dùng";
 }
 
 <div class="header-actions">
-    <h2 class="page-title">User Management</h2>
-    <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#addUserModal">+ Add User</button>
+    <h2 class="page-title">Quản lý người dùng</h2>
+    <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#addUserModal">+ Thêm người dùng</button>
 </div>
 
 @await Html.PartialAsync("_AddUserModal", new TravelSystem.Shared.Models.User())
@@ -15,13 +15,13 @@
     <table class="table-custom">
         <thead>
             <tr>
-                <th>Merchant ID</th>
-                <th>Store Name</th>
-                <th>Role</th>
-                <th>Owner Name</th>
-                <th>Date Joined</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th>ID Merchant</th>
+                <th>Tên cửa hàng</th>
+                <th>Vai trò</th>
+                <th>Chủ sở hữu</th>
+                <th>Ngày tham gia</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
             </tr>
         </thead>
         <tbody>
@@ -30,32 +30,53 @@
                 <tr>
                     <td>@user.Id</td>
                     <td>@(user.Shop?.Name ?? "-")</td>
-                    <td>@(user.Role == 0 ? "Admin" : "Vendor")</td>
+                    <td>@(user.Role == 0 ? "Quản trị viên" : "Đối tác")</td>
                     <td>@user.FullName</td>
-                    <td>@user.CreatedAt.ToString("MMM dd, yyyy")</td>
+                    <td>@user.CreatedAt.ToString("dd/MM/yyyy")</td>
                     <td>
-                        @if (user.IsActive)
+                        @if (user.Role == 1 && !user.IsActive)
                         {
-                            <span class="badge-soft badge-gray">Active</span>
+                            <span class="badge-soft badge-red">Chờ duyệt / Tạm ngưng</span>
+                        }
+                        else if (user.IsActive)
+                        {
+                            <span class="badge-soft badge-gray">Đang hoạt động</span>
                         }
                         else
                         {
-                            <span class="badge-soft badge-red">Locked</span>
+                            <span class="badge-soft badge-red">Đã khóa</span>
                         }
                     </td>
                     <td>
-                        @if (user.IsActive)
+                        @if (user.Role == 1)
+                        {
+                            if (user.IsActive)
+                            {
+                                <form asp-action="SuspendVendor" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@user.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Tạm ngưng đối tác</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-action="ApproveVendor" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@user.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Duyệt đối tác</button>
+                                </form>
+                            }
+                        }
+                        else if (user.IsActive)
                         {
                             <form asp-action="Lock" method="post" class="d-inline">
                                 <input type="hidden" name="id" value="@user.Id" />
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Lock Account</button>
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Khóa tài khoản</button>
                             </form>
                         }
                         else
                         {
                             <form asp-action="Unlock" method="post" class="d-inline">
                                 <input type="hidden" name="id" value="@user.Id" />
-                                <button type="submit" class="btn btn-sm btn-outline-success">Unlock Account</button>
+                                <button type="submit" class="btn btn-sm btn-outline-success">Mở khóa tài khoản</button>
                             </form>
                         }
                     </td>

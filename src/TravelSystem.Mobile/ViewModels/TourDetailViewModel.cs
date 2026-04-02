@@ -24,14 +24,71 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     private bool _hasCheckedLocationPermission;
     private bool _isLocationPermissionGranted;
     private bool _isLoading;
+    private readonly HashSet<int> _trackedEnterZones = [];
+    private DateTime _lastLocationPingAtUtc = DateTime.MinValue;
+    private int? _autoSelectCandidateZoneId;
+    private DateTime _autoSelectCandidateSinceUtc = DateTime.MinValue;
+    private DateTime _autoSelectSuppressedUntilUtc = DateTime.MinValue;
+    private DateTime _lastAutoSelectTriggeredAtUtc = DateTime.MinValue;
+    private int? _lastAutoSelectTriggeredZoneId;
+    private int? _currentAutoInsideZoneId;
+    private int _currentZoneOutsideSamples;
+    private int _candidateInsideSamples;
+    private Location? _simulatedLocation;
+    private Location? _stationaryAnchorLocation;
+    private DateTime _stationaryCandidateSinceUtc = DateTime.MinValue;
+    private DateTime _stationaryLockSuppressedUntilUtc = DateTime.MinValue;
+    private bool _isStationaryLocked;
+    private long _locationApplySeq;
+    private long _mapRefreshSeq;
+    private DateTime _lastLocationAppliedAtUtc = DateTime.MinValue;
+    private DateTime _lastMapRefreshAtUtc = DateTime.MinValue;
+    private readonly SemaphoreSlim _locationStreamLock = new(1, 1);
+    private bool _isLocationListening;
+    private Location? _latestStreamLocation;
+    private DateTime _latestStreamLocationAtUtc = DateTime.MinValue;
+    private DateTime _lastPollingAttemptAtUtc = DateTime.MinValue;
 
     // Cache vị trí tĩnh giữa các lần điều hướng để tránh GPS cold-start
     private static Location? _cachedUserLocation;
     private string _tourName = "Tour details";
 
-    private const double GeofenceTriggerMeters = 80;
-    private const double MapRefreshMoveThresholdMeters = 35;
-    private static readonly TimeSpan ForegroundTrackingInterval = TimeSpan.FromSeconds(8);
+    private const double GeofenceTriggerMeters = 45;
+    private const double GeofenceExitHysteresisFactor = 1.25;
+    private const double MinPracticalGeofenceMeters = 28;
+    private const double MaxGpsAccuracyCompensationMeters = 35;
+    private const double MaxEntryAccuracyCompensationMeters = 4;
+    private const double EntryAccuracyCompensationEligibleMeters = 12;
+    private const double AutoSwitchRequireDistanceMeters = 14;
+    private const int CurrentZoneExitConfirmSamples = 2;
+    private const int CandidateEnterConfirmSamples = 2;
+    private const double MapRefreshMoveThresholdMeters = 2.5;
+    private const double GpsJitterIgnoreMeters = 3.5;
+    private const double GpsSmoothingThresholdMeters = 12;
+    private const double GpsSmoothingAlpha = 0.55;
+    private const double GoodAccuracySkipSmoothingMeters = 6;
+    private const double MaxAcceptableGpsAccuracyMeters = 45;
+    private const double PoorAccuracyRequireMoveMeters = 18;
+    private const double StationaryEnterMoveMeters = 2;
+    private const double StationaryReleaseMoveMeters = 9;
+    private const double StationaryReleaseRawMoveMeters = 5;
+    private const double StationaryReleaseSpeedMetersPerSecond = 1.2;
+    private const double StationaryEnterMaxSpeedMetersPerSecond = 0.35;
+    private const double StationaryEnterMaxAccuracyMeters = 25;
+    private const double RawPoiAssistMaxAccuracyMeters = 30;
+    private static readonly TimeSpan ForegroundTrackingInterval = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan MaxAcceptedLocationAge = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan StationaryLockDebounce = TimeSpan.FromSeconds(6);
+    private static readonly TimeSpan StationaryRelockCooldown = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan LocationPingInterval = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan AutoSelectDebounce = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan AutoSelectSwitchDebounce = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan AutoSelectCooldown = TimeSpan.FromSeconds(6);
+    private static readonly TimeSpan AutoSelectSuppressAfterManualSelection = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan StreamFreshWindow = TimeSpan.FromSeconds(2.6);
+    private static readonly TimeSpan PollFallbackInterval = TimeSpan.FromSeconds(4);
+    private static readonly TimeSpan SimulationStepInterval = TimeSpan.FromMilliseconds(700);
+    private static readonly TimeSpan SimulationPauseAtPoi = TimeSpan.FromSeconds(5);
 
     public event EventHandler<PoiStopItem>? StopSelected;
 
@@ -54,14 +111,17 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
 
     public int TourId { get; private set; }
     public Location? UserLocation { get; private set; }
+    public DateTime LastLocationAppliedAtUtc => _lastLocationAppliedAtUtc;
+    public DateTime LastMapRefreshAtUtc => _lastMapRefreshAtUtc;
 
     public event EventHandler? MapDataChanged;
     public string TourStopsTitle => _localizationManager["tour_stops"];
     public string StopsCountText => _localizationManager.Format("tour_stops_count", PoiStops.Count);
+    public string PoiSimulationButtonText => IsPoiSimulationEnabled ? "Tắt giả lập POI" : "Bật giả lập POI";
 
     private static void Trace(string message)
     {
-        Debug.WriteLine($"[TOUR_DETAIL][{DateTime.Now:HH:mm:ss.fff}] {message}");
+        DiagnosticLogService.Log("TOUR_DETAIL", message);
     }
 
     public TourDetailViewModel(ApiService apiService, DatabaseService dbService)
@@ -79,6 +139,17 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     }
 
     public IAsyncRelayCommand<PoiStopItem> NavigateToZoneDetailCommand { get; }
+    private bool _isPoiSimulationEnabled;
+
+    public bool IsPoiSimulationEnabled
+    {
+        get => _isPoiSimulationEnabled;
+        set
+        {
+            if (!SetProperty(ref _isPoiSimulationEnabled, value)) return;
+            OnPoiSimulationEnabledChanged(value);
+        }
+    }
 
     private void OnPoiStopsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
@@ -112,6 +183,13 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             { "address", Uri.EscapeDataString(stop.Address) },
             { "hours", Uri.EscapeDataString(stop.Hours) }
         };
+
+        if (_trackedEnterZones.Add(stop.ZoneId))
+        {
+            var lat = UserLocation?.Latitude ?? stop.Latitude;
+            var lon = UserLocation?.Longitude ?? stop.Longitude;
+            _ = _apiService.TrackEnterZoneAsync(stop.ZoneId, lat, lon);
+        }
 
         await Shell.Current.GoToAsync(nameof(Views.ZoneDetailPage), parameters);
     }
@@ -152,6 +230,13 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         {
             TourId = newTourId;
             PoiStops.Clear();
+            _trackedEnterZones.Clear();
+            ResetAutoSelectCandidate();
+            _lastAutoSelectTriggeredAtUtc = DateTime.MinValue;
+            _lastAutoSelectTriggeredZoneId = null;
+            _currentAutoInsideZoneId = null;
+            _simulatedLocation = null;
+            ResetStationaryLock();
             IsLoading = false; // reset để LoadData không bị block bởi IsLoading guard
             _locationCts?.Cancel();
             _locationCts?.Dispose();
@@ -258,7 +343,17 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             _locationCts?.Dispose();
             _locationCts = new CancellationTokenSource();
             var token = _locationCts.Token;
-            _ = Task.Run(() => UpdateUserLocationAndDistance(token, forceMapRefresh: true));
+
+            if (_isForegroundTracking)
+            {
+                // Keep continuous tracking alive after data reload.
+                _ = Task.Run(() => ForegroundTrackingLoopAsync(token));
+            }
+            else
+            {
+                // One-shot location refresh when foreground tracking is off.
+                _ = Task.Run(() => UpdateUserLocationAndDistance(token, forceMapRefresh: true));
+            }
         }
         finally
         {
@@ -279,6 +374,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         _locationCts = new CancellationTokenSource();
         // Chạy trên background thread để tránh block main thread khi xin quyền GPS
         _ = Task.Run(() => ForegroundTrackingLoopAsync(_locationCts.Token));
+        _ = Task.Run(() => EnsureLocationListeningAsync(_locationCts.Token));
     }
 
     public void StopForegroundTracking()
@@ -287,22 +383,181 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         _locationCts?.Cancel();
         _locationCts?.Dispose();
         _locationCts = null;
+        _ = Task.Run(StopLocationListeningAsync);
     }
 
     private async Task ForegroundTrackingLoopAsync(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
         {
-            await UpdateUserLocationAndDistance(cancellationToken);
+            if (IsPoiSimulationEnabled)
+            {
+                await SimulatePoiMovementCycleAsync(cancellationToken);
+            }
+            else
+            {
+                await EnsureLocationListeningAsync(cancellationToken);
+                await UpdateUserLocationAndDistance(cancellationToken);
 
-            try
-            {
-                await Task.Delay(ForegroundTrackingInterval, cancellationToken);
+                try
+                {
+                    await Task.Delay(ForegroundTrackingInterval, cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
             }
-            catch (OperationCanceledException)
+        }
+    }
+
+    private async Task EnsureLocationListeningAsync(CancellationToken cancellationToken)
+    {
+        if (IsPoiSimulationEnabled) return;
+
+        await _locationStreamLock.WaitAsync(cancellationToken);
+        try
+        {
+            if (_isLocationListening) return;
+
+            Geolocation.Default.LocationChanged -= OnLocationChanged;
+            Geolocation.Default.LocationChanged += OnLocationChanged;
+
+            var request = new GeolocationListeningRequest(GeolocationAccuracy.Best, TimeSpan.FromSeconds(2));
+            var started = await Geolocation.Default.StartListeningForegroundAsync(request);
+            _isLocationListening = started;
+            Trace($"LOCATION_STREAM started={started}");
+        }
+        catch (Exception ex)
+        {
+            _isLocationListening = false;
+            Trace($"LOCATION_STREAM start failed: {ex.Message}");
+        }
+        finally
+        {
+            _locationStreamLock.Release();
+        }
+    }
+
+    private async Task StopLocationListeningAsync()
+    {
+        await _locationStreamLock.WaitAsync();
+        try
+        {
+            Geolocation.Default.LocationChanged -= OnLocationChanged;
+            if (_isLocationListening)
             {
-                break;
+                Geolocation.Default.StopListeningForeground();
             }
+            _isLocationListening = false;
+        }
+        catch
+        {
+        }
+        finally
+        {
+            _locationStreamLock.Release();
+        }
+    }
+
+    private void OnLocationChanged(object? sender, GeolocationLocationChangedEventArgs e)
+    {
+        var location = e.Location;
+        if (location == null) return;
+
+        _latestStreamLocation = location;
+        _latestStreamLocationAtUtc = DateTime.UtcNow;
+    }
+
+    private void OnPoiSimulationEnabledChanged(bool value)
+    {
+        OnPropertyChanged(nameof(PoiSimulationButtonText));
+        ResetAutoSelectCandidate();
+        _currentAutoInsideZoneId = null;
+        _lastAutoSelectTriggeredZoneId = null;
+        _lastAutoSelectTriggeredAtUtc = DateTime.MinValue;
+        ResetStationaryLock();
+
+        if (!value)
+        {
+            _simulatedLocation = null;
+        }
+    }
+
+    [RelayCommand]
+    private void TogglePoiSimulation()
+    {
+        IsPoiSimulationEnabled = !IsPoiSimulationEnabled;
+        Trace($"POI simulation mode: {(IsPoiSimulationEnabled ? "ON" : "OFF")}");
+    }
+
+    private async Task SimulatePoiMovementCycleAsync(CancellationToken cancellationToken)
+    {
+        var orderedStops = PoiStops.OrderBy(s => s.OrderIndex).ToList();
+        if (orderedStops.Count == 0)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+            return;
+        }
+
+        _simulatedLocation ??= UserLocation ?? new Location(orderedStops[0].Latitude, orderedStops[0].Longitude);
+
+        foreach (var stop in orderedStops)
+        {
+            if (cancellationToken.IsCancellationRequested || !IsPoiSimulationEnabled) return;
+
+            await MoveSimulatedLocationToStopAsync(stop, cancellationToken);
+            if (cancellationToken.IsCancellationRequested || !IsPoiSimulationEnabled) return;
+
+            ForceSelectStopForSimulation(stop);
+
+            var holdUntil = DateTime.UtcNow + SimulationPauseAtPoi;
+            while (DateTime.UtcNow < holdUntil)
+            {
+                if (cancellationToken.IsCancellationRequested || !IsPoiSimulationEnabled) return;
+                await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken);
+            }
+        }
+    }
+
+    private async Task MoveSimulatedLocationToStopAsync(PoiStopItem stop, CancellationToken cancellationToken)
+    {
+        var start = _simulatedLocation ?? UserLocation ?? new Location(stop.Latitude, stop.Longitude);
+        var target = new Location(stop.Latitude, stop.Longitude);
+        var distanceMeters = Location.CalculateDistance(start, target, DistanceUnits.Kilometers) * 1000d;
+        var steps = (int)Math.Clamp(Math.Ceiling(distanceMeters / 12d), 6, 40);
+
+        for (var step = 1; step <= steps; step++)
+        {
+            if (cancellationToken.IsCancellationRequested || !IsPoiSimulationEnabled) return;
+
+            var t = step / (double)steps;
+            var lat = start.Latitude + ((target.Latitude - start.Latitude) * t);
+            var lon = start.Longitude + ((target.Longitude - start.Longitude) * t);
+
+            _simulatedLocation = new Location(lat, lon);
+            ApplyLocationAndRefresh(_simulatedLocation, rawLocationForPoi: null, forceMapRefresh: false, allowAutoSelect: false);
+
+            await Task.Delay(SimulationStepInterval, cancellationToken);
+        }
+
+        _simulatedLocation = target;
+        ApplyLocationAndRefresh(target, rawLocationForPoi: null, forceMapRefresh: false, allowAutoSelect: false);
+    }
+
+    private void ForceSelectStopForSimulation(PoiStopItem stop)
+    {
+        if (PoiStops.FirstOrDefault(x => x.IsSelected)?.ZoneId != stop.ZoneId)
+        {
+            SelectStop(stop, true);
+        }
+
+        _currentAutoInsideZoneId = stop.ZoneId;
+        ResetAutoSelectCandidate();
+
+        if (_trackedEnterZones.Add(stop.ZoneId))
+        {
+            _ = _apiService.TrackEnterZoneAsync(stop.ZoneId, stop.Latitude, stop.Longitude);
         }
     }
 
@@ -418,7 +673,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         }
     }
 
-    private void SelectStop(PoiStopItem stop, bool triggerEvent = true)
+    private void SelectStop(PoiStopItem stop, bool triggerEvent = true, bool fromAutoSelect = false)
     {
         if (stop == null) return;
 
@@ -440,6 +695,18 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         {
             StopSelected?.Invoke(this, stop);
         }
+
+        if (!fromAutoSelect)
+        {
+            // Keep manual selection sticky to avoid immediate auto-switching when nearby POI overlap.
+            _autoSelectSuppressedUntilUtc = DateTime.UtcNow + AutoSelectSuppressAfterManualSelection;
+            _currentAutoInsideZoneId = stop.ZoneId;
+            _currentZoneOutsideSamples = 0;
+            _lastAutoSelectTriggeredAtUtc = DateTime.UtcNow;
+            _lastAutoSelectTriggeredZoneId = stop.ZoneId;
+            ResetAutoSelectCandidate();
+            Trace($"MANUAL_SELECT zone={stop.ZoneId} suppressAuto={AutoSelectSuppressAfterManualSelection.TotalSeconds:0}s");
+        }
     }
 
     public void SelectStopByZoneId(int zoneId)
@@ -453,6 +720,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
 
     private async Task UpdateUserLocationAndDistance(CancellationToken cancellationToken, bool forceMapRefresh = false)
     {
+        var cycleSw = Stopwatch.StartNew();
         try
         {
             if (cancellationToken.IsCancellationRequested) return;
@@ -463,46 +731,85 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
                 return;
             }
 
-            // Ưu tiên: cache tĩnh → LastKnown → GPS với timeout ngắn (1.5s, Low accuracy)
-            UserLocation = _cachedUserLocation
-                ?? await Geolocation.Default.GetLastKnownLocationAsync()
-                ?? await Geolocation.Default.GetLocationAsync(
-                    new GeolocationRequest(GeolocationAccuracy.Low, TimeSpan.FromSeconds(1.5)));
+            // Hybrid strategy:
+            // 1) Prefer latest stream location (low latency, stable cadence)
+            // 2) Fallback to polling only when stream is stale/unavailable
+            var gpsFetchSw = Stopwatch.StartNew();
+            var nowUtc = DateTime.UtcNow;
+            var streamLocation = _latestStreamLocation;
+            var streamAge = _latestStreamLocationAtUtc == DateTime.MinValue
+                ? TimeSpan.MaxValue
+                : nowUtc - _latestStreamLocationAtUtc;
 
-            if (UserLocation != null)
+            Location? freshLocation = null;
+            var source = "stream";
+            if (streamLocation != null && streamAge <= StreamFreshWindow)
             {
-                _cachedUserLocation = UserLocation;
+                freshLocation = streamLocation;
             }
-
-            if (UserLocation == null)
+            else if (_lastPollingAttemptAtUtc == DateTime.MinValue || nowUtc - _lastPollingAttemptAtUtc >= PollFallbackInterval)
             {
+                _lastPollingAttemptAtUtc = nowUtc;
+                source = "poll";
+                var highAccuracyFix = await Geolocation.Default.GetLocationAsync(
+                    new GeolocationRequest(GeolocationAccuracy.High, TimeSpan.FromSeconds(1.5)),
+                    cancellationToken);
+                freshLocation = highAccuracyFix
+                    ?? await Geolocation.Default.GetLocationAsync(
+                        new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(0.9)),
+                        cancellationToken);
+            }
+            else
+            {
+                source = "stream-stale-no-poll";
+            }
+            var gpsFetchMs = gpsFetchSw.ElapsedMilliseconds;
+
+            var rawLocation = freshLocation
+                ?? await Geolocation.Default.GetLastKnownLocationAsync()
+                ?? _cachedUserLocation;
+
+            if (rawLocation == null)
+            {
+                Trace($"GPS cycle skipped: no location source (elapsed={cycleSw.ElapsedMilliseconds}ms)");
                 return;
             }
 
-            if (cancellationToken.IsCancellationRequested) return;
-
-            foreach (var stop in PoiStops)
+            var hasFreshFixForAutoSelect = freshLocation != null && !IsLocationStale(freshLocation);
+            if (freshLocation == null)
             {
-                var distanceKm = Location.CalculateDistance(
-                    UserLocation,
-                    new Location(stop.Latitude, stop.Longitude),
-                    DistanceUnits.Kilometers);
-
-                stop.DistanceText = $"{distanceKm:0.0} km";
+                source = "fallback-lastKnown/cache";
+            }
+            var rawAccuracy = GetLocationAccuracyMeters(rawLocation);
+            var rawAgeSeconds = rawLocation.Timestamp == default
+                ? -1
+                : (DateTimeOffset.UtcNow - rawLocation.Timestamp).TotalSeconds;
+            if (IsLocationStale(rawLocation) && _cachedUserLocation != null)
+            {
+                rawLocation = _cachedUserLocation;
+                hasFreshFixForAutoSelect = false;
+                source = "cache-because-stale";
             }
 
-            var selectionChanged = TryAutoSelectNearestStop(UserLocation);
-            var shouldRefreshMap = forceMapRefresh || selectionChanged || ShouldRefreshMapByMovement(UserLocation);
-
-            if (shouldRefreshMap)
-            {
-                _lastMapRefreshLocation = UserLocation;
-                MapDataChanged?.Invoke(this, EventArgs.Empty);
-            }
+            var stabilized = StabilizeLocation(rawLocation);
+            var displayLocation = ApplyStationaryLock(stabilized, rawLocation);
+            var rawToDisplayMeters = Location.CalculateDistance(rawLocation, displayLocation, DistanceUnits.Kilometers) * 1000d;
+            Trace(
+                $"GPS source={source} raw=({rawLocation.Latitude:F6},{rawLocation.Longitude:F6}) " +
+                $"display=({displayLocation.Latitude:F6},{displayLocation.Longitude:F6}) " +
+                $"rawAcc={rawAccuracy:0.0}m rawAge={(rawAgeSeconds < 0 ? "n/a" : $"{rawAgeSeconds:0.0}s")} " +
+                $"freshForAuto={hasFreshFixForAutoSelect} fetchMs={gpsFetchMs} " +
+                $"rawToDisplay={rawToDisplayMeters:0.0}m");
+            ApplyLocationAndRefresh(displayLocation, rawLocation, forceMapRefresh, allowAutoSelect: hasFreshFixForAutoSelect);
         }
-        catch
+        catch (Exception ex)
         {
             // Keep default "--" if location unavailable.
+            Trace($"GPS cycle error: {ex.Message}");
+        }
+        finally
+        {
+            Trace($"GPS cycle end elapsed={cycleSw.ElapsedMilliseconds}ms");
         }
     }
 
@@ -537,11 +844,51 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         }
     }
 
-    private bool TryAutoSelectNearestStop(Location userLocation)
+    private bool TryAutoSelectNearestStop(Location userLocation, Location? rawLocation)
     {
-        if (PoiStops.Count == 0)
+        if (DateTime.UtcNow < _autoSelectSuppressedUntilUtc)
         {
             return false;
+        }
+
+        if (PoiStops.Count == 0)
+        {
+            _currentAutoInsideZoneId = null;
+            _lastAutoSelectTriggeredZoneId = null;
+            return false;
+        }
+
+        if (_currentAutoInsideZoneId is int currentZoneId)
+        {
+            var currentStop = PoiStops.FirstOrDefault(x => x.ZoneId == currentZoneId);
+            if (currentStop != null)
+            {
+                var currentDistanceMeters = GetPoiDistanceMeters(currentStop, userLocation, rawLocation);
+
+                var userAccuracyCompensation = GetAccuracyCompensationMeters(userLocation);
+                var currentTriggerRadius = Math.Max(
+                    currentStop.Radius > 0 ? currentStop.Radius : GeofenceTriggerMeters,
+                    MinPracticalGeofenceMeters);
+                var exitRadius = (currentTriggerRadius * GeofenceExitHysteresisFactor) + userAccuracyCompensation;
+                if (currentDistanceMeters <= exitRadius)
+                {
+                    _currentZoneOutsideSamples = 0;
+                    ResetAutoSelectCandidate();
+                    return false;
+                }
+
+                _currentZoneOutsideSamples += 1;
+                if (_currentZoneOutsideSamples < CurrentZoneExitConfirmSamples)
+                {
+                    Trace($"AUTO_SELECT keep zone={currentZoneId} outsideSamples={_currentZoneOutsideSamples}/{CurrentZoneExitConfirmSamples}");
+                    ResetAutoSelectCandidate();
+                    return false;
+                }
+            }
+
+            _currentAutoInsideZoneId = null;
+            _lastAutoSelectTriggeredZoneId = null;
+            _currentZoneOutsideSamples = 0;
         }
 
         PoiStopItem? nearestStop = null;
@@ -549,10 +896,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
 
         foreach (var stop in PoiStops)
         {
-            var distanceMeters = Location.CalculateDistance(
-                userLocation,
-                new Location(stop.Latitude, stop.Longitude),
-                DistanceUnits.Kilometers) * 1000d;
+            var distanceMeters = GetPoiDistanceMeters(stop, userLocation, rawLocation);
 
             if (distanceMeters < nearestDistanceMeters)
             {
@@ -563,36 +907,350 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
 
         if (nearestStop == null)
         {
+            ResetAutoSelectCandidate();
             return false;
         }
 
-        // Use the stop's radius if available, otherwise fallback to GeofenceTriggerMeters (80m)
-        double triggerRadius = nearestStop.Radius > 0 ? nearestStop.Radius : GeofenceTriggerMeters;
+        var entryAccuracyCompensationMeters = GetEntryAccuracyCompensationMeters(userLocation, rawLocation);
+        var adjustedDistanceMeters = Math.Max(0d, nearestDistanceMeters - entryAccuracyCompensationMeters);
 
-        if (nearestDistanceMeters > triggerRadius)
+        // Use the stop's radius if available, otherwise fallback to GeofenceTriggerMeters (80m).
+        // Keep a practical minimum radius to tolerate real-world GPS drift.
+        double triggerRadius = Math.Max(
+            nearestStop.Radius > 0 ? nearestStop.Radius : GeofenceTriggerMeters,
+            MinPracticalGeofenceMeters);
+
+        if (adjustedDistanceMeters > triggerRadius)
         {
+            ResetAutoSelectCandidate();
             return false;
         }
 
         var currentSelected = PoiStops.FirstOrDefault(x => x.IsSelected);
         if (currentSelected?.ZoneId == nearestStop.ZoneId)
         {
+            ResetAutoSelectCandidate();
             return false;
         }
 
-        SelectStop(nearestStop, true);
+        var nowUtc = DateTime.UtcNow;
+        var isSwitchingBetweenStops = currentSelected != null && currentSelected.ZoneId != nearestStop.ZoneId;
+        var requiredDebounce = isSwitchingBetweenStops ? AutoSelectSwitchDebounce : AutoSelectDebounce;
+
+        if (isSwitchingBetweenStops && adjustedDistanceMeters > AutoSwitchRequireDistanceMeters)
+        {
+            ResetAutoSelectCandidate();
+            return false;
+        }
+
+        if (_autoSelectCandidateZoneId != nearestStop.ZoneId)
+        {
+            _autoSelectCandidateZoneId = nearestStop.ZoneId;
+            _autoSelectCandidateSinceUtc = nowUtc;
+            _candidateInsideSamples = 1;
+            Trace(
+                $"AUTO_SELECT candidate zone={nearestStop.ZoneId} dist={adjustedDistanceMeters:0.0}m " +
+                $"radius={triggerRadius:0.0}m debounce={requiredDebounce.TotalSeconds:0.0}s");
+            return false;
+        }
+
+        _candidateInsideSamples += 1;
+        if (_candidateInsideSamples < CandidateEnterConfirmSamples)
+        {
+            return false;
+        }
+
+        if (nowUtc - _autoSelectCandidateSinceUtc < requiredDebounce)
+        {
+            return false;
+        }
+
+        if (_lastAutoSelectTriggeredAtUtc != DateTime.MinValue
+            && nowUtc - _lastAutoSelectTriggeredAtUtc < AutoSelectCooldown
+            && _lastAutoSelectTriggeredZoneId != nearestStop.ZoneId)
+        {
+            return false;
+        }
+
+        SelectStop(nearestStop, true, fromAutoSelect: true);
+        _currentAutoInsideZoneId = nearestStop.ZoneId;
+        _lastAutoSelectTriggeredAtUtc = nowUtc;
+        _lastAutoSelectTriggeredZoneId = nearestStop.ZoneId;
+        _currentZoneOutsideSamples = 0;
+        ResetAutoSelectCandidate();
+        Trace(
+            $"AUTO_SELECT TRIGGERED zone={nearestStop.ZoneId} dist={adjustedDistanceMeters:0.0}m " +
+            $"radius={triggerRadius:0.0}m");
+
+        if (_trackedEnterZones.Add(nearestStop.ZoneId))
+        {
+            _ = _apiService.TrackEnterZoneAsync(nearestStop.ZoneId, userLocation.Latitude, userLocation.Longitude);
+        }
+
         return true;
     }
 
-    private bool ShouldRefreshMapByMovement(Location userLocation)
+    private bool ShouldRefreshMapByMovement(Location userLocation, out double movedMeters)
     {
         if (_lastMapRefreshLocation == null)
         {
+            movedMeters = -1;
             return true;
         }
 
-        var movedMeters = Location.CalculateDistance(_lastMapRefreshLocation, userLocation, DistanceUnits.Kilometers) * 1000d;
+        movedMeters = Location.CalculateDistance(_lastMapRefreshLocation, userLocation, DistanceUnits.Kilometers) * 1000d;
         return movedMeters >= MapRefreshMoveThresholdMeters;
+    }
+
+    private void ResetStationaryLock()
+    {
+        _isStationaryLocked = false;
+        _stationaryAnchorLocation = null;
+        _stationaryCandidateSinceUtc = DateTime.MinValue;
+    }
+
+    private Location ApplyStationaryLock(Location stabilizedLocation, Location rawLocation)
+    {
+        var nowUtc = DateTime.UtcNow;
+        if (_cachedUserLocation == null)
+        {
+            return stabilizedLocation;
+        }
+
+        var movedFromPreviousMeters = Location.CalculateDistance(
+            _cachedUserLocation,
+            stabilizedLocation,
+            DistanceUnits.Kilometers) * 1000d;
+
+        if (_isStationaryLocked)
+        {
+            var anchor = _stationaryAnchorLocation ?? _cachedUserLocation;
+            var movedFromAnchorMeters = Location.CalculateDistance(
+                anchor,
+                stabilizedLocation,
+                DistanceUnits.Kilometers) * 1000d;
+            var rawMovedFromAnchorMeters = Location.CalculateDistance(
+                anchor,
+                rawLocation,
+                DistanceUnits.Kilometers) * 1000d;
+
+            var speed = rawLocation.Speed.GetValueOrDefault();
+            if (movedFromAnchorMeters >= StationaryReleaseMoveMeters
+                || rawMovedFromAnchorMeters >= StationaryReleaseRawMoveMeters
+                || (speed > 0 && speed >= StationaryReleaseSpeedMetersPerSecond))
+            {
+                ResetStationaryLock();
+                _stationaryLockSuppressedUntilUtc = nowUtc + StationaryRelockCooldown;
+                return stabilizedLocation;
+            }
+
+            return anchor;
+        }
+
+        if (nowUtc < _stationaryLockSuppressedUntilUtc)
+        {
+            return stabilizedLocation;
+        }
+
+        var speedForEnter = rawLocation.Speed.GetValueOrDefault();
+        var accuracyForEnter = GetLocationAccuracyMeters(rawLocation);
+        if (movedFromPreviousMeters <= StationaryEnterMoveMeters)
+        {
+            if ((speedForEnter <= 0 || speedForEnter <= StationaryEnterMaxSpeedMetersPerSecond)
+                && (accuracyForEnter <= 0 || accuracyForEnter <= StationaryEnterMaxAccuracyMeters))
+            {
+                if (_stationaryCandidateSinceUtc == DateTime.MinValue)
+                {
+                    _stationaryCandidateSinceUtc = nowUtc;
+                }
+                else if (nowUtc - _stationaryCandidateSinceUtc >= StationaryLockDebounce)
+                {
+                    _isStationaryLocked = true;
+                    _stationaryAnchorLocation = _cachedUserLocation;
+                    return _stationaryAnchorLocation;
+                }
+            }
+            else
+            {
+                _stationaryCandidateSinceUtc = DateTime.MinValue;
+            }
+        }
+        else
+        {
+            _stationaryCandidateSinceUtc = DateTime.MinValue;
+        }
+
+        return stabilizedLocation;
+    }
+
+    private static double GetPoiDistanceMeters(PoiStopItem stop, Location displayLocation, Location? rawLocation)
+    {
+        var stopLocation = new Location(stop.Latitude, stop.Longitude);
+        var displayDistance = Location.CalculateDistance(displayLocation, stopLocation, DistanceUnits.Kilometers) * 1000d;
+
+        if (!IsRawPoiAssistUsable(rawLocation))
+        {
+            return displayDistance;
+        }
+
+        var rawDistance = Location.CalculateDistance(rawLocation!, stopLocation, DistanceUnits.Kilometers) * 1000d;
+        return Math.Min(displayDistance, rawDistance);
+    }
+
+    private static bool IsRawPoiAssistUsable(Location? rawLocation)
+    {
+        if (rawLocation == null)
+        {
+            return false;
+        }
+
+        var accuracy = GetLocationAccuracyMeters(rawLocation);
+        if (accuracy <= 0)
+        {
+            return false;
+        }
+
+        return accuracy <= RawPoiAssistMaxAccuracyMeters;
+    }
+
+    private void ResetAutoSelectCandidate()
+    {
+        _autoSelectCandidateZoneId = null;
+        _autoSelectCandidateSinceUtc = DateTime.MinValue;
+        _candidateInsideSamples = 0;
+    }
+
+    private static Location StabilizeLocation(Location rawLocation)
+    {
+        if (_cachedUserLocation == null)
+        {
+            return rawLocation;
+        }
+
+        var movedMeters = Location.CalculateDistance(_cachedUserLocation, rawLocation, DistanceUnits.Kilometers) * 1000d;
+        var rawAccuracyMeters = GetLocationAccuracyMeters(rawLocation);
+        if (rawAccuracyMeters > MaxAcceptableGpsAccuracyMeters && movedMeters < PoorAccuracyRequireMoveMeters)
+        {
+            // Bỏ fix quá nhiễu khi người dùng gần như chưa di chuyển.
+            return _cachedUserLocation;
+        }
+
+        if (rawAccuracyMeters > 0 && rawAccuracyMeters <= GoodAccuracySkipSmoothingMeters && movedMeters >= GpsSmoothingThresholdMeters)
+        {
+            return rawLocation;
+        }
+
+        if (movedMeters < GpsJitterIgnoreMeters)
+        {
+            return _cachedUserLocation;
+        }
+
+        if (movedMeters < GpsSmoothingThresholdMeters)
+        {
+            var lat = _cachedUserLocation.Latitude + ((rawLocation.Latitude - _cachedUserLocation.Latitude) * GpsSmoothingAlpha);
+            var lon = _cachedUserLocation.Longitude + ((rawLocation.Longitude - _cachedUserLocation.Longitude) * GpsSmoothingAlpha);
+            return new Location(lat, lon);
+        }
+
+        return rawLocation;
+    }
+
+    private static bool IsLocationStale(Location location)
+    {
+        if (location.Timestamp == default)
+        {
+            return false;
+        }
+
+        return DateTimeOffset.UtcNow - location.Timestamp > MaxAcceptedLocationAge;
+    }
+
+    private static double GetAccuracyCompensationMeters(Location location)
+    {
+        var accuracy = GetLocationAccuracyMeters(location);
+        if (accuracy <= 0)
+        {
+            return 0;
+        }
+
+        return Math.Min(accuracy, MaxGpsAccuracyCompensationMeters);
+    }
+
+    private static double GetEntryAccuracyCompensationMeters(Location displayLocation, Location? rawLocation)
+    {
+        var displayAcc = GetLocationAccuracyMeters(displayLocation);
+        var rawAcc = rawLocation == null ? 0 : GetLocationAccuracyMeters(rawLocation);
+
+        var bestAcc = displayAcc > 0 && rawAcc > 0
+            ? Math.Min(displayAcc, rawAcc)
+            : Math.Max(displayAcc, rawAcc);
+
+        if (bestAcc <= 0 || bestAcc > EntryAccuracyCompensationEligibleMeters)
+        {
+            return 0;
+        }
+
+        // Entry compensation chỉ nhỏ để tránh false-positive lúc còn ở ngoài zone.
+        return Math.Min(bestAcc * 0.35d, MaxEntryAccuracyCompensationMeters);
+    }
+
+    private static double GetLocationAccuracyMeters(Location location)
+    {
+        var accuracy = location.Accuracy;
+        if (!accuracy.HasValue || accuracy.Value <= 0)
+        {
+            return 0;
+        }
+
+        return accuracy.Value;
+    }
+
+    private void ApplyLocationAndRefresh(Location location, Location? rawLocationForPoi, bool forceMapRefresh, bool allowAutoSelect)
+    {
+        var nowUtc = DateTime.UtcNow;
+        var applySeq = Interlocked.Increment(ref _locationApplySeq);
+        var sinceLastApplyMs = _lastLocationAppliedAtUtc == DateTime.MinValue
+            ? -1d
+            : (nowUtc - _lastLocationAppliedAtUtc).TotalMilliseconds;
+        _lastLocationAppliedAtUtc = nowUtc;
+
+        UserLocation = location;
+        _cachedUserLocation = location;
+
+        if (DateTime.UtcNow - _lastLocationPingAtUtc >= LocationPingInterval)
+        {
+            _lastLocationPingAtUtc = DateTime.UtcNow;
+            _ = _apiService.TrackLocationPingAsync(location.Latitude, location.Longitude);
+        }
+
+        foreach (var stop in PoiStops)
+        {
+            var distanceKm = Location.CalculateDistance(
+                location,
+                new Location(stop.Latitude, stop.Longitude),
+                DistanceUnits.Kilometers);
+
+            stop.DistanceText = $"{distanceKm:0.0} km";
+        }
+
+        var selectionChanged = allowAutoSelect && TryAutoSelectNearestStop(location, rawLocationForPoi);
+        var movementTriggered = ShouldRefreshMapByMovement(location, out var movedSinceMapRefreshMeters);
+        var shouldRefreshMap = forceMapRefresh || selectionChanged || movementTriggered;
+        var rawPoiAcc = rawLocationForPoi == null ? 0 : GetLocationAccuracyMeters(rawLocationForPoi);
+        Trace(
+            $"APPLY#{applySeq} dt={(sinceLastApplyMs < 0 ? "n/a" : $"{sinceLastApplyMs:0}ms")} " +
+            $"loc=({location.Latitude:F6},{location.Longitude:F6}) rawPoiAcc={rawPoiAcc:0.0}m " +
+            $"refresh?={shouldRefreshMap} force={forceMapRefresh} select={selectionChanged} " +
+            $"moveTrigger={movementTriggered} moveSinceMap={(movedSinceMapRefreshMeters < 0 ? "n/a" : $"{movedSinceMapRefreshMeters:0.0}m")}");
+
+        if (shouldRefreshMap)
+        {
+            _lastMapRefreshLocation = location;
+            _lastMapRefreshAtUtc = nowUtc;
+            var refreshSeq = Interlocked.Increment(ref _mapRefreshSeq);
+            Trace($"MAP_REFRESH#{refreshSeq} emit MapDataChanged");
+            MapDataChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 }
 

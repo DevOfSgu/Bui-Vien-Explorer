@@ -18,7 +18,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
 
         public async Task<IActionResult> Index()
         {
-            // load current admin profile and system preferences
+            // load current admin profile
             var username = User.Identity?.Name;
             if (string.IsNullOrEmpty(username))
                 return Challenge("AdminAuth");
@@ -32,10 +32,6 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 FullName = admin.FullName,
                 Email = admin.Email,
             };
-            var lang = await _db.AppSettings.FindAsync("DefaultLanguage");
-            var api = await _db.AppSettings.FindAsync("EnableApiSync");
-            vm.DefaultLanguage = lang?.Value ?? "vi";
-            vm.EnableApiSync = api != null && api.Value == "1";
 
             return View(vm);
         }
@@ -56,44 +52,11 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             admin.Email = vm.Email;
             if (!string.IsNullOrEmpty(vm.Password))
             {
-                admin.PasswordHash = vm.Password;
-            }
-
-            // settings
-            var lang = await _db.AppSettings.FindAsync("DefaultLanguage");
-            if (lang == null)
-            {
-                _db.AppSettings.Add(new TravelSystem.Shared.Models.AppSetting
-                {
-                    Key = "DefaultLanguage",
-                    Value = vm.DefaultLanguage,
-                    UpdatedAt = DateTime.UtcNow
-                });
-            }
-            else
-            {
-                lang.Value = vm.DefaultLanguage;
-                lang.UpdatedAt = DateTime.UtcNow;
-            }
-
-            var api = await _db.AppSettings.FindAsync("EnableApiSync");
-            if (api == null)
-            {
-                _db.AppSettings.Add(new TravelSystem.Shared.Models.AppSetting
-                {
-                    Key = "EnableApiSync",
-                    Value = vm.EnableApiSync ? "1" : "0",
-                    UpdatedAt = DateTime.UtcNow
-                });
-            }
-            else
-            {
-                api.Value = vm.EnableApiSync ? "1" : "0";
-                api.UpdatedAt = DateTime.UtcNow;
+                admin.PasswordHash = Helpers.PasswordHelper.HashPassword(admin, vm.Password);
             }
 
             await _db.SaveChangesAsync();
-            TempData["Success"] = "Settings updated successfully.";
+            TempData["Success"] = "Cập nhật thông tin thành công.";
             return RedirectToAction();
         }
     }

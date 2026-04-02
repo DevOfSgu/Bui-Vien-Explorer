@@ -1,7 +1,7 @@
 @using TravelSystem.Shared.Models
 @model IEnumerable<Narration>
 @{
-    ViewData["Title"] = "Audio & Narrations";
+    ViewData["Title"] = "Âm thanh & thuyết minh";
 }
 
 <div class="header-actions">
@@ -11,15 +11,15 @@
             <a asp-controller="Zones" asp-action="Index" class="btn btn-outline-secondary" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                 <i class="fa-solid fa-arrow-left"></i>
             </a>
-            <div class="page-title">TTS Scripts for @(ViewBag.ZoneName ?? "Zone")</div>
+            <div class="page-title">Kịch bản TTS của @(ViewBag.ZoneName ?? "Zone")</div>
         }
         else
         {
-            <div class="page-title">Audio & Narrations</div>
+            <div class="page-title">Âm thanh & thuyết minh</div>
         }
     </div>
     <div class="badge bg-warning text-dark px-3 py-2" style="font-size: 13px;">
-        <i class="fa-solid fa-shield-halved me-1"></i> Review Mode
+        <i class="fa-solid fa-shield-halved me-1"></i> Chế độ kiểm duyệt
     </div>
 </div>
 
@@ -36,15 +36,15 @@
     <div class="d-flex justify-content-between mb-4 pb-3 border-bottom border-light">
         <div class="search-container">
             <i class="fa-solid fa-search"></i>
-            <input type="text" class="search-bar" style="width: 400px; background-color: #fff; border: 1px solid #edf2f9;" placeholder="Search audio files...">
+            <input type="text" class="search-bar" style="width: 400px; background-color: #fff; border: 1px solid #edf2f9;" placeholder="Tìm kiếm file âm thanh...">
         </div>
         
         <div class="d-flex gap-2">
             <select class="form-select text-muted" style="width: 200px; border-color: #edf2f9; font-size: 14px;">
-                <option>All Languages</option>
-                <option>English</option>
-                <option>Vietnamese</option>
-                <option>Korean</option>
+                <option>Tất cả ngôn ngữ</option>
+                <option>Tiếng Anh</option>
+                <option>Tiếng Việt</option>
+                <option>Tiếng Hàn</option>
             </select>
             <button class="btn btn-outline-secondary" style="border-color:#edf2f9;"><i class="fa-solid fa-filter text-muted"></i></button>
         </div>
@@ -56,65 +56,65 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>ASSIGNED ZONE</th>
-                    <th>LANGUAGE</th>
-                    <th>SCRIPT PREVIEW</th>
-                    <th>STATUS</th>
-                    <th>ACTIONS</th>
+                    <th>KHU VỰC</th>
+                    <th>NGÔN NGỮ</th>
+                    <th>XEM NHANH NỘI DUNG</th>
+                    <th>TRẠNG THÁI</th>
+                    <th>THAO TÁC</th>
                 </tr>
             </thead>
             <tbody>
                 @if(!Model.Any()) {
-                    <tr><td colspan="5" class="text-center text-muted border-bottom-0 pb-4 pt-4">No scripts found. Add a new script to start.</td></tr>
+                    <tr><td colspan="5" class="text-center text-muted border-bottom-0 pb-4 pt-4">Không tìm thấy kịch bản nào.</td></tr>
                 }
                 @foreach(var item in Model) {
                     <tr>
                         <td class="text-muted">A-@item.Id.ToString("000")</td>
                         <td>
-                            <div class="text-dark fw-bold">@(ViewBag.ZonesMap != null && ViewBag.ZonesMap.ContainsKey(item.ZoneId) ? ViewBag.ZonesMap[item.ZoneId] : "Unknown")</div>
+                            <div class="text-dark fw-bold">@(ViewBag.ZonesMap != null && ViewBag.ZonesMap.ContainsKey(item.ZoneId) ? ViewBag.ZonesMap[item.ZoneId] : "Không xác định")</div>
                         </td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
-                                @if(item.Language == "vi") { <img src="https://flagcdn.com/w20/vn.png" width="20" alt="VN"> <span class="text-dark">Vietnamese</span> }
-                                else if(item.Language == "en") { <img src="https://flagcdn.com/w20/gb.png" width="20" alt="UK"> <span class="text-dark">English</span> }
-                                else if(item.Language == "ko") { <img src="https://flagcdn.com/w20/kr.png" width="20" alt="KR"> <span class="text-dark">Korean</span> }
-                                else if(item.Language == "ja") { <img src="https://flagcdn.com/w20/jp.png" width="20" alt="JP"> <span class="text-dark">Japanese</span> }
+                                @if(item.Language == "vi") { <img src="https://flagcdn.com/w20/vn.png" width="20" alt="VN"> <span class="text-dark">Tiếng Việt</span> }
+                                else if(item.Language == "en") { <img src="https://flagcdn.com/w20/gb.png" width="20" alt="UK"> <span class="text-dark">Tiếng Anh</span> }
+                                else if(item.Language == "ko") { <img src="https://flagcdn.com/w20/kr.png" width="20" alt="KR"> <span class="text-dark">Tiếng Hàn</span> }
+                                else if(item.Language == "ja") { <img src="https://flagcdn.com/w20/jp.png" width="20" alt="JP"> <span class="text-dark">Tiếng Nhật</span> }
                                 else { <span class="text-dark">@item.Language</span> }
                             </div>
                         </td>
                         <td class="text-muted"><small>@item.Text.Substring(0, Math.Min(item.Text.Length, 40))...</small></td>
                         <td>
                             @if(item.ApprovalStatus == "Pending") {
-                                <span class="badge bg-warning text-dark"><i class="fa-solid fa-clock"></i> Pending</span>
+                                <span class="badge bg-warning text-dark"><i class="fa-solid fa-clock"></i> Chờ duyệt</span>
                             } else if (item.ApprovalStatus == "Approved") {
-                                <span class="badge bg-success"><i class="fa-solid fa-check"></i> Approved</span>
+                                <span class="badge bg-success"><i class="fa-solid fa-check"></i> Đã duyệt</span>
                             } else {
-                                <span class="badge bg-danger"><i class="fa-solid fa-xmark"></i> Rejected</span>
+                                <span class="badge bg-danger"><i class="fa-solid fa-xmark"></i> Từ chối</span>
                             }
                         </td>
                         <td>
                             <div class="d-flex gap-2">
                                 @if (item.ApprovalStatus == "Pending") {
                                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" style="border-radius: 6px;">
-                                        <i class="fa-solid fa-eye"></i> View
+                                        <i class="fa-solid fa-eye"></i> Xem
                                     </a>
                                     <form asp-action="Approve" method="post" style="display:inline;">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@item.Id" />
                                         <button type="submit" class="btn btn-sm btn-success" style="border-radius: 6px;">
-                                            <i class="fa-solid fa-check"></i> Approve
+                                            <i class="fa-solid fa-check"></i> Duyệt
                                         </button>
                                     </form>
                                     <form asp-action="Reject" method="post" style="display:inline;">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@item.Id" />
                                         <button type="submit" class="btn btn-sm btn-danger" style="border-radius: 6px;">
-                                            <i class="fa-solid fa-xmark"></i> Reject
+                                            <i class="fa-solid fa-xmark"></i> Từ chối
                                         </button>
                                     </form>
                                 } else {
                                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" style="border-radius: 6px;">
-                                        <i class="fa-solid fa-eye"></i> View
+                                        <i class="fa-solid fa-eye"></i> Xem
                                     </a>
                                 }
                             </div>
@@ -135,7 +135,7 @@
             int from = (currentPage - 1) * pageSize + 1;
             int to = Math.Min(currentPage * pageSize, totalCount);
         }
-        <span class="text-muted" style="font-size: 13px;">Showing <span class="fw-bold text-dark">@from</span> to <span class="fw-bold text-dark">@to</span> of <span class="fw-bold text-dark">@totalCount</span> results</span>
+        <span class="text-muted" style="font-size: 13px;">Hiển thị <span class="fw-bold text-dark">@from</span> đến <span class="fw-bold text-dark">@to</span> trên tổng <span class="fw-bold text-dark">@totalCount</span> kết quả</span>
         <nav>
             <ul class="pagination pagination-sm mb-0">
                 <li class="page-item @(currentPage == 1 ? "disabled" : "")">

@@ -233,7 +233,7 @@
         <div class="d-flex gap-2">
             <a asp-action="Index" class="btn btn-outline-secondary px-4">Hủy bỏ</a>
             <button type="submit" class="btn btn-danger btn-create">
-                <i class="fa-solid fa-check me-2"></i>Cập nhật
+                <i class="fa-solid fa-check me-2"></i>Tạo tour
             </button>
         </div>
     </div>
@@ -242,13 +242,13 @@
         <!-- Left Panel: Zone Selection -->
         <div class="panel-card">
             <div class="panel-header">
-                <h6 class="panel-title">Điểm tham quan</h6>
+                <h6 class="panel-title">POI</h6>
                 <span class="badge bg-light text-muted fw-normal">Sẵn có</span>
             </div>
             <div class="panel-body">
                 <div class="search-input-container">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" class="form-control search-input" id="zoneSearch" placeholder="Tìm kiếm điểm tham quan..." />
+                    <input type="text" class="form-control search-input" id="zoneSearch" placeholder="Tìm kiếm POI..." />
                 </div>
 
                 <div id="availableZones">
@@ -319,12 +319,12 @@
         <div class="panel-card">
             <div class="panel-header">
                 <h6 class="panel-title">Lộ trình tham quan</h6>
-                <span class="badge bg-dark rounded-pill" id="poiCount">0 điểm</span>
+                <span class="badge bg-dark rounded-pill" id="poiCount">0 POI</span>
             </div>
             <div class="panel-body" id="itineraryContainer">
                 <div id="emptyItinerary" class="text-center py-5 text-muted">
                     <i class="fa-solid fa-route fa-3x mb-3 opacity-25"></i>
-                    <p class="small">Kéo thả hoặc click (+) để thêm điểm vào lộ trình</p>
+                    <p class="small">Kéo thả hoặc click (+) để thêm POI vào lộ trình</p>
                 </div>
                 
                 <div id="sortableItinerary">
@@ -390,7 +390,7 @@
             });
 
             const count = items.length;
-            poiCountBadge.innerText = `${count} điểm`;
+            poiCountBadge.innerText = `${count} POI`;
             emptyItinerary.style.display = count > 0 ? 'none' : 'block';
         }
 

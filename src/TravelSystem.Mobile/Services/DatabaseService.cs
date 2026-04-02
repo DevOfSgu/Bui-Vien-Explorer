@@ -179,6 +179,53 @@ public class DatabaseService
         }
     }
 
+    // Local analytics helpers
+    public async Task InsertLocalAnalyticsAsync(LocalAnalytics analytics)
+    {
+        try
+        {
+            await InitializeAsync();
+            await _connection.InsertAsync(analytics);
+        }
+        catch
+        {
+        }
+    }
+
+    public async Task<List<LocalAnalytics>> GetUnsyncedAnalyticsAsync(int take = 200)
+    {
+        try
+        {
+            await InitializeAsync();
+            return await _connection.Table<LocalAnalytics>()
+                .Where(a => a.IsSynced == 0)
+                .OrderBy(a => a.Id)
+                .Take(take)
+                .ToListAsync();
+        }
+        catch
+        {
+            return new List<LocalAnalytics>();
+        }
+    }
+
+    public async Task MarkLocalAnalyticsSyncedAsync(int id)
+    {
+        try
+        {
+            await InitializeAsync();
+            var existing = await _connection.Table<LocalAnalytics>().FirstOrDefaultAsync(a => a.Id == id);
+            if (existing != null)
+            {
+                existing.IsSynced = 1;
+                await _connection.UpdateAsync(existing);
+            }
+        }
+        catch
+        {
+        }
+    }
+
     public async Task ReplaceLocalFavoritesForGuestAsync(string guestId, List<LocalFavorite> favorites)
     {
         try

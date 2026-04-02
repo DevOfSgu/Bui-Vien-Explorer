@@ -4,6 +4,8 @@ using System.Net.Http.Json;
 using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Linq;
+using System.Net.Http.Headers;
+using System.Globalization;
 using TravelSystem.Shared.Models;
 
 namespace TravelSystem.Mobile.Services;
@@ -13,11 +15,22 @@ public class ApiService
     private readonly HttpClient _httpClient;
     private readonly ILogger<ApiService> _logger;
     private readonly DatabaseService _dbService;
+    private readonly SemaphoreSlim _guestIdLock = new(1, 1);
+    private readonly SemaphoreSlim _analyticsSessionLock = new(1, 1);
+    private readonly SemaphoreSlim _installSyncLock = new(1, 1);
+    private readonly SemaphoreSlim _analyticsSyncLock = new(1, 1);
     private readonly ConcurrentDictionary<int, IReadOnlyList<TourStopDto>> _tourStopsCache = new();
     private IReadOnlyList<TourSummaryDto>? _toursMemoryCache;
     private static readonly TimeSpan TourStopsRequestTimeout = TimeSpan.FromSeconds(3);
     private static readonly JsonSerializerOptions CacheJsonOptions = new() { PropertyNameCaseInsensitive = true };
     private const string ToursCacheKey = "cache_tours_v1";
+    private static readonly HashSet<string> AllowedAnalyticsActions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "AppInstall",
+        "EnterZone",
+        "PlayNarration",
+        "LocationPing"
+    };
 
     public ApiService(ILogger<ApiService> logger, DatabaseService dbService)
     {
@@ -27,6 +40,9 @@ public class ApiService
         {
             Timeout = TimeSpan.FromSeconds(30) // Increased for initial sync
         };
+        // Prevent ngrok browser warning page from being returned to API calls.
+        _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("ngrok-skip-browser-warning", "true");
+        _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         _logger.LogInformation("[API] Initialized with BaseUrl: {BaseUrl}", ApiConstants.GetBaseApiUrl());
     }
 
@@ -281,21 +297,35 @@ public class ApiService
     {
         try
         {
-            if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
-            {
+            var toursUri = BuildUri(ApiConstants.ToursEndpoint);
+            _logger.LogInformation("[API] GetTours network={NetworkAccess}, requesting: {Uri}", Connectivity.Current.NetworkAccess, toursUri);
+            using var response = await _httpClient.GetAsync(toursUri, cancellationToken);
+            var rawBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
-                var toursUri = BuildUri(ApiConstants.ToursEndpoint);
-                _logger.LogInformation("[API] Requesting: {Uri}", toursUri);
-                var tours = await _httpClient.GetFromJsonAsync<List<TourSummaryDto>>(toursUri, cancellationToken);
-                if (tours is not null)
-                {
-                    foreach (var tour in tours)          
-                        tour.ImageUrl = NormalizeImageUrl(tour.ImageUrl);
-                    await SaveCachedListAsync(ToursCacheKey, tours);
-                    _toursMemoryCache = tours;
-                    _logger.LogInformation("[API] Fetched tours from server: {TourCount}", tours.Count);
-                    return tours;
-                }
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("[API] Tours request failed: {StatusCode}. Body: {BodySnippet}",
+                    (int)response.StatusCode,
+                    rawBody.Length > 300 ? rawBody[..300] : rawBody);
+                throw new HttpRequestException($"Tours request failed: {(int)response.StatusCode}");
+            }
+
+            if (string.IsNullOrWhiteSpace(rawBody) || rawBody.TrimStart().StartsWith("<"))
+            {
+                _logger.LogWarning("[API] Tours response is not JSON. Body starts with: {BodySnippet}",
+                    rawBody.Length > 120 ? rawBody[..120] : rawBody);
+                throw new InvalidOperationException("Tours endpoint returned non-JSON content.");
+            }
+
+            var tours = JsonSerializer.Deserialize<List<TourSummaryDto>>(rawBody, CacheJsonOptions);
+            if (tours is not null)
+            {
+                foreach (var tour in tours)          
+                    tour.ImageUrl = NormalizeImageUrl(tour.ImageUrl);
+                await SaveCachedListAsync(ToursCacheKey, tours);
+                _toursMemoryCache = tours;
+                _logger.LogInformation("[API] Fetched tours from server: {TourCount}", tours.Count);
+                return tours;
             }
         }
         catch (Exception ex)
@@ -437,16 +467,44 @@ public class ApiService
 
     public async Task<string> EnsureGuestIdAsync()
     {
-        var guestId = Preferences.Default.Get<string>(GuestIdKey, null);
-        if (string.IsNullOrEmpty(guestId))
+        await _guestIdLock.WaitAsync();
+        try
         {
-            guestId = Guid.NewGuid().ToString();
-            Preferences.Default.Set(GuestIdKey, guestId);
-            
-            // Register install if needed
-            await RegisterAnonymousInstallAsync(Guid.Parse(guestId));
+            var guestId = Preferences.Default.Get<string>(GuestIdKey, null);
+            var isNewGuest = false;
+            if (string.IsNullOrEmpty(guestId))
+            {
+                guestId = Guid.NewGuid().ToString();
+                Preferences.Default.Set(GuestIdKey, guestId);
+                isNewGuest = true;
+            }
+
+            // Keep analytics session identity aligned with guest identity.
+            await EnsureAnonymousSessionMatchesGuestAsync(guestId);
+
+            // First-time install should attempt sync immediately (best-effort).
+            if (isNewGuest && Guid.TryParse(guestId, out var guestGuid))
+            {
+                await TrySyncAnonymousInstallAsync(guestGuid);
+            }
+
+            return guestId;
         }
-        return guestId;
+        finally
+        {
+            _guestIdLock.Release();
+        }
+    }
+
+    public async Task<bool> EnsureAnonymousInstallSyncedAsync(CancellationToken cancellationToken = default)
+    {
+        var guestId = await EnsureGuestIdAsync();
+        if (!Guid.TryParse(guestId, out var guestGuid))
+        {
+            return false;
+        }
+
+        return await TrySyncAnonymousInstallAsync(guestGuid, cancellationToken);
     }
 
     public async Task<IReadOnlyList<FavoriteDto>?> GetFavoritesAsync(string guestId, CancellationToken cancellationToken = default)
@@ -642,6 +700,339 @@ public class ApiService
         }
     }
 
+    public async Task<bool> TrackEnterZoneAsync(int zoneId, double latitude, double longitude, CancellationToken cancellationToken = default)
+    {
+        return await TrackAnalyticsEventAsync("EnterZone", zoneId, latitude, longitude, 0, cancellationToken);
+    }
+
+    public async Task<bool> TrackPlayNarrationAsync(int zoneId, int dwellTimeSeconds, CancellationToken cancellationToken = default)
+    {
+        return await TrackPlayNarrationAsync(zoneId, dwellTimeSeconds, null, cancellationToken);
+    }
+
+    public async Task<bool> TrackPlayNarrationAsync(int zoneId, int dwellTimeSeconds, string? language, CancellationToken cancellationToken = default)
+    {
+        var lang = (language ?? string.Empty).Trim().ToLowerInvariant();
+        var actionType = string.IsNullOrWhiteSpace(lang) ? "PlayNarration" : $"PlayNarration|{lang}";
+        return await TrackAnalyticsEventAsync(actionType, zoneId, 0, 0, Math.Max(0, dwellTimeSeconds), cancellationToken);
+    }
+
+    public async Task<bool> TrackLocationPingAsync(double latitude, double longitude, int? zoneId = null, CancellationToken cancellationToken = default)
+    {
+        return await TrackAnalyticsEventAsync("LocationPing", zoneId, latitude, longitude, 0, cancellationToken);
+    }
+
+    private async Task<Guid> EnsureAnalyticsSessionIdAsync()
+    {
+        await _dbService.InitializeAsync();
+
+        var sessionIdValue = await _dbService.GetSettingAsync("AnonymousSessionId", string.Empty);
+        if (Guid.TryParse(sessionIdValue, out var sessionId))
+        {
+            return sessionId;
+        }
+
+        // Always prefer using GuestId so AppInstall + analytics events share one identity.
+        var guestId = await EnsureGuestIdAsync();
+        var hasGuestGuid = Guid.TryParse(guestId, out var guestGuid);
+
+        await _analyticsSessionLock.WaitAsync();
+        try
+        {
+            // Re-check after entering lock to prevent first-run race creating multiple IDs.
+            sessionIdValue = await _dbService.GetSettingAsync("AnonymousSessionId", string.Empty);
+            if (Guid.TryParse(sessionIdValue, out sessionId))
+            {
+                return sessionId;
+            }
+
+            if (hasGuestGuid)
+            {
+                await _dbService.SetSettingAsync("AnonymousSessionId", guestGuid.ToString());
+                await _dbService.SetSettingAsync("AnonymousInstallSynced", "0");
+                return guestGuid;
+            }
+
+            sessionId = Guid.NewGuid();
+            await _dbService.SetSettingAsync("AnonymousSessionId", sessionId.ToString());
+            await _dbService.SetSettingAsync("AnonymousInstallSynced", "0");
+            return sessionId;
+        }
+        finally
+        {
+            _analyticsSessionLock.Release();
+        }
+    }
+
+    private async Task EnsureAnonymousSessionMatchesGuestAsync(string guestId)
+    {
+        if (!Guid.TryParse(guestId, out var guestGuid))
+        {
+            return;
+        }
+
+        await _dbService.InitializeAsync();
+        await _analyticsSessionLock.WaitAsync();
+        try
+        {
+            var sessionIdValue = await _dbService.GetSettingAsync("AnonymousSessionId", string.Empty);
+            if (!Guid.TryParse(sessionIdValue, out var existing) || existing != guestGuid)
+            {
+                await _dbService.SetSettingAsync("AnonymousSessionId", guestGuid.ToString());
+                await _dbService.SetSettingAsync("AnonymousInstallSynced", "0");
+            }
+        }
+        finally
+        {
+            _analyticsSessionLock.Release();
+        }
+    }
+
+    private async Task<bool> TrySyncAnonymousInstallAsync(Guid guestGuid, CancellationToken cancellationToken = default)
+    {
+        await _dbService.InitializeAsync();
+
+        await _installSyncLock.WaitAsync(cancellationToken);
+        try
+        {
+            var installSynced = await _dbService.GetSettingAsync("AnonymousInstallSynced", "0");
+            if (installSynced == "1")
+            {
+                return true;
+            }
+
+            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+            {
+                return false;
+            }
+
+            var synced = await RegisterAnonymousInstallAsync(guestGuid, cancellationToken);
+            if (synced)
+            {
+                await _dbService.SetSettingAsync("AnonymousInstallSynced", "1");
+            }
+
+            return synced;
+        }
+        finally
+        {
+            _installSyncLock.Release();
+        }
+    }
+
+    public async Task SyncAnalyticsIfOnlineAsync(CancellationToken cancellationToken = default)
+    {
+        if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+        {
+            _logger.LogInformation("[API][ANALYTICS_SYNC] Skipped: offline");
+            return;
+        }
+
+        await _dbService.InitializeAsync();
+        await _analyticsSyncLock.WaitAsync(cancellationToken);
+        try
+        {
+            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+            {
+                return;
+            }
+
+            var pending = await _dbService.GetUnsyncedAnalyticsAsync();
+            if (pending.Count == 0)
+            {
+                return;
+            }
+
+            _logger.LogInformation("[API][ANALYTICS_SYNC] Pending events: {Count}", pending.Count);
+
+            foreach (var localEvent in pending)
+            {
+                if (cancellationToken.IsCancellationRequested
+                    || Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                {
+                    break;
+                }
+
+                if (!TryBuildAnalyticsPayload(localEvent, out var payload))
+                {
+                    // Invalid local data should not block later events forever.
+                    await _dbService.MarkLocalAnalyticsSyncedAsync(localEvent.Id);
+                    continue;
+                }
+
+                try
+                {
+                    var response = await _httpClient.PostAsJsonAsync(
+                        BuildUri($"{ApiConstants.AnalyticsEndpoint}/event"),
+                        payload,
+                        cancellationToken);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        await _dbService.MarkLocalAnalyticsSyncedAsync(localEvent.Id);
+                        continue;
+                    }
+
+                    var statusCode = (int)response.StatusCode;
+                    if (statusCode >= 400 && statusCode < 500 && statusCode != 408 && statusCode != 429)
+                    {
+                        // Permanent client-side failure: mark as synced to avoid endless retry loop.
+                        await _dbService.MarkLocalAnalyticsSyncedAsync(localEvent.Id);
+                        _logger.LogWarning("[API][ANALYTICS_SYNC] Dropped invalid event Id={Id} Status={StatusCode}", localEvent.Id, statusCode);
+                        continue;
+                    }
+
+                    _logger.LogWarning("[API][ANALYTICS_SYNC] Stop sync on transient failure Status={StatusCode}", statusCode);
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[API][ANALYTICS_SYNC] Stop sync on exception for event Id={Id}", localEvent.Id);
+                    break;
+                }
+            }
+        }
+        finally
+        {
+            _analyticsSyncLock.Release();
+        }
+    }
+
+    public async Task<bool> TrackAnalyticsEventAsync(
+        string actionType,
+        int? zoneId,
+        double latitude,
+        double longitude,
+        int dwellTimeSeconds = 0,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (!IsAllowedAnalyticsAction(actionType))
+            {
+                return false;
+            }
+
+            var sessionId = await EnsureAnalyticsSessionIdAsync();
+            var nowUtc = DateTime.UtcNow;
+            var localEvent = new LocalAnalytics
+            {
+                SessionId = sessionId.ToString(),
+                ZoneId = zoneId.HasValue ? zoneId.Value.ToString() : string.Empty,
+                Latitude = latitude,
+                Longitude = longitude,
+                ActionType = actionType,
+                DwellTimeSeconds = Math.Max(0, dwellTimeSeconds),
+                Timestamp = nowUtc.ToString("o"),
+                IsSynced = 0
+            };
+
+            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+            {
+                await _dbService.InsertLocalAnalyticsAsync(localEvent);
+                return true;
+            }
+
+            var payload = new AnalyticsEventRequest
+            {
+                SessionId = sessionId,
+                ZoneId = zoneId,
+                Latitude = latitude,
+                Longitude = longitude,
+                ActionType = actionType,
+                DwellTimeSeconds = Math.Max(0, dwellTimeSeconds),
+                CreatedAt = nowUtc
+            };
+
+            var response = await _httpClient.PostAsJsonAsync(
+                BuildUri($"{ApiConstants.AnalyticsEndpoint}/event"),
+                payload,
+                cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return true;
+            }
+
+            var statusCode = (int)response.StatusCode;
+            if (statusCode >= 400 && statusCode < 500 && statusCode != 408 && statusCode != 429)
+            {
+                // Validation/client errors should surface instead of being retried forever.
+                return false;
+            }
+
+            await _dbService.InsertLocalAnalyticsAsync(localEvent);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[API] Failed to track analytics event {ActionType}", actionType);
+            try
+            {
+                var fallbackSessionId = await EnsureAnalyticsSessionIdAsync();
+                await _dbService.InsertLocalAnalyticsAsync(new LocalAnalytics
+                {
+                    SessionId = fallbackSessionId.ToString(),
+                    ZoneId = zoneId.HasValue ? zoneId.Value.ToString() : string.Empty,
+                    Latitude = latitude,
+                    Longitude = longitude,
+                    ActionType = actionType,
+                    DwellTimeSeconds = Math.Max(0, dwellTimeSeconds),
+                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    IsSynced = 0
+                });
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+    }
+
+    private static bool TryBuildAnalyticsPayload(LocalAnalytics localEvent, out AnalyticsEventRequest payload)
+    {
+        payload = new AnalyticsEventRequest();
+
+        if (!Guid.TryParse(localEvent.SessionId, out var sessionId))
+        {
+            return false;
+        }
+
+        if (!IsAllowedAnalyticsAction(localEvent.ActionType))
+        {
+            return false;
+        }
+
+        int? zoneId = null;
+        if (!string.IsNullOrWhiteSpace(localEvent.ZoneId))
+        {
+            if (!int.TryParse(localEvent.ZoneId, out var parsedZoneId) || parsedZoneId <= 0)
+            {
+                return false;
+            }
+            zoneId = parsedZoneId;
+        }
+
+        if (!DateTime.TryParse(localEvent.Timestamp, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var createdAt))
+        {
+            createdAt = DateTime.UtcNow;
+        }
+
+        payload = new AnalyticsEventRequest
+        {
+            SessionId = sessionId,
+            ZoneId = zoneId,
+            Latitude = localEvent.Latitude,
+            Longitude = localEvent.Longitude,
+            ActionType = localEvent.ActionType,
+            DwellTimeSeconds = Math.Max(0, localEvent.DwellTimeSeconds),
+            CreatedAt = createdAt
+        };
+
+        return true;
+    }
+
 
     private string NormalizeImageUrl(string? imageUrl)
     {
@@ -701,6 +1092,27 @@ public class ApiService
     {
         public Guid SessionId { get; set; }
         public DateTime CreatedAt { get; set; }
+    }
+
+    private sealed class AnalyticsEventRequest
+    {
+        public Guid SessionId { get; set; }
+        public int? ZoneId { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+        public string ActionType { get; set; } = string.Empty;
+        public int DwellTimeSeconds { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+
+    private static bool IsAllowedAnalyticsAction(string actionType)
+    {
+        if (AllowedAnalyticsActions.Contains(actionType))
+        {
+            return true;
+        }
+
+        return actionType.StartsWith("PlayNarration|", StringComparison.OrdinalIgnoreCase);
     }
 }
 

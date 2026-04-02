@@ -122,13 +122,13 @@
         <!-- Left Panel -->
         <div class="panel-card">
             <div class="panel-header">
-                <h6 class="panel-title">Điểm tham quan</h6>
+                <h6 class="panel-title">POI</h6>
                 <span class="badge bg-light text-muted fw-normal">Sẵn có</span>
             </div>
             <div class="panel-body">
                 <div class="search-input-container">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" class="form-control search-input" id="zoneSearch" placeholder="Tìm kiếm điểm tham quan..." />
+                    <input type="text" class="form-control search-input" id="zoneSearch" placeholder="Tìm kiếm POI..." />
                 </div>
                  <div id="availableZones">
                     @foreach (var zone in zones)
@@ -187,12 +187,12 @@
         <div class="panel-card">
             <div class="panel-header">
                 <h6 class="panel-title">Lộ trình tham quan</h6>
-                <span class="badge bg-dark rounded-pill" id="poiCount">0 điểm</span>
+                <span class="badge bg-dark rounded-pill" id="poiCount">0 POI</span>
             </div>
             <div class="panel-body" id="itineraryContainer">
                 <div id="emptyItinerary" class="text-center py-5 text-muted" style="display: none;">
                     <i class="fa-solid fa-route fa-3x mb-3 opacity-25"></i>
-                    <p class="small">Kéo thả hoặc click (+) để thêm điểm</p>
+                    <p class="small">Kéo thả hoặc click (+) để thêm POI</p>
                 </div>
                 <div id="sortableItinerary">
                      @foreach (var tz in Model.TourZones.OrderBy(x => x.OrderIndex))
@@ -259,7 +259,7 @@
             const items = itineraryContainer.querySelectorAll('.itinerary-item');
             items.forEach((item, index) => { item.querySelector('.zone-number').innerText = index + 1; });
             const count = items.length;
-            poiCountBadge.innerText = `${count} điểm`;
+            poiCountBadge.innerText = `${count} POI`;
             emptyItinerary.style.display = count > 0 ? 'none' : 'block';
         }
 

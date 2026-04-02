@@ -4,11 +4,11 @@
 }
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Login - Bùi Viện Explorer</title>
+    <title>Đăng nhập quản trị - Bùi Viện Explorer</title>
     <link rel="icon" type="image/png" href="~/icons/logo.png" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
@@ -156,8 +156,8 @@
     <div class="login-card">
         <img class="login-logo" src="~/icons/logo.png" alt="Bùi Viện Explorer logo" />
 
-        <div class="card-title">Admin Login</div>
-        <div class="card-subtitle">Access the platform control center</div>
+        <div class="card-title">Đăng nhập quản trị</div>
+        <div class="card-subtitle">Truy cập trung tâm điều hành hệ thống</div>
 
         @if (ViewBag.Error != null)
         {
@@ -168,17 +168,17 @@
 
         <form method="post" asp-area="Admin" asp-controller="Auth" asp-action="Login">
             <div class="mb-3">
-                <label class="form-label">Email Address</label>
+                <label class="form-label">Tài khoản</label>
                 <div class="input-wrapper">
                     <i class="fa-solid fa-envelope input-icon"></i>
-                    <input type="text" name="username" class="form-control" placeholder="admin@buivien.com" required />
+                    <input type="text" name="username" class="form-control" placeholder="Nhập tài khoản quản trị" required />
                 </div>
             </div>
 
             <div class="mb-3">
                 <div class="row-label">
-                    <label class="form-label mb-0">Password</label>
-                    <a href="#" class="forgot-link">Forgot password?</a>
+                    <label class="form-label mb-0">Mật khẩu</label>
+                    <a href="#" class="forgot-link">Quên mật khẩu?</a>
                 </div>
                 <div class="input-wrapper">
                     <i class="fa-solid fa-lock input-icon"></i>
@@ -191,19 +191,19 @@
 
             <div class="form-check mb-4">
                 <input class="form-check-input" type="checkbox" id="rememberMe">
-                <label class="form-check-label" for="rememberMe">Remember this device</label>
+                <label class="form-check-label" for="rememberMe">Ghi nhớ thiết bị này</label>
             </div>
 
-            <button type="submit" class="btn-login">Sign In</button>
+            <button type="submit" class="btn-login">Đăng nhập</button>
 
             <div class="footer-text">
-                &copy; 2026 Bui Vien Explorer Platform. All rights reserved.
+                &copy; 2026 Nền tảng Bui Vien Explorer.
             </div>
         </form>
     </div>
 
     <a href="/" class="back-link">
-        <i class="fa-solid fa-arrow-left me-1"></i> Back to public site
+        <i class="fa-solid fa-arrow-left me-1"></i> Quay lại trang công khai
     </a>
 
     <script>

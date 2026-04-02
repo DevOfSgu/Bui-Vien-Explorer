@@ -1,6 +1,6 @@
 @model TravelSystem.Shared.Models.Zone
 @{
-    ViewData["Title"] = "Edit POI";
+    ViewData["Title"] = "Sửa POI";
 }
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -10,7 +10,7 @@
         <a asp-action="Index" class="btn btn-outline-secondary" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
             <i class="fa-solid fa-arrow-left"></i>
         </a>
-        <div class="page-title">Edit Point of Interest (Zone)</div>
+        <div class="page-title">Sửa POI (Zone)</div>
     </div>
 </div>
 
@@ -30,17 +30,17 @@
             <!-- Left Panel: All Inputs -->
             <div class="col-md-4">
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Name</label>
+                    <label class="form-label fw-bold">Tên</label>
                     <input asp-for="Name" class="form-control" disabled="@Model.IsLocked" required />
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Description</label>
+                    <label class="form-label fw-bold">Mô tả</label>
                     <textarea asp-for="Description" class="form-control" rows="4" disabled="@Model.IsLocked"></textarea>
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Cover Image</label>
+                    <label class="form-label fw-bold">Ảnh đại diện</label>
                     @if (!string.IsNullOrEmpty(Model.ImageUrl))
                     {
                         <div class="mb-2">
@@ -48,98 +48,98 @@
                         </div>
                     }
                     <input type="file" name="imageFile" class="form-control" accept="image/*" disabled="@Model.IsLocked" />
-                    <small class="text-muted">Upload a new photo to replace the current one.</small>
+                    <small class="text-muted">Tải lên ảnh mới để thay thế ảnh hiện tại.</small>
                     <input type="hidden" asp-for="ImageUrl" />
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Category (Type)</label>
+                    <label class="form-label fw-bold">Danh mục (Loại)</label>
                     <select asp-for="ZoneType" class="form-select" disabled="@Model.IsLocked">
-                        <option value="0">Bars & Clubs</option>
-                        <option value="1">Restaurants & Cafes</option>
-                        <option value="2">Shopping</option>
-                        <option value="3">Landmark/Street</option>
+                        <option value="0">Bar & Club</option>
+                        <option value="1">Nhà hàng & Quán cà phê</option>
+                        <option value="2">Mua sắm</option>
+                        <option value="3">Địa danh/Đường phố</option>
                     </select>
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Point Classification</label>
+                    <label class="form-label fw-bold">Phân loại POI</label>
                     <select asp-for="IsMain" class="form-select" id="isMainSelect" disabled="@Model.IsLocked">
-                        <option value="true">Main Point (Điểm chính)</option>
-                        <option value="false">Secondary Point (Điểm phụ)</option>
+                        <option value="true">POI chính</option>
+                        <option value="false">POI phụ</option>
                     </select>
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Linked Vendor Shop (Optional)</label>
+                    <label class="form-label fw-bold">Cửa hàng đối tác liên kết (Tùy chọn)</label>
                     <select asp-for="ShopId" class="form-select" asp-items="@(new SelectList(ViewBag.Shops, "Id", "Name", Model.ShopId))" disabled="@Model.IsLocked">
-                        <option value="">-- No Vendor / Generic Landmark --</option>
+                        <option value="">-- Không liên kết đối tác / Mốc chung --</option>
                     </select>
                 </div>
 
                 <div class="p-3 mb-4 rounded" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
-                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-location-dot text-danger me-2"></i> Location Settings</h6>
+                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-location-dot text-danger me-2"></i> Cài đặt vị trí</h6>
                     
                     <div class="mb-3">
-                        <label class="form-label text-muted small">Latitude</label>
+                        <label class="form-label text-muted small">Vĩ độ</label>
                         <input asp-for="Latitude" type="number" step="0.00000001" class="form-control form-control-sm" disabled="@Model.IsLocked" id="latInput" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label text-muted small">Longitude</label>
+                        <label class="form-label text-muted small">Kinh độ</label>
                         <input asp-for="Longitude" type="number" step="0.00000001" class="form-control form-control-sm" disabled="@Model.IsLocked" id="lngInput" />
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label text-muted small">Geo-fence Radius (meters)</label>
+                        <label class="form-label text-muted small">Bán kính geo-fence (mét)</label>
                         <input asp-for="Radius" type="number" class="form-control form-control-sm" disabled="@Model.IsLocked" id="radiusInput" />
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label text-muted small">Display Order</label>
+                        <label class="form-label text-muted small">Thứ tự hiển thị</label>
                         <input asp-for="OrderIndex" type="number" class="form-control form-control-sm" disabled="@Model.IsLocked" />
                     </div>
 
                     <div class="form-check form-switch mt-3">
                         <input class="form-check-input" type="checkbox" asp-for="IsActive" disabled="@Model.IsLocked">
-                        <label class="form-check-label fw-bold">Active Station</label>
+                        <label class="form-check-label fw-bold">Đang hoạt động</label>
                     </div>
                 </div>
 
                 @if (!Model.IsLocked)
                 {
                     <button type="submit" class="btn btn-primary-custom w-100 py-2 mb-2">
-                        <i class="fa-solid fa-floppy-disk me-2"></i> Update Zone
+                        <i class="fa-solid fa-floppy-disk me-2"></i> Cập nhật khu vực
                     </button>
                 }
                 else
                 {
                     <button type="button" class="btn btn-primary-custom w-100 py-2 mb-2" disabled>
-                        <i class="fa-solid fa-lock me-2"></i> Locked - Cannot Save
+                        <i class="fa-solid fa-lock me-2"></i> Đã khóa - Không thể lưu
                     </button>
                 }
                 <a asp-action="Index" class="btn btn-outline-secondary w-100 py-2">
-                    Cancel
+                    Hủy
                 </a>
             </div>
 
             <!-- Right Panel: Big Map -->
             <div class="col-md-8 d-flex flex-column">
                 <div class="position-relative d-flex flex-column" style="flex: 1; min-height: 600px;">
-                    <label class="form-label fw-bold">Map Preview & Location Picker</label>
+                    <label class="form-label fw-bold">Xem trước bản đồ & chọn vị trí</label>
                     <div id="leafletMap" style="flex: 1; width: 100%; border-radius: 12px; border: 1px solid #edf2f9; z-index: 1;"></div>
                     
                     <div class="map-legend">
                         <div class="legend-item">
                             <div class="dot" style="background: #1e3a8a;"></div>
-                            <span>Existing Main Point</span>
+                            <span>POI chính hiện có</span>
                         </div>
                         <div class="legend-item">
                             <div class="dot" style="background: #f59e0b;"></div>
-                            <span>Existing Secondary Point</span>
+                            <span>POI phụ hiện có</span>
                         </div>
                         <div class="legend-item">
                             <div class="dot" style="background: #10b981;"></div>
-                            <span>Current Selection (Green)</span>
+                            <span>POI đang chọn (màu xanh)</span>
                         </div>
                     </div>
                 </div>
@@ -216,7 +216,7 @@
                 existingZones.forEach(z => {
                     const icon = z.isMain ? icons.main : icons.sub;
                     L.marker([z.latitude, z.longitude], { icon: icon })
-                     .bindPopup(`<b>${z.name}</b><br>${z.isMain ? 'Main Point' : 'Sub Point'}`)
+                     .bindPopup(`<b>${z.name}</b><br>${z.isMain ? 'POI chính' : 'POI phụ'}`)
                      .addTo(map);
                 });
             }

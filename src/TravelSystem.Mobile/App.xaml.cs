@@ -72,6 +72,7 @@ public partial class App : Application
         {
             if (e.NetworkAccess == NetworkAccess.Internet)
             {
+                await _apiService.SyncAnalyticsIfOnlineAsync();
                 await _apiService.SyncFavoritesIfOnlineAsync();
                 _ = _audioPreloadService.StartPreloadAsync(); // Trigger preload on reconnect
             }
@@ -105,6 +106,7 @@ public partial class App : Application
                     // C. Sync dữ liệu từ Server (Phụ thuộc mạng)
                     Debug.WriteLine("[APP] 🔄 Starting Core Sync...");
                     await _apiService.SyncCoreDataFromServerIfOnlineAsync();
+                    await _apiService.SyncAnalyticsIfOnlineAsync();
                     await _apiService.SyncFavoritesIfOnlineAsync();
                     
                     // D. Tải trước audio (Ngầm)
@@ -132,20 +134,8 @@ public partial class App : Application
     {
         try
         {
-            var sessionIdValue = await _dbService.GetSettingAsync("AnonymousSessionId", string.Empty);
-            if (!Guid.TryParse(sessionIdValue, out var sessionId))
-            {
-                sessionId = Guid.NewGuid();
-                await _dbService.SetSettingAsync("AnonymousSessionId", sessionId.ToString());
-                await _dbService.SetSettingAsync("AnonymousInstallSynced", "0");
-            }
-
-            var installSynced = await _dbService.GetSettingAsync("AnonymousInstallSynced", "0");
-            if (installSynced != "1")
-            {
-                var synced = await _apiService.RegisterAnonymousInstallAsync(sessionId);
-                if (synced) await _dbService.SetSettingAsync("AnonymousInstallSynced", "1");
-            }
+            // Single source of truth for identity + install sync to avoid duplicate AppInstall events.
+            await _apiService.EnsureAnonymousInstallSyncedAsync();
         }
         catch (Exception ex)
         {

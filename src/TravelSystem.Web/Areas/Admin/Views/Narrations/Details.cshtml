@@ -1,6 +1,6 @@
 @model TravelSystem.Shared.Models.Narration
 @{
-    ViewData["Title"] = "Narration Details";
+    ViewData["Title"] = "Chi tiết thuyết minh";
 }
 
 <div class="header-actions">
@@ -8,7 +8,7 @@
         <a asp-action="Index" asp-route-zoneId="@Model.ZoneId" class="btn btn-outline-secondary" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
             <i class="fa-solid fa-arrow-left"></i>
         </a>
-        <div class="page-title">Narration Details</div>
+        <div class="page-title">Chi tiết thuyết minh</div>
     </div>
 </div>
 
@@ -23,21 +23,21 @@
 <div class="card-custom">
     <div class="row g-4">
         <div class="col-md-6">
-            <label class="form-label fw-bold">Assigned Zone</label>
-            <input type="text" class="form-control" value="@(ViewBag.ZoneName ?? "Unknown")" readonly />
+            <label class="form-label fw-bold">Khu vực</label>
+            <input type="text" class="form-control" value="@(ViewBag.ZoneName ?? "Không xác định")" readonly />
         </div>
         <div class="col-md-3">
-            <label class="form-label fw-bold">Language</label>
+            <label class="form-label fw-bold">Ngôn ngữ</label>
             <input type="text" class="form-control" value="@Model.Language" readonly />
         </div>
         <div class="col-md-3">
-            <label class="form-label fw-bold">Status</label>
+            <label class="form-label fw-bold">Trạng thái</label>
             <input type="text" class="form-control" value="@Model.ApprovalStatus" readonly />
         </div>
     </div>
 
     <div class="mt-4">
-        <label class="form-label fw-bold">Narration Text</label>
+        <label class="form-label fw-bold">Nội dung thuyết minh</label>
         <textarea class="form-control" rows="14" readonly>@Model.Text</textarea>
     </div>
 
@@ -48,20 +48,20 @@
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="id" value="@Model.Id" />
                 <button type="submit" class="btn btn-success">
-                    <i class="fa-solid fa-check me-1"></i> Approve
+                    <i class="fa-solid fa-check me-1"></i> Duyệt
                 </button>
             </form>
             <form asp-action="Reject" method="post" style="display:inline;">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="id" value="@Model.Id" />
                 <button type="submit" class="btn btn-danger">
-                    <i class="fa-solid fa-xmark me-1"></i> Reject
+                    <i class="fa-solid fa-xmark me-1"></i> Từ chối
                 </button>
             </form>
         }
         else
         {
-            <span class="text-muted">This script is already @Model.ApprovalStatus.ToLowerInvariant().</span>
+            <span class="text-muted">Kịch bản này đã ở trạng thái @Model.ApprovalStatus.ToLowerInvariant().</span>
         }
     </div>
 </div>

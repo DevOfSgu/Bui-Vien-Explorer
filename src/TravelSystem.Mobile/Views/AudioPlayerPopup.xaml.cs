@@ -4,12 +4,14 @@ using System.Diagnostics;
 using CommunityToolkit.Maui.Views;
 using CommunityToolkit.Maui.Core;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace TravelSystem.Mobile.Views;
 
 public partial class AudioPlayerPopup : ContentView
 {
     private IAudioGuideService? _audioService;
+    public ApiService? AnalyticsApiService { get; set; }
     private string _text = string.Empty;
     private string _language = "vi";
     private PoiStopItem? _stop;
@@ -17,6 +19,8 @@ public partial class AudioPlayerPopup : ContentView
     private bool _isDragging = false;
     private Task? _mp3CheckTask;
     private CancellationTokenSource? _initCts;
+    private DateTime? _playbackStartedAtUtc;
+    private bool _playNarrationTracked;
 
     public event Action<PoiStopItem>? SeeDetailsRequested;
 
@@ -30,6 +34,7 @@ public partial class AudioPlayerPopup : ContentView
     {
         if (e.PropertyName == nameof(IsVisible) && !IsVisible)
         {
+            TrackPlayNarrationIfNeeded();
             // Auto-stop when hidden
             StopAllPlayback();
         }
@@ -72,6 +77,8 @@ public partial class AudioPlayerPopup : ContentView
         _text = stop.Description ?? string.Empty;
         _language = language;
         _isUsingMp3 = false; // Mặc định là false cho đến khi check xong
+        _playbackStartedAtUtc = null;
+        _playNarrationTracked = false;
         
         // Clear MediaElement source ngay lập tức
         MainThread.BeginInvokeOnMainThread(() => {
@@ -170,11 +177,13 @@ public partial class AudioPlayerPopup : ContentView
         if (_isUsingMp3)
         {
             Debug.WriteLine("[DEBUG][AUDIO] Autoplaying MP3...");
+            _playbackStartedAtUtc ??= DateTime.UtcNow;
             AudioMediaPlayer.Play();
         }
         else if (_audioService != null && !string.IsNullOrEmpty(_text))
         {
             Debug.WriteLine($"[DEBUG][AUDIO] Autoplaying TTS: {_text.Substring(0, Math.Min(20, _text.Length))}...");
+            _playbackStartedAtUtc ??= DateTime.UtcNow;
             // Không await ở đây để tránh block việc Update UI icon ngay lúc bắt đầu
             _ = _audioService.PlayAsync(_text, _language, _audioService.CurrentSpeed);
         }
@@ -225,6 +234,7 @@ public partial class AudioPlayerPopup : ContentView
     private void OnMediaEnded(object? sender, EventArgs e)
     {
         Debug.WriteLine("[DEBUG][TTS_POPUP] MP3 Playback Finished.");
+        TrackPlayNarrationIfNeeded();
         MainThread.BeginInvokeOnMainThread(() => 
         {
             AudioSlider.Value = AudioSlider.Maximum;
@@ -285,6 +295,7 @@ public partial class AudioPlayerPopup : ContentView
     private async void OnReplayClicked(object sender, EventArgs e)
     {
         Debug.WriteLine("[DEBUG][AUDIO] Replay clicked.");
+        _playbackStartedAtUtc ??= DateTime.UtcNow;
         if (_isUsingMp3)
         {
             AudioMediaPlayer.SeekTo(TimeSpan.Zero);
@@ -299,6 +310,7 @@ public partial class AudioPlayerPopup : ContentView
 
     private async void OnPlayPauseClicked(object sender, EventArgs e)
     {
+        _playbackStartedAtUtc ??= DateTime.UtcNow;
         if (_isUsingMp3)
         {
             if (AudioMediaPlayer.CurrentState == MediaElementState.Playing)
@@ -339,6 +351,7 @@ public partial class AudioPlayerPopup : ContentView
     {
         if (_stop != null)
         {
+            TrackPlayNarrationIfNeeded();
             this.IsVisible = false;
             
             if (_isUsingMp3)
@@ -352,6 +365,8 @@ public partial class AudioPlayerPopup : ContentView
 
     private void OnCloseClicked(object sender, EventArgs e)
     {
+        TrackPlayNarrationIfNeeded();
+
         if (_isUsingMp3)
             AudioMediaPlayer.Stop();
         else if (_audioService != null)
@@ -360,5 +375,28 @@ public partial class AudioPlayerPopup : ContentView
             _audioService.Stop();
         }
         this.IsVisible = false;
+    }
+
+    private void TrackPlayNarrationIfNeeded()
+    {
+        if (_playNarrationTracked || _stop == null)
+        {
+            return;
+        }
+
+        var apiService = AnalyticsApiService ?? Handler?.MauiContext?.Services.GetService<ApiService>();
+        if (apiService == null)
+        {
+            return;
+        }
+
+        var dwell = 0;
+        if (_playbackStartedAtUtc.HasValue)
+        {
+            dwell = Math.Max(0, (int)Math.Round((DateTime.UtcNow - _playbackStartedAtUtc.Value).TotalSeconds));
+        }
+
+        _playNarrationTracked = true;
+        _ = apiService.TrackPlayNarrationAsync(_stop.ZoneId, dwell, _language);
     }
 }

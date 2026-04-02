@@ -1,8 +1,8 @@
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Bảng điều khiển";
 }
 
-<div class="page-title mb-4">Dashboard</div>
+<div class="page-title mb-4">Bảng điều khiển</div>
 
 <!-- Stat Cards Row -->
 <div class="row mb-4 g-4">
@@ -13,7 +13,7 @@
                 <i class="fa-solid fa-map-location-dot"></i>
             </div>
             <div class="stat-content">
-                <p>Total POIs</p>
+                <p>Tổng POI</p>
                 <h4>@ViewBag.TotalZones</h4>
             </div>
         </div>
@@ -26,8 +26,8 @@
                 <i class="fa-solid fa-wave-square"></i>
             </div>
             <div class="stat-content">
-                <p>Total Narrations</p>
-                <h4>45</h4>
+                <p>Tổng bản thuyết minh</p>
+                <h4>@ViewBag.TotalNarrations</h4>
             </div>
         </div>
     </div>
@@ -39,8 +39,8 @@
                 <i class="fa-solid fa-user-group"></i>
             </div>
             <div class="stat-content">
-                <p>Active Users Today</p>
-                <h4>120</h4>
+                <p>Người dùng hoạt động hôm nay</p>
+                <h4>@ViewBag.ActiveUsers</h4>
             </div>
         </div>
     </div>
@@ -52,7 +52,7 @@
                 <i class="fa-solid fa-stopwatch"></i>
             </div>
             <div class="stat-content">
-                <p>Avg. Listen Time / POI</p>
+                <p>Thời gian nghe TB / POI</p>
                 <h4>@ViewBag.AvgDwellTime<small style="font-size:14px; font-weight:normal; color:#64748b;">s</small></h4>
             </div>
         </div>
@@ -63,26 +63,9 @@
     <!-- Chart Column -->
     <div class="col-xl-8 col-lg-7">
         <div class="card-custom h-100">
-            <h6 class="fw-bold mb-4">Visits this week</h6>
-            <!-- Placeholder for Chart.js -->
-            <div style="height: 300px; display: flex; align-items: flex-end; justify-content: space-around; padding-top: 20px;">
-                <!-- CSS Mockup of Bar Chart -->
-                <div style="width: 10%; height: 30%; background-color: #fecaca; border-radius: 4px 4px 0 0;"></div>
-                <div style="width: 10%; height: 50%; background-color: #fca5a5; border-radius: 4px 4px 0 0;"></div>
-                <div style="width: 10%; height: 80%; background-color: #f87171; border-radius: 4px 4px 0 0;"></div>
-                <div style="width: 10%; height: 60%; background-color: #fca5a5; border-radius: 4px 4px 0 0;"></div>
-                <div style="width: 10%; height: 100%; background-color: #ef4444; border-radius: 4px 4px 0 0;"></div>
-                <div style="width: 10%; height: 75%; background-color: #f87171; border-radius: 4px 4px 0 0;"></div>
-                <div style="width: 10%; height: 40%; background-color: #fecaca; border-radius: 4px 4px 0 0;"></div>
-            </div>
-            <div class="d-flex justify-content-space-around mt-3 text-muted" style="font-size: 12px; padding: 0 10px;">
-                <span style="flex:1; text-align:center;">Mon</span>
-                <span style="flex:1; text-align:center;">Tue</span>
-                <span style="flex:1; text-align:center;">Wed</span>
-                <span style="flex:1; text-align:center;">Thu</span>
-                <span style="flex:1; text-align:center;">Fri</span>
-                <span style="flex:1; text-align:center;">Sat</span>
-                <span style="flex:1; text-align:center;">Sun</span>
+            <h6 class="fw-bold mb-4">Lượt truy cập tuần này</h6>
+            <div style="height: 300px;">
+                <canvas id="weeklyVisitsChart"></canvas>
             </div>
         </div>
     </div>
@@ -90,7 +73,7 @@
     <!-- Top POIs Column -->
     <div class="col-xl-4 col-lg-5">
         <div class="card-custom h-100">
-            <h6 class="fw-bold mb-4">Top POIs (Most Listened)</h6>
+            <h6 class="fw-bold mb-4">Top POI nghe nhiều nhất</h6>
             
             <div class="ms-1">
                 @{
@@ -125,7 +108,7 @@
                 <i class="fa-solid fa-heart"></i>
             </div>
             <div class="stat-content">
-                <p>Total Guest Favorites</p>
+                <p>Tổng lượt yêu thích từ khách</p>
                 <h4>@ViewBag.TotalFavorites</h4>
             </div>
         </div>
@@ -136,7 +119,7 @@
         <div class="card-custom h-100">
             <div class="d-flex align-items-center justify-content-between mb-4">
                 <h6 class="fw-bold mb-0">
-                    <i class="fa-solid fa-heart text-danger me-2"></i> Top Địa Điểm Được Yêu Thích
+                    <i class="fa-solid fa-heart text-danger me-2"></i> Top POI Được Yêu Thích
                 </h6>
                 <small class="text-muted">Từ guest sessions toàn hệ thống</small>
             </div>
@@ -144,7 +127,7 @@
             @if (ViewBag.TopFavorites != null && ((IEnumerable<dynamic>)ViewBag.TopFavorites).Any())
             {
                 int fRank = 1;
-                foreach (var fav in ViewBag.TopFavorites)
+                foreach (var fav in ((IEnumerable<dynamic>)ViewBag.TopFavorites).Take(5))
                 {
                     var fColor = fRank == 1 ? "#ef4444" : (fRank == 2 ? "#f59e0b" : (fRank == 3 ? "#3b82f6" : "#9ca3af"));
                     <div class="d-flex align-items-center mb-3">
@@ -169,7 +152,7 @@
             {
                 <div class="text-center text-muted py-4">
                     <i class="fa-regular fa-heart" style="font-size:2rem; margin-bottom:10px; display:block; opacity:0.4;"></i>
-                    Chưa có dữ liệu favorites. Người dùng chưa thêm địa điểm yêu thích nào.
+                    Chưa có dữ liệu yêu thích. Người dùng chưa thêm POI nào.
                 </div>
             }
         </div>
@@ -182,7 +165,7 @@
     <div class="col-xl-8 col-lg-7">
         <div class="card-custom">
             <div class="d-flex align-items-center justify-content-between mb-4">
-                <h6 class="fw-bold mb-0">Shop Owner Registrations (Monthly)</h6>
+                <h6 class="fw-bold mb-0">Đăng ký chủ cửa hàng (theo tháng)</h6>
                 <span class="badge bg-light text-dark fw-normal">Đăng ký hằng tháng</span>
             </div>
             <div style="height: 300px;">
@@ -221,7 +204,7 @@
     <div class="col-xl-8 col-lg-7">
         <div class="card-custom">
             <div class="d-flex align-items-center justify-content-between mb-4">
-                <h6 class="fw-bold mb-0">App User Activity (Monthly Sessions)</h6>
+                <h6 class="fw-bold mb-0">Hoạt động người dùng app (session theo tháng)</h6>
                 <span class="badge bg-light text-dark fw-normal">Xu hướng người dùng</span>
             </div>
             <div style="height: 300px;">
@@ -237,7 +220,7 @@
                     <thead class="sticky-top bg-white">
                         <tr>
                             <th>Ngày</th>
-                            <th class="text-end">Sessions</th>
+                            <th class="text-end">Phiên</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -258,6 +241,30 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // Visits this week chart
+        const weeklyVisitsCtx = document.getElementById('weeklyVisitsChart').getContext('2d');
+        new Chart(weeklyVisitsCtx, {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(Json.Serialize(ViewBag.WeeklyVisitLabels)),
+                datasets: [{
+                    label: 'Phiên duy nhất',
+                    data: @Html.Raw(Json.Serialize(ViewBag.WeeklyVisitData)),
+                    backgroundColor: '#ef4444',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
         // Shop Owner Registrations Chart
         const shopRegCtx = document.getElementById('shopRegChart').getContext('2d');
         new Chart(shopRegCtx, {
@@ -265,7 +272,7 @@
             data: {
                 labels: @Html.Raw(Json.Serialize(ViewBag.MonthlyRegLabels)),
                 datasets: [{
-                    label: 'Registrations',
+                    label: 'Lượt đăng ký',
                     data: @Html.Raw(Json.Serialize(ViewBag.MonthlyRegData)),
                     backgroundColor: '#0ea5e9',
                     borderRadius: 4
@@ -289,7 +296,7 @@
             data: {
                 labels: @Html.Raw(Json.Serialize(ViewBag.MonthlyUsageLabels)),
                 datasets: [{
-                    label: 'Unique Sessions',
+                    label: 'Phiên duy nhất',
                     data: @Html.Raw(Json.Serialize(ViewBag.MonthlyUsageData)),
                     borderColor: '#f43f5e',
                     backgroundColor: 'rgba(244, 63, 94, 0.1)',

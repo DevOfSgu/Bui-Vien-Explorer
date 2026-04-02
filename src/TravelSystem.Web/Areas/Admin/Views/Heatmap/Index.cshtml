@@ -1,54 +1,123 @@
-@model IEnumerable<dynamic>
+@model TravelSystem.Web.Areas.Admin.Controllers.HeatmapController.HeatmapViewModel
 @{
-    ViewData["Title"] = "Visitor Heatmap";
+    ViewData["Title"] = "Heat map tuyến Bùi Viện";
 }
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    .heatmap-meta {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+    }
+
+    .heatmap-badge {
+        background: #111827;
+        color: #f3f4f6;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .map-wrap {
+        position: relative;
+    }
+
+    .heatmap-legend {
+        position: absolute;
+        right: 14px;
+        bottom: 14px;
+        z-index: 500;
+        background: rgba(255, 255, 255, 0.95);
+        color: #0f172a;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 12px;
+        width: 210px;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+        font-size: 12px;
+    }
+
+    .heatmap-scale {
+        height: 10px;
+        border-radius: 999px;
+        margin-top: 8px;
+        margin-bottom: 6px;
+        background: linear-gradient(90deg, #1d4ed8 0%, #06b6d4 28%, #84cc16 48%, #facc15 70%, #ef4444 100%);
+    }
+
+    .heatmap-scale-label {
+        display: flex;
+        justify-content: space-between;
+        color: #475569;
+    }
+
+    .leaflet-container {
+        background: #f8fafc;
+    }
+</style>
 
 <div class="header-actions">
-    <div class="page-title">Visitor Heatmap (Live)</div>
+    <div class="page-title">Heat map dọc tuyến Bùi Viện</div>
 </div>
 
 <div class="card-custom">
-    <div id="map" style="height: 600px; width: 100%; border-radius: 8px;"></div>
+    <div class="heatmap-meta">
+        <span class="heatmap-badge">Start: @Model.StartLatitude, @Model.StartLongitude</span>
+        <span class="heatmap-badge">End: @Model.EndLatitude, @Model.EndLongitude</span>
+        <span class="heatmap-badge">Corridor: ±@Model.CorridorMeters m</span>
+        <span class="heatmap-badge">Analytics: @Model.TotalAnalyticsRows</span>
+        <span class="heatmap-badge">Matched: @Model.MatchedRows</span>
+    </div>
+
+    <div class="map-wrap">
+        <div id="map" style="height: 680px; width: 100%; border-radius: 10px;"></div>
+        <div class="heatmap-legend">
+            <div><strong>Heat Intensity</strong></div>
+            <div style="margin-top:4px;">Dữ liệu được chiếu lên route thật Bùi Viện.</div>
+            <div class="heatmap-scale"></div>
+            <div class="heatmap-scale-label"><span>min</span><span>max</span></div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script>
-        var map = L.map('map').setView([10.7688, 106.6924], 17); // Bui Vien center
+        const routePolyline = @Html.Raw(Json.Serialize(Model.RoutePolyline.Select(p => new[] { p.Latitude, p.Longitude })));
+        const heatPoints = @Html.Raw(Json.Serialize(Model.HeatPoints.Select(p => new[] { p.Latitude, p.Longitude, p.Intensity })));
+
+        const map = L.map('map', {
+            zoomControl: true,
+            preferCanvas: true
+        }).setView([10.7529, 106.6873], 15);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
         }).addTo(map);
 
-        var points = [
-            @foreach(var item in Model) {
-                double intensity = 0.5;
-                if(item.ActionType == "PlayNarration") intensity = 1.0;
-                <text>[@item.Latitude, @item.Longitude, @intensity],</text>
-            }
-        ];
-
-        if(points.length === 0) {
-            // Mock data for UI presentation if DB is empty
-            points = [
-                // Highlight crowded areas in Bui Vien
-                [10.76945, 106.69170, 0.8], [10.76950, 106.69175, 0.9],
-                [10.76930, 106.69185, 1.0], [10.76935, 106.69190, 0.9],
-                [10.76910, 106.69200, 0.5], [10.76915, 106.69205, 0.6],
-                [10.76890, 106.69215, 0.7], [10.76895, 106.69225, 1.0],
-                [10.76880, 106.69240, 0.8], [10.76885, 106.69245, 0.9],
-                [10.76860, 106.69260, 0.8], [10.76850, 106.69270, 0.4]
-            ];
+        if (routePolyline && routePolyline.length > 1) {
+            const routeBounds = L.latLngBounds(routePolyline);
+            map.fitBounds(routeBounds, { padding: [24, 24] });
         }
 
-        var heat = L.heatLayer(points, {
-            radius: 25,
-            blur: 15,
-            maxZoom: 17,
-            gradient: {0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1.0: 'red'}
-        }).addTo(map);
+        if (heatPoints && heatPoints.length > 0) {
+            L.heatLayer(heatPoints, {
+                radius: 26,
+                blur: 20,
+                minOpacity: 0.2,
+                maxZoom: 18,
+                gradient: {
+                    0.1: '#1d4ed8',
+                    0.3: '#06b6d4',
+                    0.5: '#84cc16',
+                    0.72: '#facc15',
+                    1.0: '#ef4444'
+                }
+            }).addTo(map);
+        }
     </script>
 }

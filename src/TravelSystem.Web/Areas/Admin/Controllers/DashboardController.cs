@@ -18,55 +18,46 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
 
         public async Task<IActionResult> Index()
         {
-            // Analytics computations based on slides
-            var analytics = await _db.Analytics.ToListAsync();
-            
+            var analytics = _db.Analytics.AsQueryable();
+
             ViewBag.TotalZones = await _db.Zones.CountAsync();
             ViewBag.TotalNarrations = await _db.Narrations.CountAsync();
-            ViewBag.ActiveUsers = analytics.Select(a => a.SessionId).Distinct().Count();
-            ViewBag.TotalAppOpens = analytics.Count(a => a.ActionType == "AppOpen") + 3400; // Mock base
+
+            var utcToday = DateTime.UtcNow.Date;
+            var utcTomorrow = utcToday.AddDays(1);
+
+            ViewBag.ActiveUsers = await analytics
+                .Where(a => a.CreatedAt >= utcToday && a.CreatedAt < utcTomorrow)
+                .Select(a => a.SessionId)
+                .Distinct()
+                .CountAsync();
 
             // 1. Thời gian trung bình nghe 1 POI
-            var playActions = analytics.Where(a => a.ActionType == "PlayNarration" && a.DwellTimeSeconds > 0).ToList();
-            ViewBag.AvgDwellTime = playActions.Any() ? (int)playActions.Average(a => a.DwellTimeSeconds) : 120; // 120s mock if empty
+            var avgDwellSeconds = await analytics
+                .Where(a => a.ActionType.StartsWith("PlayNarration") && a.DwellTimeSeconds > 0)
+                .Select(a => (double?)a.DwellTimeSeconds)
+                .AverageAsync();
+            ViewBag.AvgDwellTime = avgDwellSeconds.HasValue ? (int)Math.Round(avgDwellSeconds.Value) : 0;
 
             // 2. Top địa điểm được nghe nhiều nhất
-            var topZonesIds = playActions
-                .Where(a => a.ZoneId.HasValue)
+            var topZoneCounts = await analytics
+                .Where(a => a.ActionType.StartsWith("PlayNarration") && a.ZoneId.HasValue)
                 .GroupBy(a => a.ZoneId!.Value)
-
-                .OrderByDescending(g => g.Count())
+                .Select(g => new { ZoneId = g.Key, Count = g.Count() })
+                .OrderByDescending(g => g.Count)
                 .Take(5)
-                .Select(g => g.Key)
-                .ToList();
+                .ToListAsync();
+
+            var topZonesIds = topZoneCounts.Select(x => x.ZoneId).ToList();
 
             var topZones = await _db.Zones.Where(z => topZonesIds.Contains(z.Id)).ToDictionaryAsync(z => z.Id, z => z.Name);
             
-            var topList = playActions
-                .Where(a => a.ZoneId.HasValue && topZones.ContainsKey(a.ZoneId.Value))
-                .GroupBy(a => a.ZoneId!.Value)
-
-                .OrderByDescending(g => g.Count())
-                .Take(5)
-                .Select(g => new { Name = topZones[g.Key], Count = g.Count() })
+            var topList = topZoneCounts
+                .Where(x => topZones.ContainsKey(x.ZoneId))
+                .Select(x => new { Name = topZones[x.ZoneId], x.Count })
                 .ToList();
 
-            // Mock data if db is empty for presentation
-            if (!topList.Any())
-            {
-                ViewBag.TopPoIs = new List<dynamic>
-                {
-                    new { Name = "Sahara Beer Club", Count = 450 },
-                    new { Name = "Cong Coffee", Count = 320 },
-                    new { Name = "Bui Vien Arch", Count = 210 },
-                    new { Name = "Miss Saigon", Count = 150 },
-                    new { Name = "Street Food Market", Count = 95 }
-                };
-            }
-            else
-            {
-                ViewBag.TopPoIs = topList;
-            }
+            ViewBag.TopPoIs = topList;
 
             // 3. Top zones được nhiều guest yêu thích nhất (GuestFavorites)
             var topFavorites = await _db.GuestFavorites
@@ -116,12 +107,16 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
 
             // 5. App User Usage Stats (Unique Sessions)
             // Monthly (Last 12)
+            var analyticsRows = await analytics
+                .Select(a => new { a.SessionId, a.CreatedAt })
+                .ToListAsync();
+
             var monthlyUsage = Enumerable.Range(0, 12).Select(i => {
                 var month = now.AddMonths(-i);
                 return new {
                     Label = month.ToString("MMM yyyy"),
-                    Count = analytics.Where(a => a.CreatedAt.Month == month.Month && a.CreatedAt.Year == month.Year)
-                                     .Select(a => a.SessionId).Distinct().Count()
+                    Count = analyticsRows.Where(a => a.CreatedAt.Month == month.Month && a.CreatedAt.Year == month.Year)
+                                         .Select(a => a.SessionId).Distinct().Count()
                 };
             }).Reverse().ToList();
 
@@ -132,9 +127,36 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             var dailyUsage = Enumerable.Range(0, 30).Select(i => {
                 var date = now.AddDays(-i).Date;
                 return new KeyValuePair<string, int>(date.ToString("dd/MM"), 
-                    analytics.Where(a => a.CreatedAt.Date == date).Select(a => a.SessionId).Distinct().Count());
+                    analyticsRows.Where(a => a.CreatedAt.Date == date).Select(a => a.SessionId).Distinct().Count());
             }).ToList();
             ViewBag.DailyUsageTable = dailyUsage;
+
+            // 6. Visits this week (unique sessions per day, UTC week Mon-Sun)
+            var weekStart = utcToday.AddDays(-(((int)utcToday.DayOfWeek + 6) % 7)); // Monday
+            var weekEnd = weekStart.AddDays(7);
+
+            var weeklyRows = await analytics
+                .Where(a => a.CreatedAt >= weekStart && a.CreatedAt < weekEnd)
+                .Select(a => new { Day = a.CreatedAt.Date, a.SessionId })
+                .ToListAsync();
+
+            var weeklyLabels = Enumerable.Range(0, 7)
+                .Select(i => weekStart.AddDays(i).ToString("ddd"))
+                .ToList();
+            var weeklyVisits = Enumerable.Range(0, 7)
+                .Select(i =>
+                {
+                    var day = weekStart.AddDays(i);
+                    return weeklyRows
+                        .Where(x => x.Day == day)
+                        .Select(x => x.SessionId)
+                        .Distinct()
+                        .Count();
+                })
+                .ToList();
+
+            ViewBag.WeeklyVisitLabels = weeklyLabels;
+            ViewBag.WeeklyVisitData = weeklyVisits;
 
             return View();
         }

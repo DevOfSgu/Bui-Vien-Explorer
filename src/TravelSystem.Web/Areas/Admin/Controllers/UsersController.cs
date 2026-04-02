@@ -36,13 +36,17 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
         {
             if (password != confirmPassword)
             {
-                ModelState.AddModelError("", "Passwords do not match.");
+                ModelState.AddModelError("", "Mật khẩu xác nhận không khớp.");
+            }
+
+            if (string.IsNullOrWhiteSpace(password) || password.Length < 6)
+            {
+                ModelState.AddModelError("", "Mật khẩu phải có ít nhất 6 ký tự.");
             }
 
             if (ModelState.IsValid)
             {
-                // very basic password storage for demo; in real app use hashing
-                model.PasswordHash = password;
+                model.PasswordHash = Helpers.PasswordHelper.HashPassword(model, password);
                 model.CreatedAt = DateTime.UtcNow;
                 _db.Users.Add(model);
                 await _db.SaveChangesAsync();
@@ -51,8 +55,35 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             return View(model);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ApproveVendor(int id)
+        {
+            var user = await _db.Users.FindAsync(id);
+            if (user != null && user.Role == 1)
+            {
+                user.IsActive = true;
+                await _db.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SuspendVendor(int id)
+        {
+            var user = await _db.Users.FindAsync(id);
+            if (user != null && user.Role == 1)
+            {
+                user.IsActive = false;
+                await _db.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
         // POST: Admin/Users/Lock/5
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Lock(int id)
         {
             var user = await _db.Users.FindAsync(id);
@@ -66,6 +97,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
 
         // POST: Admin/Users/Unlock/5
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Unlock(int id)
         {
             var user = await _db.Users.FindAsync(id);

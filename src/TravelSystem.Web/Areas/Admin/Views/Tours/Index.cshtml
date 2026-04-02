@@ -18,7 +18,7 @@
                     <th style="width: 80px;">ID</th>
                     <th>Tên Tour</th>
                     <th>Thời lượng</th>
-                    <th>Số điểm dừng</th>
+                    <th>Số POI</th>
                     <th>Ngày tạo</th>
                     <th class="text-end">Thao tác</th>
                 </tr>
@@ -60,7 +60,7 @@
                             </span>
                         </td>
                         <td>
-                            <span class="badge bg-danger rounded-pill">@tour.TourZones.Count POIs</span>
+                            <span class="badge bg-danger rounded-pill">@tour.TourZones.Count POI</span>
                         </td>
                         <td class="text-muted small">@tour.CreatedAt.ToString("dd/MM/yyyy")</td>
                         <td class="text-end">

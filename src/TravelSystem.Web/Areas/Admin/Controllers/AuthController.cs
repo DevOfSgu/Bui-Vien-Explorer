@@ -30,12 +30,18 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(string username, string password)
         {
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == username && u.PasswordHash == password && u.Role == 0);
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == username && u.Role == 0);
 
-            if (user == null || !user.IsActive)
+            if (user == null || !user.IsActive || !Helpers.PasswordHelper.VerifyPassword(user, password, out var needsUpgrade))
             {
                 ViewBag.Error = "Tài khoản hoặc mật khẩu không đúng, hoặc tài khoản đã bị khóa.";
                 return View();
+            }
+
+            if (needsUpgrade)
+            {
+                user.PasswordHash = Helpers.PasswordHelper.HashPassword(user, password);
+                await _db.SaveChangesAsync();
             }
 
             var claims = new List<Claim>

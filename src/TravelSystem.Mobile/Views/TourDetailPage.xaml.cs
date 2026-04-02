@@ -6,6 +6,7 @@ using Mapsui.Projections;
 using Mapsui.Providers;
 using Mapsui.Styles;
 using Mapsui.Tiling;
+using Mapsui.Tiling.Layers;
 using Mapsui.UI.Maui;
 using Mapsui.Nts.Extensions;
 using NetTopologySuite.Geometries;
@@ -16,6 +17,9 @@ using Itinero;
 using Itinero.Osm.Vehicles;
 using Itinero.LocalGeo;
 using Mapsui.Nts;
+using BruTile.Predefined;
+using BruTile.Web;
+using System.Globalization;
 
 namespace TravelSystem.Mobile.Views;
 
@@ -26,6 +30,7 @@ public partial class TourDetailPage : ContentPage
     private const double MinFocusMeters = 550;
 
     // Mapsui layers (Style = null để tắt điểm tròn trắng mặc định)
+    private readonly MemoryLayer _poiRadiusLayer = new() { Name = "PoiRadiusLayer", Style = null };
     private readonly MemoryLayer _poiLayer   = new() { Name = "PoiLayer", Style = null };
     private readonly MemoryLayer _userLayer  = new() { Name = "UserLayer", Style = null };
     private readonly MemoryLayer _routeLayer = new()
@@ -40,6 +45,7 @@ public partial class TourDetailPage : ContentPage
     private readonly TourDetailViewModel _viewModel;
     private readonly IAudioGuideService _audioService;
     private readonly DatabaseService _dbService;
+    private readonly ApiService _apiService;
     private Mapsui.Navigator? _trackedNavigator;
 
     private Router? _router;
@@ -55,11 +61,21 @@ public partial class TourDetailPage : ContentPage
     private bool _hasFocusedOnce;
     private int _lastSelectedZoneId = -1;
     private string? _lastStaticMapKey;
+    private string? _lastRouteKey;
     private (double Latitude, double Longitude)? _lastRenderedUserLocation;
     private bool _isMapInitialized;
     private Task? _mapInitTask;
     private MRect? _lastViewportExtent;
+    private long _mapDataChangedSeq;
+    private long _renderSeq;
+    private DateTime _lastMapDataChangedAtUtc = DateTime.MinValue;
     private static readonly List<IFeature> EmptyFeatures = [];
+    private string _currentMapSource = "UNKNOWN";
+
+    private static void TracePersistent(string category, string message)
+    {
+        DiagnosticLogService.Log(category, message);
+    }
 
     // ─── Bottom Sheet ────────────────────────────────────────────────────────
     private static readonly double[] SnapPoints = { 0.1, 0.75, 0.94 };
@@ -70,7 +86,7 @@ public partial class TourDetailPage : ContentPage
     private bool   _isPanning      = false;
 
 
-    public TourDetailPage(TourDetailViewModel viewModel, IAudioGuideService audioService, DatabaseService dbService)
+    public TourDetailPage(TourDetailViewModel viewModel, IAudioGuideService audioService, DatabaseService dbService, ApiService apiService)
     {
         Debug.WriteLine("[MAP_CRASH_DEBUG] 1. Constructor START");
         try
@@ -87,8 +103,10 @@ public partial class TourDetailPage : ContentPage
         _viewModel = viewModel;
         _audioService = audioService;
         _dbService = dbService;
+        _apiService = apiService;
         BindingContext = _viewModel;
         Shell.SetTabBarIsVisible(this, false);
+        AudioPlayer.AnalyticsApiService = _apiService;
 
         Mapsui.Logging.Logger.LogDelegate += (level, message, exception) =>
         {
@@ -212,6 +230,7 @@ public partial class TourDetailPage : ContentPage
 
         _viewModel.StartForegroundTracking();
         _ = _viewModel.LoadData();
+        Debug.WriteLine($"[MAP_SOURCE] OnAppearing - current source: {_currentMapSource}");
 
         if (!_isMapInitialized)
         {
@@ -294,6 +313,9 @@ public partial class TourDetailPage : ContentPage
             Debug.WriteLine($"[MAP_CRASH_DEBUG] ❌ Lỗi MapHelper: {ex.Message}");
         }
 
+        var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+        Debug.WriteLine($"[MAP_INIT] Internet={hasInternet}, OfflineMbtiles={offlineMapExists}");
+
         // ✅ FIX: Chỉ đưa việc tạo UI object lên Main Thread
         await MainThread.InvokeOnMainThreadAsync(async () =>
         {
@@ -303,37 +325,62 @@ public partial class TourDetailPage : ContentPage
             try
             {
                 var map = new Mapsui.Map { CRS = "EPSG:3857" };
-                bool offlineLoaded = false;
+                var baseLayerLoaded = false;
+                var usedOfflineLayer = false;
 
-                if (offlineMapExists && mapPath != null)
+                if (hasInternet)
+                {
+                    try
+                    {
+                        var onlineLayer = CreateOnlineRoadOnlyLayer();
+                        map.Layers.Add(onlineLayer);
+                        baseLayerLoaded = true;
+                        _currentMapSource = "ONLINE_NO_LABELS";
+                        Debug.WriteLine("[MAP_SOURCE] Selected ONLINE_NO_LABELS (internet available)");
+                        Debug.WriteLine("[MAP_INIT] ✅ Online no-labels road map layer added");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[MAP_INIT] ❌ Online no-labels layer failed: {ex.Message}");
+                    }
+                }
+
+                if (!baseLayerLoaded && offlineMapExists && mapPath != null)
                 {
                     try
                     {
                         var connString = new SQLite.SQLiteConnectionString(mapPath, false);
                         var mbTilesSource = new BruTile.MbTiles.MbTilesTileSource(connString);
-                        var offlineLayer = new Mapsui.Tiling.Layers.TileLayer(mbTilesSource) { Name = "OfflineMap" };
+                        var offlineLayer = new TileLayer(mbTilesSource) { Name = "OfflineMap" };
                         map.Layers.Add(offlineLayer);
-                        offlineLoaded = true;
-                        Debug.WriteLine("[MAP_CRASH_DEBUG] 13. MBTiles layer ADDED");
+                        baseLayerLoaded = true;
+                        usedOfflineLayer = true;
+                        _currentMapSource = "OFFLINE_MBTILES";
+                        var onlineFailedStatus = hasInternet ? "YES" : "N/A";
+                        Debug.WriteLine($"[MAP_SOURCE] Selected OFFLINE_MBTILES (internet={hasInternet}, onlineFailed={onlineFailedStatus})");
+                        Debug.WriteLine("[MAP_INIT] ✅ Offline MBTiles layer added");
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine($"[MAP_CRASH_DEBUG] ❌ Lỗi nạp MBTiles: {ex.Message}");
+                        Debug.WriteLine($"[MAP_INIT] ❌ MBTiles layer failed: {ex.Message}");
                     }
                 }
 
-                if (!offlineLoaded)
+                if (!baseLayerLoaded)
                 {
-                    Debug.WriteLine("[MAP_CRASH_DEBUG] 14. Fallback to OSM");
-                    map.Layers.Add(Mapsui.Tiling.OpenStreetMap.CreateTileLayer());
+                    Debug.WriteLine("[MAP_INIT] ⚠️ Fallback to default OSM layer");
+                    map.Layers.Add(OpenStreetMap.CreateTileLayer());
+                    _currentMapSource = "FALLBACK_OSM";
+                    Debug.WriteLine("[MAP_SOURCE] Selected FALLBACK_OSM (online and mbtiles unavailable)");
                 }
 
                 map.Layers.Add(_routeLayer);
+                map.Layers.Add(_poiRadiusLayer);
                 map.Layers.Add(_poiLayer);
                 map.Layers.Add(_userLayer);
                 map.Widgets.Clear();
 
-                if (offlineLoaded)
+                if (usedOfflineLayer)
                     map.Navigator.RotationLock = true;
 
                 _trackedNavigator = map.Navigator;
@@ -398,6 +445,28 @@ public partial class TourDetailPage : ContentPage
         {
             Debug.WriteLine($"[MAP_ICONS] ❌ Error loading SVG icons: {ex.Message}");
         }
+    }
+
+    private static ILayer CreateOnlineRoadOnlyLayer()
+    {
+        // CARTO light_nolabels: nền đường sá sạch, không hiện label POI/quán.
+        var schema = new GlobalSphericalMercator();
+        var urlBuilder = new BasicUrlBuilder(
+            "https://basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png",
+            Array.Empty<string>(),
+            string.Empty);
+        var attribution = new BruTile.Attribution(
+            "© OpenStreetMap contributors © CARTO",
+            "https://www.openstreetmap.org/copyright");
+        var source = new HttpTileSource(
+            schema,
+            urlBuilder,
+            name: "OnlineRoadsNoLabels",
+            persistentCache: null,
+            attribution: attribution,
+            configureHttpRequestMessage: null);
+
+        return new TileLayer(source) { Name = "OnlineRoadsNoLabels" };
     }
 
     private static string? RecolorLocationSvg(string? svg, string colorHex)
@@ -485,10 +554,16 @@ public partial class TourDetailPage : ContentPage
             var lang = await _dbService.GetSettingAsync("Language", "vi");
             Debug.WriteLine($"[TOUR_PAGE] Current app language from DB: {lang}");
 
-            var narration = await _dbService.GetNarrationAsync(stop.ZoneId, lang);
+            // Warm cache lookup only; popup/player logic already handles MP3/TTS fallback internally.
+            _ = await _dbService.GetNarrationAsync(stop.ZoneId, lang);
 
-            AudioPlayer.Initialize(_audioService, stop, lang);
-            _ = AudioPlayer.ShowAsync();
+            // StopSelected can be raised from background tracking thread.
+            // Ensure popup/UI operations always run on the main thread.
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                AudioPlayer.Initialize(_audioService, stop, lang);
+                await AudioPlayer.ShowAsync();
+            });
         }
         catch (Exception ex)
         {
@@ -516,8 +591,26 @@ public partial class TourDetailPage : ContentPage
     {
         if (!_isMapInitialized) return;
 
-        Debug.WriteLine($"[EVENT] MapDataChanged fired, stops={_viewModel.PoiStops.Count}");
-        _lastStaticMapKey = null;
+        var nowUtc = DateTime.UtcNow;
+        var eventSeq = Interlocked.Increment(ref _mapDataChangedSeq);
+        var vmToPageMs = _viewModel.LastLocationAppliedAtUtc == DateTime.MinValue
+            ? -1d
+            : (nowUtc - _viewModel.LastLocationAppliedAtUtc).TotalMilliseconds;
+        var sinceLastEventMs = _lastMapDataChangedAtUtc == DateTime.MinValue
+            ? -1d
+            : (nowUtc - _lastMapDataChangedAtUtc).TotalMilliseconds;
+        _lastMapDataChangedAtUtc = nowUtc;
+
+        TracePersistent("TOUR_PAGE",
+            $"[EVENT][MAP_DATA#{eventSeq}] stops={_viewModel.PoiStops.Count} " +
+            $"vmToPage={(vmToPageMs < 0 ? "n/a" : $"{vmToPageMs:0}ms")} " +
+            $"sinceLast={(sinceLastEventMs < 0 ? "n/a" : $"{sinceLastEventMs:0}ms")} " +
+            $"renderDelay=80ms");
+
+        if (_renderCts != null)
+        {
+            TracePersistent("TOUR_PAGE", $"[EVENT][MAP_DATA#{eventSeq}] cancel previous pending render");
+        }
 
         CancelAndDispose(ref _renderCts);
         _renderCts = new CancellationTokenSource();
@@ -527,8 +620,10 @@ public partial class TourDetailPage : ContentPage
         {
             try
             {
-                await Task.Delay(220, token);
+                await Task.Delay(80, token);
                 if (token.IsCancellationRequested) return;
+                var queueDelayMs = (DateTime.UtcNow - nowUtc).TotalMilliseconds;
+                TracePersistent("TOUR_PAGE", $"[EVENT][MAP_DATA#{eventSeq}] dispatch RenderMap after {queueDelayMs:0}ms");
                 await MainThread.InvokeOnMainThreadAsync(RenderMap);
             }
             catch (OperationCanceledException) { }
@@ -577,17 +672,27 @@ public partial class TourDetailPage : ContentPage
         // ✅ FIX: Thêm Map null check để tránh NullReferenceException
         if (!_isMapInitialized || MapControlView?.Map == null) return;
 
-        Debug.WriteLine($"[RENDER][{DateTime.Now:HH:mm:ss.fff}] start — stops={_viewModel.PoiStops.Count}");
+        var renderSeq = Interlocked.Increment(ref _renderSeq);
+        var renderSw = Stopwatch.StartNew();
+        var mapEventToRenderMs = _lastMapDataChangedAtUtc == DateTime.MinValue
+            ? -1d
+            : (DateTime.UtcNow - _lastMapDataChangedAtUtc).TotalMilliseconds;
+        TracePersistent("TOUR_PAGE",
+            $"[RENDER][#{renderSeq}][{DateTime.Now:HH:mm:ss.fff}] start stops={_viewModel.PoiStops.Count} " +
+            $"mapEventToRender={(mapEventToRenderMs < 0 ? "n/a" : $"{mapEventToRenderMs:0}ms")}");
 
         if (_viewModel.PoiStops.Count == 0)
         {
+            _poiRadiusLayer.Features = EmptyFeatures;
             _poiLayer.Features = EmptyFeatures;
             _userLayer.Features = EmptyFeatures;
+            _poiRadiusLayer.DataHasChanged();
             _poiLayer.DataHasChanged();
             _userLayer.DataHasChanged();
             _lastStaticMapKey = null;
             _lastRenderedUserLocation = null;
             MapControlView.Refresh();
+            TracePersistent("TOUR_PAGE", $"[RENDER][#{renderSeq}] empty map refresh done in {renderSw.ElapsedMilliseconds}ms");
             return;
         }
 
@@ -609,17 +714,21 @@ public partial class TourDetailPage : ContentPage
         var staticMapKey = BuildStaticMapKey(visibleStops, selectedZoneId);
         var staticChanged = staticMapKey != _lastStaticMapKey;
 
-        Debug.WriteLine($"[RENDER] visible={visibleStops.Count} selectedZone={selectedZoneId} staticChanged={staticChanged} routingInit={_isRoutingInitialized}");
+        TracePersistent("TOUR_PAGE", $"[RENDER] visible={visibleStops.Count} selectedZone={selectedZoneId} staticChanged={staticChanged} routingInit={_isRoutingInitialized}");
 
         if (staticChanged)
         {
+            RenderPoiRadiusLayer(visibleStops);
             RenderPoiLayer(visibleStops);
-            RenderRouteLayer(orderedStops);
             _lastStaticMapKey = staticMapKey;
         }
-        else if (_isRoutingInitialized && (_routeLayer.Features == null || !_routeLayer.Features.Any()))
+
+        var routeKey = BuildRouteKey(orderedStops);
+        var routeChanged = routeKey != _lastRouteKey;
+        if (routeChanged || (_isRoutingInitialized && (_routeLayer.Features == null || !_routeLayer.Features.Any())))
         {
             RenderRouteLayer(orderedStops);
+            _lastRouteKey = routeKey;
         }
 
         var userChanged = UpdateUserLayer();
@@ -631,7 +740,7 @@ public partial class TourDetailPage : ContentPage
             _hasFocusedOnce = true;
             _lastSelectedZoneId = selectedZoneId;
             didFocus = true;
-            Debug.WriteLine("[RENDER] Initial focus → Bùi Viện");
+            TracePersistent("TOUR_PAGE", "[RENDER] Initial focus -> Bui Vien");
         }
         else if (selectedZoneId != _lastSelectedZoneId)
         {
@@ -639,14 +748,20 @@ public partial class TourDetailPage : ContentPage
                 FocusOnStop(selectedStop);
             _lastSelectedZoneId = selectedZoneId;
             didFocus = true;
-            Debug.WriteLine($"[RENDER] Focus → zone={selectedZoneId}");
+            TracePersistent("TOUR_PAGE", $"[RENDER] Focus -> zone={selectedZoneId}");
         }
 
+        var refreshed = false;
         if (staticChanged || userChanged || didFocus)
         {
-            Debug.WriteLine($"[RENDER] Refresh — static={staticChanged} user={userChanged} focus={didFocus}");
+            TracePersistent("TOUR_PAGE", $"[RENDER] Refresh static={staticChanged} user={userChanged} focus={didFocus}");
             MapControlView.Refresh();
+            refreshed = true;
         }
+
+        TracePersistent("TOUR_PAGE",
+            $"[RENDER][#{renderSeq}] done in {renderSw.ElapsedMilliseconds}ms " +
+            $"refreshed={refreshed} staticChanged={staticChanged} userChanged={userChanged} didFocus={didFocus}");
     }
 
     private void RenderPoiLayer(List<PoiStopItem> visibleStops)
@@ -717,6 +832,44 @@ public partial class TourDetailPage : ContentPage
         _poiLayer.Features = poiFeatures;
         _poiLayer.DataHasChanged();
         Debug.WriteLine($"[RENDER][POI] {poiFeatures.Count} stops");
+    }
+
+    private void RenderPoiRadiusLayer(List<PoiStopItem> visibleStops)
+    {
+        var radiusFeatures = new List<IFeature>(visibleStops.Count);
+
+        foreach (var stop in visibleStops)
+        {
+            var radiusMeters = Math.Max(stop.Radius, 0);
+            if (radiusMeters <= 0) continue;
+
+            var (mx, my) = SphericalMercator.FromLonLat(stop.Longitude, stop.Latitude);
+            var center = new NetTopologySuite.Geometries.Point(mx, my);
+            var buffered = center.Buffer(radiusMeters);
+            var feature = buffered.ToFeature();
+
+            feature["ZoneId"] = stop.ZoneId;
+            feature["Radius"] = radiusMeters;
+
+            var fillColor = stop.IsSelected
+                ? Mapsui.Styles.Color.FromArgb(80, 67, 160, 71)
+                : Mapsui.Styles.Color.FromArgb(60, 255, 75, 75);
+            var outlineColor = stop.IsSelected
+                ? Mapsui.Styles.Color.FromArgb(180, 67, 160, 71)
+                : Mapsui.Styles.Color.FromArgb(150, 255, 75, 75);
+
+            feature.Styles.Add(new VectorStyle
+            {
+                Fill = new Mapsui.Styles.Brush(fillColor),
+                Outline = new Pen(outlineColor, 2)
+            });
+
+            radiusFeatures.Add(feature);
+        }
+
+        _poiRadiusLayer.Features = radiusFeatures;
+        _poiRadiusLayer.DataHasChanged();
+        Debug.WriteLine($"[RENDER][RADIUS] {radiusFeatures.Count} circles");
     }
 
     private void RenderRouteLayer(List<PoiStopItem> allStops)
@@ -821,19 +974,25 @@ public partial class TourDetailPage : ContentPage
             _userLayer.Features = EmptyFeatures;
             _userLayer.DataHasChanged();
             _lastRenderedUserLocation = null;
+            TracePersistent("TOUR_PAGE", "[RENDER][USER] cleared user marker");
             return true;
         }
 
         var current = (userLocation.Latitude, userLocation.Longitude);
+        double movedMeters = -1;
 
         if (_lastRenderedUserLocation is { } last)
         {
-            var moved = Microsoft.Maui.Devices.Sensors.Location.CalculateDistance(
+            movedMeters = Microsoft.Maui.Devices.Sensors.Location.CalculateDistance(
                 new Microsoft.Maui.Devices.Sensors.Location(last.Latitude, last.Longitude),
                 new Microsoft.Maui.Devices.Sensors.Location(current.Latitude, current.Longitude),
                 Microsoft.Maui.Devices.Sensors.DistanceUnits.Kilometers) * 1000d;
 
-            if (moved < 8) return false;
+            if (movedMeters < 1.5)
+            {
+                TracePersistent("TOUR_PAGE", $"[RENDER][USER] skip redraw moved={movedMeters:0.0}m (<1.5m)");
+                return false;
+            }
         }
 
         var (ux, uy) = SphericalMercator.FromLonLat(current.Longitude, current.Latitude);
@@ -845,10 +1004,28 @@ public partial class TourDetailPage : ContentPage
             Outline     = new Pen(Mapsui.Styles.Color.White, 2),
             SymbolScale = 1.0
         });
+        userFeature.Styles.Add(new LabelStyle
+        {
+            Text = $"GPS: {current.Latitude.ToString("F6", CultureInfo.InvariantCulture)}, {current.Longitude.ToString("F6", CultureInfo.InvariantCulture)}",
+            ForeColor = Mapsui.Styles.Color.FromArgb(255, 20, 20, 20),
+            BackColor = new Mapsui.Styles.Brush(Mapsui.Styles.Color.FromArgb(220, 255, 255, 255)),
+            Halo = new Pen(Mapsui.Styles.Color.Transparent, 0),
+            HorizontalAlignment = LabelStyle.HorizontalAlignmentEnum.Left,
+            VerticalAlignment = LabelStyle.VerticalAlignmentEnum.Center,
+            Offset = new Offset(14, 0),
+            Font = new Mapsui.Styles.Font { Size = 10, Bold = true }
+        });
 
         _userLayer.Features = new List<IFeature> { userFeature };
         _userLayer.DataHasChanged();
         _lastRenderedUserLocation = current;
+        var vmToRenderMs = _viewModel.LastLocationAppliedAtUtc == DateTime.MinValue
+            ? -1d
+            : (DateTime.UtcNow - _viewModel.LastLocationAppliedAtUtc).TotalMilliseconds;
+        TracePersistent("TOUR_PAGE",
+            $"[RENDER][USER] redraw moved={(movedMeters < 0 ? "first" : $"{movedMeters:0.0}m")} " +
+            $"vmToRender={(vmToRenderMs < 0 ? "n/a" : $"{vmToRenderMs:0}ms")} " +
+            $"at=({current.Latitude:F6},{current.Longitude:F6})");
         return true;
     }
 
@@ -927,6 +1104,10 @@ public partial class TourDetailPage : ContentPage
 
     private string BuildStaticMapKey(IReadOnlyList<PoiStopItem> stops, int selectedZoneId)
         => $"{_isRoutingInitialized}|{selectedZoneId}|{string.Join(';', stops.Select(s =>
+            $"{s.ZoneId}:{s.OrderIndex}:{s.Latitude:0.000000}:{s.Longitude:0.000000}:{s.Radius}"))}";
+
+    private string BuildRouteKey(IReadOnlyList<PoiStopItem> orderedStops)
+        => $"{_isRoutingInitialized}|{string.Join(';', orderedStops.Select(s =>
             $"{s.ZoneId}:{s.OrderIndex}:{s.Latitude:0.000000}:{s.Longitude:0.000000}"))}";
 
     private static List<PoiStopItem> FilterStopsByViewport(

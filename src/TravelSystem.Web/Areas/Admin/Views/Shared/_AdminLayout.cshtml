@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Admin Portal</title>
+    <title>@ViewData["Title"] - Cổng quản trị</title>
     <link rel="icon" type="image/png" href="~/icons/logo.png" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <!-- Font Awesome for Icons -->
@@ -302,7 +302,7 @@
             </div>
             <div class="sidebar-brand-text">
                 <h5>Bui Vien Explorer</h5>
-                <span>Admin Dashboard</span>
+                <span>Bảng điều khiển quản trị</span>
             </div>
         </a>
 
@@ -313,43 +313,43 @@
         <ul class="nav flex-column mb-auto">
             <li class="nav-item">
                 <a class="nav-link @(currentController == "Dashboard" ? "active" : "")" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
-                    <i class="fa-solid fa-border-all"></i> Dashboard
+                    <i class="fa-solid fa-border-all"></i> Bảng điều khiển
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link @(currentController == "Zones" ? "active" : "")" asp-area="Admin" asp-controller="Zones" asp-action="Index">
-                    <i class="fa-solid fa-map-location-dot"></i> Zones Management
+                    <i class="fa-solid fa-map-location-dot"></i> Quản lý khu vực
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link @(currentController == "Tours" ? "active" : "")" asp-area="Admin" asp-controller="Tours" asp-action="Index">
-                    <i class="fa-solid fa-route"></i> Tours Management
+                    <i class="fa-solid fa-route"></i> Quản lý tour
                 </a>
             </li>
 
             <li class="nav-item">
                 <a class="nav-link @(currentController == "Narrations" ? "active" : "")" asp-area="Admin" asp-controller="Narrations" asp-action="Index">
-                    <i class="fa-solid fa-headphones"></i> Audio & Narrations
+                    <i class="fa-solid fa-headphones"></i> Âm thanh & thuyết minh
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link @(currentController == "VisitLogs" ? "active" : "")" asp-area="Admin" asp-controller="VisitLogs" asp-action="Index">
-                    <i class="fa-solid fa-clock-rotate-left"></i> Visit Logs
+                    <i class="fa-solid fa-clock-rotate-left"></i> Nhật ký truy cập
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link @(currentController == "Heatmap" ? "active" : "")" asp-area="Admin" asp-controller="Heatmap" asp-action="Index">
-                    <i class="fa-solid fa-fire text-danger"></i> Visitor Heatmap
+                    <i class="fa-solid fa-fire text-danger"></i> Heat map
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link @(currentController == "Users" ? "active" : "")" asp-area="Admin" asp-controller="Users" asp-action="Index">
-                    <i class="fa-solid fa-users"></i> User Management
+                    <i class="fa-solid fa-users"></i> Quản lý người dùng
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link @(currentController == "Settings" ? "active" : "")" asp-area="Admin" asp-controller="Settings" asp-action="Index">
-                    <i class="fa-solid fa-gear"></i> Settings
+                    <i class="fa-solid fa-gear"></i> Cài đặt
                 </a>
             </li>
         </ul>
@@ -365,7 +365,7 @@
                 <div class="d-flex align-items-center gap-2 overflow-hidden">
                     <img src="https://ui-avatars.com/api/?name=Admin&background=fcd34d&color=fff" alt="User" style="width: 32px; height: 32px; border-radius: 50%;">
                     <div class="overflow-hidden">
-                        <div class="fw-bold small text-dark text-truncate" style="font-size: 12px;">Admin Account</div>
+                        <div class="fw-bold small text-dark text-truncate" style="font-size: 12px;">Tài khoản quản trị</div>
                     </div>
                 </div>
                 <a asp-area="Admin" asp-controller="Auth" asp-action="Logout" class="btn btn-sm btn-outline-danger border-0 p-1 px-2" title="Đăng xuất">

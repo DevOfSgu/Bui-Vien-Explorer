@@ -1,16 +1,16 @@
 @using TravelSystem.Shared.Models
 @model IEnumerable<Zone>
 @{
-    ViewData["Title"] = "Zones Management";
+    ViewData["Title"] = "Quản lý khu vực";
     var counts = ViewBag.NarrationCounts as Dictionary<int, int> ?? new Dictionary<int, int>();
 }
 
 <div class="header-actions">
     <div class="d-flex align-items-center gap-3">
-        <div class="page-title">Zones Management</div>
+        <div class="page-title">Quản lý khu vực</div>
     </div>
     <a asp-action="Create" class="btn btn-primary-custom text-decoration-none">
-        <i class="fa-solid fa-plus me-2"></i> Add New Zone
+        <i class="fa-solid fa-plus me-2"></i> Thêm khu vực mới
     </a>
 </div>
 
@@ -19,16 +19,16 @@
     <div class="d-flex justify-content-between mb-4 pb-3 border-bottom border-light">
         <div class="search-container">
             <i class="fa-solid fa-search"></i>
-            <input type="text" class="search-bar" style="width: 400px; background-color: #fff; border: 1px solid #edf2f9;" placeholder="Search zones...">
+            <input type="text" class="search-bar" style="width: 400px; background-color: #fff; border: 1px solid #edf2f9;" placeholder="Tìm kiếm khu vực...">
         </div>
         
         <div class="d-flex gap-2">
             <select class="form-select text-muted" style="width: 200px; border-color: #edf2f9; font-size: 14px;">
-                <option>All Categories</option>
-                <option>Bars & Clubs</option>
-                <option>Cafes</option>
-                <option>Restaurants</option>
-                <option>Landmarks</option>
+                <option>Tất cả danh mục</option>
+                <option>Bar & Club</option>
+                <option>Quán cà phê</option>
+                <option>Nhà hàng</option>
+                <option>Địa danh</option>
             </select>
             <button class="btn btn-outline-secondary" style="border-color:#edf2f9;"><i class="fa-solid fa-filter text-muted"></i></button>
         </div>
@@ -40,11 +40,11 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>THUMBNAIL</th>
-                    <th>ZONE NAME</th>
-                    <th>GPS COORDINATES</th>
-                    <th>TOTAL AUDIO GUIDES</th>
-                    <th>ACTIONS</th>
+                    <th>ẢNH ĐẠI DIỆN</th>
+                    <th>TÊN KHU VỰC</th>
+                    <th>TỌA ĐỘ GPS</th>
+                    <th>TỔNG AUDIO GUIDE</th>
+                    <th>THAO TÁC</th>
                 </tr>
             </thead>
             <tbody>
@@ -75,13 +75,13 @@
                         <td>
                             <div class="fw-bold text-dark">@item.Name</div>
                             <small class="text-muted">
-                                @(item.ZoneType == 0 ? "Bars & Clubs" : item.ZoneType == 1 ? "Restaurants/Cafes" : "Landmarks")
+                                @(item.ZoneType == 0 ? "Bar & Club" : item.ZoneType == 1 ? "Nhà hàng/Quán cà phê" : "Địa danh")
                             </small>
                             @if(item.IsLocked)
                             {
                                 <div style="margin-top: 4px;">
                                     <span class="badge-soft" style="background-color: #fee2e2; color: #dc2626; font-size: 11px;">
-                                        <i class="fa-solid fa-lock me-1"></i>Locked
+                                        <i class="fa-solid fa-lock me-1"></i>Đã khóa
                                     </span>
                                 </div>
                             }
@@ -89,7 +89,7 @@
                             {
                                 <div style="margin-top: 4px;">
                                     <span class="badge-soft" style="background-color: #f3f4f6; color: #6b7280; font-size: 11px;">
-                                        <i class="fa-solid fa-eye-slash me-1"></i>Hidden
+                                        <i class="fa-solid fa-eye-slash me-1"></i>Đã ẩn
                                     </span>
                                 </div>
                             }
@@ -101,25 +101,25 @@
                             }
                             @if(c > 0)
                             {
-                                <span class="badge-soft badge-red">@c Guides</span>
+                                <span class="badge-soft badge-red">@c bản ghi âm</span>
                             }
                             else
                             {
-                                <span class="badge-soft badge-gray">0 Guides</span>
+                                <span class="badge-soft badge-gray">0 bản ghi âm</span>
                             }
                         </td>
                         <td style="min-width: 400px;">
                             <div class="d-flex gap-1 flex-wrap">
                                 <!-- Scripts -->
                                 <a asp-controller="Narrations" asp-action="Index" asp-route-zoneId="@item.Id" class="btn btn-sm btn-outline-danger" style="border-radius: 6px; white-space: nowrap;">
-                                    <i class="fa-solid fa-headphones me-1"></i> Scripts
+                                    <i class="fa-solid fa-headphones me-1"></i> Kịch bản
                                 </a>
 
                                 <!-- Edit -->
                                 @if(!item.IsLocked)
                                 {
                                     <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" style="border-radius: 6px; white-space: nowrap;">
-                                        <i class="fa-solid fa-pen"></i> Edit
+                                        <i class="fa-solid fa-pen"></i> Sửa
                                     </a>
                                 }
 
@@ -129,7 +129,7 @@
                                     <form method="post" asp-action="Delete" asp-route-id="@item.Id" style="display: inline;" onsubmit="return confirm('Bạn chắc chắn muốn xóa zone này?');">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="btn btn-sm btn-outline-danger" style="border-radius: 6px; white-space: nowrap;">
-                                            <i class="fa-solid fa-trash me-1"></i> Delete
+                                            <i class="fa-solid fa-trash me-1"></i> Xóa
                                         </button>
                                     </form>
                                 }
@@ -139,7 +139,7 @@
                                 {
                                     <div class="dropdown" style="display: inline-block;">
                                         <button class="btn btn-sm btn-outline-warning dropdown-toggle" type="button" data-bs-toggle="dropdown" style="border-radius: 6px; white-space: nowrap;">
-                                            <i class="fa-solid fa-ban me-1"></i> Lock
+                                            <i class="fa-solid fa-ban me-1"></i> Khóa
                                         </button>
                                         <ul class="dropdown-menu">
                                             <li>
@@ -147,7 +147,7 @@
                                                     @Html.AntiForgeryToken()
                                                     <input type="hidden" name="reason" value="Có vấn đề khi chỉnh sửa">
                                                     <button type="submit" class="dropdown-item">
-                                                        <i class="fa-solid fa-exclamation-triangle me-2"></i> Lock: Issues
+                                                        <i class="fa-solid fa-exclamation-triangle me-2"></i> Khóa: Có vấn đề
                                                     </button>
                                                 </form>
                                             </li>
@@ -159,7 +159,7 @@
                                     <form method="post" asp-action="Unlock" asp-route-id="@item.Id" style="display: inline;">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="btn btn-sm btn-outline-success" style="border-radius: 6px; white-space: nowrap;">
-                                            <i class="fa-solid fa-lock-open me-1"></i> Unlock
+                                            <i class="fa-solid fa-lock-open me-1"></i> Mở khóa
                                         </button>
                                     </form>
                                 }
@@ -170,7 +170,7 @@
                                     <form method="post" asp-action="Hide" asp-route-id="@item.Id" style="display: inline;">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="btn btn-sm btn-outline-secondary" style="border-radius: 6px; white-space: nowrap;">
-                                            <i class="fa-solid fa-eye-slash me-1"></i> Hide
+                                            <i class="fa-solid fa-eye-slash me-1"></i> Ẩn
                                         </button>
                                     </form>
                                 }
@@ -179,7 +179,7 @@
                                     <form method="post" asp-action="Show" asp-route-id="@item.Id" style="display: inline;">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="btn btn-sm btn-outline-info" style="border-radius: 6px; white-space: nowrap;">
-                                            <i class="fa-solid fa-eye me-1"></i> Show
+                                            <i class="fa-solid fa-eye me-1"></i> Hiện
                                         </button>
                                     </form>
                                 }
@@ -201,7 +201,7 @@
             int from = (currentPage - 1) * pageSize + 1;
             int to = Math.Min(currentPage * pageSize, totalCount);
         }
-        <span class="text-muted" style="font-size: 13px;">Showing <span class="fw-bold text-dark">@from</span> to <span class="fw-bold text-dark">@to</span> of <span class="fw-bold text-dark">@totalCount</span> results</span>
+        <span class="text-muted" style="font-size: 13px;">Hiển thị <span class="fw-bold text-dark">@from</span> đến <span class="fw-bold text-dark">@to</span> trên tổng <span class="fw-bold text-dark">@totalCount</span> kết quả</span>
         <nav>
             <ul class="pagination pagination-sm mb-0">
                 <li class="page-item @(currentPage == 1 ? "disabled" : "")">

@@ -1,14 +1,55 @@
+@using System.Globalization
+@using TravelSystem.Web.Areas.Vendor.Controllers
 @{
     ViewData["Title"] = "Dashboard Home";
 
-    var shopName = ViewBag.ShopName as string ?? "Your Shop";
     var zoneVisits = (int)(ViewBag.ZoneVisits ?? 0);
     var narrationListens = (int)(ViewBag.NarrationListens ?? 0);
     var engagementRate = (int)(ViewBag.EngagementRate ?? 0);
     var avgDwellSeconds = (int)(ViewBag.AvgDwellTimeSeconds ?? 0);
     var avgDwell = TimeSpan.FromSeconds(avgDwellSeconds);
     var avgDwellLabel = $"{(int)avgDwell.TotalMinutes}m {avgDwell.Seconds}s";
-    var shopOpen = ViewBag.ShopOpen as bool? ?? true;
+
+    var trafficLabels = (ViewBag.TrafficLabels as List<string>) ?? new List<string> { "MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN" };
+    var trafficValues = (ViewBag.TrafficValues as List<int>) ?? new List<int> { 0, 0, 0, 0, 0, 0, 0 };
+
+    if (trafficLabels.Count != trafficValues.Count)
+    {
+        trafficLabels = new List<string> { "MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN" };
+        trafficValues = new List<int> { 0, 0, 0, 0, 0, 0, 0 };
+    }
+
+    const double chartWidth = 800;
+    const double chartHeight = 220;
+    const double baselineY = 190;
+    const double topY = 30;
+    var maxTraffic = Math.Max(trafficValues.DefaultIfEmpty(0).Max(), 1);
+
+    string F(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+
+    var points = new List<(double X, double Y)>();
+    for (var i = 0; i < trafficValues.Count; i++)
+    {
+        var x = trafficValues.Count == 1 ? 0 : i * (chartWidth / (trafficValues.Count - 1));
+        var normalized = trafficValues[i] / (double)maxTraffic;
+        var y = baselineY - ((baselineY - topY) * normalized);
+        points.Add((x, y));
+    }
+
+    var linePath = points.Count > 0
+        ? "M " + string.Join(" L ", points.Select(p => $"{F(p.X)} {F(p.Y)}"))
+        : "M 0 190";
+    var areaPath = points.Count > 0
+        ? $"{linePath} L {F(chartWidth)} {F(chartHeight)} L 0 {F(chartHeight)} Z"
+        : $"M 0 {F(chartHeight)} L {F(chartWidth)} {F(chartHeight)} Z";
+
+    var languageStats = (ViewBag.LanguageStats as List<DashboardController.LanguageBreakdownViewModel>)
+        ?? new List<DashboardController.LanguageBreakdownViewModel>();
+    var totalLanguageScans = (int)(ViewBag.TotalLanguageScans ?? 0);
+
+    var circumference = 328d;
+    var donutStats = languageStats.Where(x => x.Percentage > 0).ToList();
+    var donutOffset = 0d;
 }
 
 <style>
@@ -20,13 +61,12 @@
     .donut-center .pct { font-size: 18px; font-weight: 700; color: #111827; }
     .donut-center .lbl { font-size: 10px; color: #9ca3af; font-weight: 600; letter-spacing: 0.5px; }
 
-    .lang-item { display: flex; flex-direction: column; align-items: flex-start; }
+    .lang-item { display: flex; flex-direction: column; align-items: flex-start; min-width: 170px; }
     .lang-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
     .lang-pct { font-size: 26px; font-weight: 700; color: #111827; }
     .lang-count { font-size: 12px; color: #9ca3af; }
 </style>
 
-<!-- Stat Cards -->
 <div class="row g-3 mb-4">
     <div class="col-xl-3 col-md-6">
         <div class="stat-card">
@@ -66,7 +106,6 @@
     </div>
 </div>
 
-<!-- Traffic Trends Chart -->
 <div class="card-custom mb-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
@@ -74,12 +113,11 @@
             <small class="text-muted">Weekly scan volume analysis</small>
         </div>
         <div class="d-flex gap-2">
-            <button class="btn btn-outline-secondary btn-sm">Last 7 Days</button>
-            <button class="btn btn-outline-secondary btn-sm">Export</button>
+            <button class="btn btn-outline-secondary btn-sm" type="button" disabled>Last 7 Days</button>
+            <button class="btn btn-outline-secondary btn-sm" type="button" disabled>Export</button>
         </div>
     </div>
 
-    <!-- SVG area chart mimicking the mockup -->
     <div style="position:relative; width:100%; height:220px;">
         <svg width="100%" height="100%" viewBox="0 0 800 220" preserveAspectRatio="none">
             <defs>
@@ -88,27 +126,18 @@
                     <stop offset="100%" stop-color="#ef4444" stop-opacity="0.01"/>
                 </linearGradient>
             </defs>
-            <!-- Filled area -->
-            <path d="M0 190 C100 180, 150 160, 250 140 S400 120, 480 130 S600 160, 680 80 L800 40 L800 220 L0 220 Z"
-                  fill="url(#areaGrad)"/>
-            <!-- Line -->
-            <path d="M0 190 C100 180, 150 160, 250 140 S400 120, 480 130 S600 160, 680 80 L800 40"
-                  fill="none" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="@areaPath" fill="url(#areaGrad)"/>
+            <path d="@linePath" fill="none" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <!-- Day labels -->
         <div class="d-flex justify-content-between" style="position:absolute;bottom:0;left:0;right:0;padding: 0 5px;">
-            <span style="font-size:11px;font-weight:600;color:#9ca3af;">MON</span>
-            <span style="font-size:11px;font-weight:600;color:#9ca3af;">TUE</span>
-            <span style="font-size:11px;font-weight:600;color:#9ca3af;">WED</span>
-            <span style="font-size:11px;font-weight:600;color:#9ca3af;">THU</span>
-            <span style="font-size:11px;font-weight:600;color:#9ca3af;">FRI</span>
-            <span style="font-size:11px;font-weight:600;color:#9ca3af;">SAT</span>
-            <span style="font-size:11px;font-weight:600;color:#9ca3af;">SUN</span>
+            @foreach (var label in trafficLabels)
+            {
+                <span style="font-size:11px;font-weight:600;color:#9ca3af;">@label</span>
+            }
         </div>
     </div>
 </div>
 
-<!-- Tourist Language Breakdown -->
 <div class="card-custom mb-4">
     <div class="mb-3">
         <h6 class="fw-bold mb-1" style="color:#111827;">Tourist Language Breakdown</h6>
@@ -116,44 +145,36 @@
     </div>
 
     <div class="d-flex align-items-center gap-5 flex-wrap">
-        <!-- Donut -->
         <div class="donut-wrapper flex-shrink-0">
             <svg width="140" height="140" viewBox="0 0 140 140">
-                <!-- Background ring -->
                 <circle cx="70" cy="70" r="52" fill="none" stroke="#f3f4f6" stroke-width="18"/>
-                <!-- English 55% = ~198deg -->
-                <circle cx="70" cy="70" r="52" fill="none" stroke="#ef4444" stroke-width="18"
-                        stroke-dasharray="198 328" stroke-dashoffset="82" stroke-linecap="butt"/>
-                <!-- Vietnamese 30% = ~108deg -->
-                <circle cx="70" cy="70" r="52" fill="none" stroke="#6b7280" stroke-width="18"
-                        stroke-dasharray="108 328" stroke-dashoffset="-116" stroke-linecap="butt"/>
-                <!-- Korean 15% = ~54deg - pinkish -->
-                <circle cx="70" cy="70" r="52" fill="none" stroke="#fca5a5" stroke-width="18"
-                        stroke-dasharray="54 328" stroke-dashoffset="-224" stroke-linecap="butt"/>
+                @foreach (var stat in donutStats)
+                {
+                    var arc = stat.Percentage / 100d * circumference;
+                    var dashArray = $"{F(arc)} {F(circumference)}";
+                    var dashOffset = F(-donutOffset);
+                    donutOffset += arc;
+                    <circle cx="70" cy="70" r="52" fill="none" stroke="@stat.Color" stroke-width="18"
+                            stroke-dasharray="@dashArray"
+                            stroke-dashoffset="@dashOffset"
+                            transform="rotate(-90 70 70)"/>
+                }
             </svg>
             <div class="donut-center">
-                <div class="pct">100%</div>
+                <div class="pct">@(totalLanguageScans > 0 ? "100%" : "0%")</div>
                 <div class="lbl">TOTAL SCANS</div>
             </div>
         </div>
 
-        <!-- Legend -->
         <div class="d-flex gap-5 flex-wrap">
-            <div class="lang-item">
-                <div class="mb-1"><span class="lang-dot" style="background:#ef4444;"></span>🇺🇸 <strong>English</strong></div>
-                <div class="lang-pct">55%</div>
-                <div class="lang-count">352 Scans</div>
-            </div>
-            <div class="lang-item">
-                <div class="mb-1"><span class="lang-dot" style="background:#6b7280;"></span>🇻🇳 <strong>Vietnamese</strong></div>
-                <div class="lang-pct">30%</div>
-                <div class="lang-count">192 Scans</div>
-            </div>
-            <div class="lang-item">
-                <div class="mb-1"><span class="lang-dot" style="background:#fca5a5;"></span>🇰🇷 <strong>Korean</strong></div>
-                <div class="lang-pct">15%</div>
-                <div class="lang-count">96 Scans</div>
-            </div>
+            @foreach (var stat in languageStats)
+            {
+                <div class="lang-item">
+                    <div class="mb-1"><span class="lang-dot" style="background:@stat.Color;"></span>@stat.CountryCode <strong>@stat.Name</strong></div>
+                    <div class="lang-pct">@stat.Percentage%</div>
+                    <div class="lang-count">@stat.Count Scans</div>
+                </div>
+            }
         </div>
     </div>
 </div>

@@ -1,11 +1,11 @@
 @using TravelSystem.Shared.Models
 @model IEnumerable<Analytics>
 @{
-    ViewData["Title"] = "Visit Logs";
+    ViewData["Title"] = "Nhật ký truy cập";
 }
 
 <div class="header-actions">
-    <div class="page-title">Visitor Logs</div>
+    <div class="page-title">Nhật ký khách truy cập</div>
 </div>
 
 <div class="card-custom">
@@ -13,34 +13,34 @@
         <table class="table-custom">
             <thead>
                 <tr>
-                    <th>TIMESTAMP</th>
-                    <th>SESSION ID (ANONYMOUS)</th>
-                    <th>GPS COORDINATES</th>
-                    <th>ACTION</th>
-                    <th>DWELL TIME</th>
+                    <th>THỜI GIAN</th>
+                    <th>SESSION ID (ẨN DANH)</th>
+                    <th>TỌA ĐỘ GPS</th>
+                    <th>HÀNH ĐỘNG</th>
+                    <th>THỜI GIAN Ở LẠI</th>
                 </tr>
             </thead>
             <tbody>
                 @if(!Model.Any()) {
-                    <tr><td colspan="5" class="text-center text-muted border-bottom-0 pb-4 pt-4">No real visit logs available yet. Here is some mocked data to show the layout:</td></tr>
+                    <tr><td colspan="5" class="text-center text-muted border-bottom-0 pb-4 pt-4">Chưa có dữ liệu truy cập thực tế. Hiển thị dữ liệu mẫu để minh họa giao diện:</td></tr>
                     
                     <!-- Dummy data to show UI layout -->
                     <tr>
-                        <td class="text-muted">@((DateTime.UtcNow.AddMinutes(-10)).ToString("MMM dd yyyy, HH:mm"))</td>
+                        <td class="text-muted">@((DateTime.UtcNow.AddMinutes(-10)).ToString("dd/MM/yyyy, HH:mm"))</td>
                         <td><span class="badge-soft badge-gray">b9c2a3f1...</span></td>
                         <td><small style="font-family: monospace;">10.7688° N, 106.6924° E</small></td>
                         <td><span class="badge-soft badge-red">PlayNarration</span></td>
                         <td>120s</td>
                     </tr>
                     <tr>
-                        <td class="text-muted">@((DateTime.UtcNow.AddMinutes(-25)).ToString("MMM dd yyyy, HH:mm"))</td>
+                        <td class="text-muted">@((DateTime.UtcNow.AddMinutes(-25)).ToString("dd/MM/yyyy, HH:mm"))</td>
                         <td><span class="badge-soft badge-gray">f8a91b2c...</span></td>
                         <td><small style="font-family: monospace;">10.7690° N, 106.6920° E</small></td>
                         <td><span class="badge-soft badge-gray">LocationPing</span></td>
                         <td>-</td>
                     </tr>
                     <tr>
-                        <td class="text-muted">@((DateTime.UtcNow.AddMinutes(-40)).ToString("MMM dd yyyy, HH:mm"))</td>
+                        <td class="text-muted">@((DateTime.UtcNow.AddMinutes(-40)).ToString("dd/MM/yyyy, HH:mm"))</td>
                         <td><span class="badge-soft badge-gray">1a2b3c4d...</span></td>
                         <td><small style="font-family: monospace;">10.7695° N, 106.6918° E</small></td>
                         <td><span class="badge-soft badge-gray">EnterZone</span></td>
@@ -50,7 +50,7 @@
                 @foreach (var log in Model)
                 {
                     <tr>
-                        <td class="text-muted">@log.CreatedAt.ToString("MMM dd yyyy, HH:mm")</td>
+                        <td class="text-muted">@log.CreatedAt.ToString("dd/MM/yyyy, HH:mm")</td>
                         <td><span class="badge-soft badge-gray">@log.SessionId.ToString().Substring(0,8)...</span></td>
                         <td><small style="font-family: monospace;">@log.Latitude.ToString("0.0000")° N, @log.Longitude.ToString("0.0000")° E</small></td>
                         <td>

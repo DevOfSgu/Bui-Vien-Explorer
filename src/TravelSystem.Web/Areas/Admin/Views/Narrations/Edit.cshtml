@@ -1,6 +1,6 @@
 @model TravelSystem.Shared.Models.Narration
 @{
-    ViewData["Title"] = "Edit Script";
+    ViewData["Title"] = "Sửa kịch bản";
 }
 
 <div class="header-actions">
@@ -8,7 +8,7 @@
         <a asp-action="Index" asp-route-zoneId="@Model.ZoneId" class="btn btn-outline-secondary" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
             <i class="fa-solid fa-arrow-left"></i>
         </a>
-        <div class="page-title">Edit TTS Script</div>
+        <div class="page-title">Sửa kịch bản TTS</div>
     </div>
 </div>
 
@@ -18,25 +18,25 @@
         <div class="row">
             <div class="col-md-8">
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Select Active Zone (POI)</label>
+                    <label class="form-label fw-bold">Chọn khu vực đang hoạt động (POI)</label>
                     <select asp-for="ZoneId" class="form-select" asp-items="@(new SelectList(ViewBag.Zones, "Id", "Name", Model.ZoneId))" required>
                     </select>
                 </div>
 
                 <div class="row mb-4">
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">Select Language</label>
+                        <label class="form-label fw-bold">Chọn ngôn ngữ</label>
                         <select asp-for="Language" class="form-select" required>
-                            <option value="vi">Vietnamese (vi)</option>
-                            <option value="en">English (en)</option>
-                            <option value="ko">Korean (ko)</option>
-                            <option value="ja">Japanese (ja)</option>
+                            <option value="vi">Tiếng Việt (vi)</option>
+                            <option value="en">Tiếng Anh (en)</option>
+                            <option value="ko">Tiếng Hàn (ko)</option>
+                            <option value="ja">Tiếng Nhật (ja)</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Narration Text (Script)</label>
+                    <label class="form-label fw-bold">Nội dung thuyết minh (kịch bản)</label>
                     <textarea asp-for="Text" class="form-control" rows="12"></textarea>
                 </div>
             </div>
@@ -44,22 +44,22 @@
             <!-- Settings Sidebar -->
             <div class="col-md-4">
                 <div class="p-3 mb-4 rounded" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
-                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-microphone text-primary me-2"></i> Audio Configuration</h6>
+                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-microphone text-primary me-2"></i> Cấu hình âm thanh</h6>
                     
                     <div class="mb-3">
-                        <label class="form-label text-muted small">Voice Profile (Optional)</label>
+                        <label class="form-label text-muted small">Giọng đọc (Tùy chọn)</label>
                         <select asp-for="VoiceId" class="form-select form-select-sm">
-                            <option value="">-- Let Device Decide --</option>
-                            <option value="Wavenet-A">Premium Female (A)</option>
-                            <option value="Wavenet-B">Premium Male (B)</option>
-                            <option value="Wavenet-C">Premium Female (C)</option>
-                            <option value="Wavenet-D">Premium Male (D)</option>
+                            <option value="">-- Để thiết bị tự chọn --</option>
+                            <option value="Wavenet-A">Nữ cao cấp (A)</option>
+                            <option value="Wavenet-B">Nam cao cấp (B)</option>
+                            <option value="Wavenet-C">Nữ cao cấp (C)</option>
+                            <option value="Wavenet-D">Nam cao cấp (D)</option>
                         </select>
                     </div>
                 </div>
 
                 <button type="submit" class="btn btn-primary-custom w-100 py-2 mt-2">
-                    <i class="fa-solid fa-floppy-disk me-2"></i> Update Script
+                    <i class="fa-solid fa-floppy-disk me-2"></i> Cập nhật kịch bản
                 </button>
             </div>
         </div>

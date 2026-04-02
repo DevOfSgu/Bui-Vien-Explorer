@@ -3,26 +3,18 @@ namespace TravelSystem.Mobile.Services;
 public static class ApiConstants
 {
 #if DEBUG
-    private const string DebugAndroidEmulatorBaseApiUrl = "http://10.0.2.2:5281/";
-    // HƯỚNG DẪN: Nếu dùng điện thoại thật, hãy chạy lệnh 'ipconfig' trên máy tính, 
-    // lấy địa chỉ IPv4 (ví dụ: 192.168.1.10) và thay vào 127.0.0.1 dưới đây.
-    private const string DebugAndroidDeviceBaseApiUrl = "http://127.0.0.1:5281/";
-    private const string DebugDesktopBaseApiUrl = "http://localhost:5281/";
+    // For debug testing on real devices/emulators via ngrok tunnel.
+    // Update this URL whenever ngrok forwarding domain changes.
+    private const string DebugTunnelBaseApiUrl = "https://nonstereotyped-biometrical-amir.ngrok-free.dev/";
 #else
-    // Production: thay bằng URL thật khi deploy
-    private const string ProductionBaseApiUrl = "https://YOUR_NGROK_URL_HERE.ngrok-free.app/";
+    // Production: replace with your deployed API domain.
+    private const string ProductionBaseApiUrl = "https://nonstereotyped-biometrical-amir.ngrok-free.dev/";
 #endif
 
     public static string GetBaseApiUrl()
     {
 #if DEBUG
-#if ANDROID
-        return DeviceInfo.DeviceType == DeviceType.Virtual
-            ? DebugAndroidEmulatorBaseApiUrl
-            : DebugAndroidDeviceBaseApiUrl;
-#else
-        return DebugDesktopBaseApiUrl;
-#endif
+        return DebugTunnelBaseApiUrl;
 #else
         return ProductionBaseApiUrl;
 #endif

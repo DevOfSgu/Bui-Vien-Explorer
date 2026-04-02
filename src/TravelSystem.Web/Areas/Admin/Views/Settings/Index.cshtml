@@ -1,9 +1,9 @@
 @model TravelSystem.Web.Areas.Admin.Models.AdminSettingsViewModel
 @{
-    ViewData["Title"] = "Settings";
+    ViewData["Title"] = "Cài đặt";
 }
 
-<div class="page-title mb-4">Settings</div>
+<div class="page-title mb-4">Cài đặt</div>
 
 <style>
     .settings-header {
@@ -88,7 +88,7 @@
 
 <form asp-action="Index" method="post">
     <div class="settings-card">
-        <h5 class="mb-3">Admin Profile</h5>
+        <h5 class="mb-3">Thông tin quản trị viên</h5>
         <div class="row g-3">
             <div class="col-md-6">
                 <div class="form-group">
@@ -114,29 +114,7 @@
         </div>
     </div>
 
-    <div class="settings-card">
-        <h5 class="mb-3">System Preferences</h5>
-        <div class="row g-3 align-items-center">
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label asp-for="DefaultLanguage"></label>
-                    <select asp-for="DefaultLanguage" class="form-control-custom">
-                        <option value="vi">Vietnamese</option>
-                        <option value="en">English</option>
-                    </select>
-                </div>
-            </div>
-            <div class="col-md-6 d-flex align-items-center">
-                <label class="me-2" asp-for="EnableApiSync"></label>
-                <label class="toggle-switch">
-                    <input asp-for="EnableApiSync" type="checkbox" />
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-        </div>
-    </div>
-
-    <button type="submit" class="btn btn-primary">Save Changes</button>
+    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
 </form>
 
 @section Scripts {
