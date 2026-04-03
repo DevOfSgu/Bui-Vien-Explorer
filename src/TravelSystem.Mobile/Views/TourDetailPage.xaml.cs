@@ -20,6 +20,7 @@ using Mapsui.Nts;
 using BruTile.Predefined;
 using BruTile.Web;
 using System.Globalization;
+using System.ComponentModel;
 
 namespace TravelSystem.Mobile.Views;
 
@@ -71,6 +72,9 @@ public partial class TourDetailPage : ContentPage
     private DateTime _lastMapDataChangedAtUtc = DateTime.MinValue;
     private static readonly List<IFeature> EmptyFeatures = [];
     private string _currentMapSource = "UNKNOWN";
+    private bool _isRemoteHintToastAnimating;
+
+    private Border? RemoteHintToastView => this.FindByName<Border>("RemoteHintToast");
 
     private static void TracePersistent(string category, string message)
     {
@@ -117,6 +121,8 @@ public partial class TourDetailPage : ContentPage
         {
             _viewModel.NavigateToZoneDetailCommand.Execute(stop);
         };
+
+        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         Debug.WriteLine("[MAP_CRASH_DEBUG] 3. Constructor FINISHED");
     }
 
@@ -222,6 +228,7 @@ public partial class TourDetailPage : ContentPage
     {
         base.OnAppearing();
         Shell.SetTabBarIsVisible(this, false);
+        SyncRemoteHintToastState(animate: false);
 
         _viewModel.StopSelected -= OnStopSelected;
         _viewModel.StopSelected += OnStopSelected;
@@ -256,6 +263,7 @@ public partial class TourDetailPage : ContentPage
     {
         base.OnDisappearing();
         Debug.WriteLine("[MAP_CRASH_DEBUG] 22. Disappearing - Cleaning up");
+        HideRemoteHintToast();
 
         _viewModel.StopForegroundTracking();
         _viewModel.MapDataChanged -= OnMapDataChanged;
@@ -286,6 +294,79 @@ public partial class TourDetailPage : ContentPage
         });
 
         Debug.WriteLine("[MAP_CRASH_DEBUG] 23. Cleanup FINISHED");
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(TourDetailViewModel.IsRemoteExploreHintVisible)
+            && e.PropertyName != nameof(TourDetailViewModel.RemoteExploreHintText))
+        {
+            return;
+        }
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            SyncRemoteHintToastState(animate: e.PropertyName == nameof(TourDetailViewModel.IsRemoteExploreHintVisible));
+        });
+    }
+
+    private void SyncRemoteHintToastState(bool animate)
+    {
+        var remoteHintToast = RemoteHintToastView;
+        if (remoteHintToast == null) return;
+
+        if (_viewModel.IsRemoteExploreHintVisible)
+        {
+            _ = ShowRemoteHintToastAsync(animate);
+            return;
+        }
+
+        HideRemoteHintToast();
+    }
+
+    private async Task ShowRemoteHintToastAsync(bool animate)
+    {
+        var remoteHintToast = RemoteHintToastView;
+        if (remoteHintToast == null) return;
+        if (remoteHintToast.IsVisible && (!animate || _isRemoteHintToastAnimating)) return;
+
+        remoteHintToast.IsVisible = true;
+
+        if (!animate)
+        {
+            remoteHintToast.Opacity = 1;
+            remoteHintToast.TranslationY = 0;
+            return;
+        }
+
+        _isRemoteHintToastAnimating = true;
+        remoteHintToast.Opacity = 0;
+        remoteHintToast.TranslationY = -18;
+
+        try
+        {
+            await Task.WhenAll(
+                remoteHintToast.FadeTo(1, 220, Easing.CubicOut),
+                remoteHintToast.TranslateTo(0, 0, 220, Easing.CubicOut));
+        }
+        finally
+        {
+            _isRemoteHintToastAnimating = false;
+        }
+    }
+
+    private void HideRemoteHintToast()
+    {
+        var remoteHintToast = RemoteHintToastView;
+        if (remoteHintToast == null) return;
+
+        remoteHintToast.AbortAnimation("TranslationX");
+        remoteHintToast.AbortAnimation("TranslationY");
+        remoteHintToast.AbortAnimation("FadeTo");
+        remoteHintToast.Opacity = 0;
+        remoteHintToast.TranslationY = -18;
+        remoteHintToast.IsVisible = false;
+        _isRemoteHintToastAnimating = false;
     }
 
     // ─── Map Init ────────────────────────────────────────────────────────────

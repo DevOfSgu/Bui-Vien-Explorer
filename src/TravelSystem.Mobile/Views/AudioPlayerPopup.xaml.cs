@@ -11,6 +11,7 @@ namespace TravelSystem.Mobile.Views;
 public partial class AudioPlayerPopup : ContentView
 {
     private IAudioGuideService? _audioService;
+    private IAppAudioInterruptionService? _audioInterruptionService;
     public ApiService? AnalyticsApiService { get; set; }
     private string _text = string.Empty;
     private string _language = "vi";
@@ -21,6 +22,7 @@ public partial class AudioPlayerPopup : ContentView
     private CancellationTokenSource? _initCts;
     private DateTime? _playbackStartedAtUtc;
     private bool _playNarrationTracked;
+    private bool _resumeMp3AfterInterruption;
 
     public event Action<PoiStopItem>? SeeDetailsRequested;
 
@@ -28,6 +30,26 @@ public partial class AudioPlayerPopup : ContentView
     {
         InitializeComponent();
         this.PropertyChanged += OnPopupPropertyChanged;
+    }
+
+    protected override void OnHandlerChanged()
+    {
+        base.OnHandlerChanged();
+
+        var svc = Handler?.MauiContext?.Services.GetService<IAppAudioInterruptionService>();
+        if (ReferenceEquals(_audioInterruptionService, svc)) return;
+
+        if (_audioInterruptionService != null)
+        {
+            _audioInterruptionService.InterruptionChanged -= OnAudioInterruptionChanged;
+        }
+
+        _audioInterruptionService = svc;
+
+        if (_audioInterruptionService != null)
+        {
+            _audioInterruptionService.InterruptionChanged += OnAudioInterruptionChanged;
+        }
     }
 
     private void OnPopupPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -38,6 +60,32 @@ public partial class AudioPlayerPopup : ContentView
             // Auto-stop when hidden
             StopAllPlayback();
         }
+    }
+
+    private void OnAudioInterruptionChanged(bool isInterrupted)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            if (!_isUsingMp3) return;
+
+            if (isInterrupted)
+            {
+                _resumeMp3AfterInterruption = AudioMediaPlayer.CurrentState == MediaElementState.Playing;
+                if (_resumeMp3AfterInterruption)
+                {
+                    AudioMediaPlayer.Pause();
+                }
+            }
+            else
+            {
+                if (_resumeMp3AfterInterruption && IsVisible)
+                {
+                    AudioMediaPlayer.Play();
+                }
+
+                _resumeMp3AfterInterruption = false;
+            }
+        });
     }
 
     private void StopAllPlayback()

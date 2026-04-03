@@ -33,6 +33,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<TravelSystem.Shared.Factories.SqliteConnectionFactory>();
         builder.Services.AddSingleton<Services.DatabaseService>();
         builder.Services.AddSingleton<Services.ApiService>();
+        builder.Services.AddSingleton<Services.IAppAudioInterruptionService, Services.AppAudioInterruptionService>();
         builder.Services.AddSingleton<Services.IAudioGuideService, Services.AudioGuideService>();
         builder.Services.AddSingleton<Services.AudioPreloadService>();
 

@@ -48,6 +48,8 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     private Location? _latestStreamLocation;
     private DateTime _latestStreamLocationAtUtc = DateTime.MinValue;
     private DateTime _lastPollingAttemptAtUtc = DateTime.MinValue;
+    private string _remoteExploreHintText = string.Empty;
+    private bool _isRemoteExploreHintVisible;
 
     // Cache vị trí tĩnh giữa các lần điều hướng để tránh GPS cold-start
     private static Location? _cachedUserLocation;
@@ -78,6 +80,9 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     private const double StationaryEnterMaxSpeedMetersPerSecond = 0.35;
     private const double StationaryEnterMaxAccuracyMeters = 25;
     private const double RawPoiAssistMaxAccuracyMeters = 30;
+    private const double BuiVienLatitude = 10.764017;
+    private const double BuiVienLongitude = 106.692527;
+    private const double RemoteExploreHintThresholdMeters = 1000;
     private static readonly TimeSpan ForegroundTrackingInterval = TimeSpan.FromSeconds(2);
     private static readonly TimeSpan MaxAcceptedLocationAge = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan StationaryLockDebounce = TimeSpan.FromSeconds(6);
@@ -121,6 +126,17 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     public string TourStopsTitle => _localizationManager["tour_stops"];
     public string StopsCountText => _localizationManager.Format("tour_stops_count", PoiStops.Count);
     public string PoiSimulationButtonText => IsPoiSimulationEnabled ? "Tắt giả lập POI" : "Bật giả lập POI";
+    public string RemoteExploreHintText
+    {
+        get => _remoteExploreHintText;
+        private set => SetProperty(ref _remoteExploreHintText, value);
+    }
+
+    public bool IsRemoteExploreHintVisible
+    {
+        get => _isRemoteExploreHintVisible;
+        private set => SetProperty(ref _isRemoteExploreHintVisible, value);
+    }
 
     private static void Trace(string message)
     {
@@ -164,6 +180,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         if (e.PropertyName != "Item[]") return;
         OnPropertyChanged(nameof(TourStopsTitle));
         OnPropertyChanged(nameof(StopsCountText));
+        UpdateRemoteExploreHint(UserLocation);
     }
 
     private async Task NavigateToZoneDetail(PoiStopItem stop)
@@ -240,6 +257,8 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             _currentAutoInsideZoneId = null;
             _simulatedLocation = null;
             ResetStationaryLock();
+            RemoteExploreHintText = string.Empty;
+            IsRemoteExploreHintVisible = false;
             IsLoading = false; // reset để LoadData không bị block bởi IsLoading guard
             _locationCts?.Cancel();
             _locationCts?.Dispose();
@@ -1253,6 +1272,8 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             stop.DistanceText = $"{distanceKm:0.0} km";
         }
 
+        UpdateRemoteExploreHint(location);
+
         var selectionChanged = allowAutoSelect && TryAutoSelectNearestStop(location, rawLocationForPoi);
         var movementTriggered = ShouldRefreshMapByMovement(location, out var movedSinceMapRefreshMeters);
         var shouldRefreshMap = forceMapRefresh || selectionChanged || movementTriggered;
@@ -1271,6 +1292,30 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             Trace($"MAP_REFRESH#{refreshSeq} emit MapDataChanged");
             MapDataChanged?.Invoke(this, EventArgs.Empty);
         }
+    }
+
+    private void UpdateRemoteExploreHint(Location? location)
+    {
+        if (location == null)
+        {
+            IsRemoteExploreHintVisible = false;
+            RemoteExploreHintText = string.Empty;
+            return;
+        }
+
+        var buiVien = new Location(BuiVienLatitude, BuiVienLongitude);
+        var distanceKm = Location.CalculateDistance(location, buiVien, DistanceUnits.Kilometers);
+        var distanceMeters = distanceKm * 1000d;
+
+        if (distanceMeters < RemoteExploreHintThresholdMeters)
+        {
+            IsRemoteExploreHintVisible = false;
+            RemoteExploreHintText = string.Empty;
+            return;
+        }
+
+        RemoteExploreHintText = _localizationManager.Format("tour_remote_explore_hint", distanceKm);
+        IsRemoteExploreHintVisible = true;
     }
 }
 

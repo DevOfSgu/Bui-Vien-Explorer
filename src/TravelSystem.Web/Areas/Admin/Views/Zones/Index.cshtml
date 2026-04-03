@@ -28,6 +28,7 @@
                 <option>Bar & Club</option>
                 <option>Quán cà phê</option>
                 <option>Nhà hàng</option>
+                <option>Ăn uống</option>
                 <option>Địa danh</option>
             </select>
             <button class="btn btn-outline-secondary" style="border-color:#edf2f9;"><i class="fa-solid fa-filter text-muted"></i></button>
@@ -73,9 +74,20 @@
                             }
                         </td>
                         <td>
+                            @{ 
+                                var zoneTypeLabel = item.ZoneType switch
+                                {
+                                    0 => "Bar & Club",
+                                    1 => "Nhà hàng/Quán cà phê",
+                                    2 => "Mua sắm",
+                                    3 => "Địa danh",
+                                    4 => "Ăn uống",
+                                    _ => "Khác"
+                                };
+                            }
                             <div class="fw-bold text-dark">@item.Name</div>
                             <small class="text-muted">
-                                @(item.ZoneType == 0 ? "Bar & Club" : item.ZoneType == 1 ? "Nhà hàng/Quán cà phê" : "Địa danh")
+                                @zoneTypeLabel
                             </small>
                             @if(item.IsLocked)
                             {

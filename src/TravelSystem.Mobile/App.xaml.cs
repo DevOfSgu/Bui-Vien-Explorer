@@ -13,9 +13,10 @@ public partial class App : Application
     private readonly ApiService _apiService;
     private readonly TourDetailViewModel _tourDetailViewModel;
     private readonly AudioPreloadService _audioPreloadService;
+    private readonly IAppAudioInterruptionService _audioInterruptionService;
     private readonly LocalizationManager _localizationManager = LocalizationManager.Instance;
 
-    public App(DatabaseService dbService, ApiService apiService, TourDetailViewModel tourDetailViewModel, AudioPreloadService audioPreloadService)
+    public App(DatabaseService dbService, ApiService apiService, TourDetailViewModel tourDetailViewModel, AudioPreloadService audioPreloadService, IAppAudioInterruptionService audioInterruptionService)
     {
         RegisterGlobalExceptionHandlers();
         InitializeComponent();
@@ -23,6 +24,7 @@ public partial class App : Application
         _apiService = apiService;
         _tourDetailViewModel = tourDetailViewModel;
         _audioPreloadService = audioPreloadService;
+        _audioInterruptionService = audioInterruptionService;
         
         // Mặc định là Light mode
         UserAppTheme = AppTheme.Light;
@@ -44,6 +46,18 @@ public partial class App : Application
             Debug.WriteLine($"[FATAL][TaskScheduler] {args.Exception}");
             args.SetObserved();
         };
+    }
+
+    protected override void OnSleep()
+    {
+        base.OnSleep();
+        _audioInterruptionService.BeginInterruption();
+    }
+
+    protected override void OnResume()
+    {
+        base.OnResume();
+        _audioInterruptionService.EndInterruption();
     }
 
     private async void InitializeTheme()

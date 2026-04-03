@@ -152,6 +152,24 @@
             </Grid>
         </Border>
 
+        <Border x:Name="RemoteHintToast"
+                IsVisible="False"
+                Opacity="0"
+                TranslationY="-18"
+                Margin="12,0,12,0"
+                Padding="12,10"
+                AbsoluteLayout.LayoutFlags="PositionProportional,WidthProportional"
+                AbsoluteLayout.LayoutBounds="0.5,0.08,0.92,-1"
+                BackgroundColor="{AppThemeBinding Light=#FFF7E6, Dark=#2D2417}"
+                Stroke="{AppThemeBinding Light=#F5C26B, Dark=#7A5B2B}"
+                StrokeThickness="1"
+                StrokeShape="RoundRectangle 12">
+            <Label Text="{Binding RemoteExploreHintText}"
+                   FontSize="13"
+                   LineBreakMode="WordWrap"
+                   TextColor="{AppThemeBinding Light=#7A4F01, Dark=#F7D9A0}" />
+        </Border>
+
         <!-- Loading overlay -->
         <Grid BackgroundColor="#66000000"
               IsVisible="{Binding IsLoading}"

@@ -43,6 +43,7 @@
   <data name="settings_terms_msg" xml:space="preserve"><value>Đang mở Điều khoản &amp; Chính sách...</value></data>
   <data name="tour_stops" xml:space="preserve"><value>Điểm dừng tour</value></data>
   <data name="tour_stops_count" xml:space="preserve"><value>{0} điểm</value></data>
+  <data name="tour_remote_explore_hint" xml:space="preserve"><value>Bạn đang cách Bùi Viện {0:0.0} km, bạn có thể ấn vào các điểm POI để trải nghiệm khám phá từ xa.</value></data>
   <data name="tour_loading" xml:space="preserve"><value>Đang tải chi tiết tour...</value></data>
   <data name="zone_open_now" xml:space="preserve"><value>ĐANG MỞ CỬA</value></data>
   <data name="zone_closed_now" xml:space="preserve"><value>ĐANG ĐÓNG CỬA</value></data>
