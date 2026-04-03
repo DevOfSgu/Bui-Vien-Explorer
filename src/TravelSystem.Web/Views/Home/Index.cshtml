@@ -3,10 +3,14 @@
 }
 
 <style>
-    @@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+    @@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap');
+
+    body {
+        background-color: #0f172a !important;
+    }
 
     .app-landing-wrapper {
-        font-family: 'Outfit', sans-serif;
+        font-family: 'Be Vietnam Pro', sans-serif;
         width: 100vw;
         position: relative;
         left: 50%;
@@ -14,9 +18,13 @@
         margin-left: -50vw;
         margin-right: -50vw;
         overflow-x: hidden;
-        background-color: #f8fafc;
+        background-color: #0f172a;
         margin-top: -16px; /* Offset to connect with layout header if needed */
-        color: #1e293b;
+        color: #f1f5f9;
+    }
+
+    .app-landing-wrapper .text-muted {
+        color: #94a3b8 !important;
     }
 
     /* Typography */
@@ -57,7 +65,6 @@
 
     /* Hero Section */
     .hero-section {
-        background: radial-gradient(circle at top right, #0f172a 0%, #1e1b4b 100%);
         min-height: 90vh;
         display: flex;
         align-items: center;
@@ -65,6 +72,7 @@
         overflow: hidden;
         color: white;
         padding: 80px 0;
+        background: radial-gradient(circle at top right, rgba(234, 88, 12, 0.5) 0%, rgba(15, 23, 42, 1) 120%);
     }
 
     .hero-bg-shapes {
@@ -123,7 +131,7 @@
     /* Features Section */
     .features-section {
         padding: 100px 0;
-        background-color: #ffffff;
+        background-color: #0f172a;
         position: relative;
     }
 
@@ -154,10 +162,10 @@
     }
 
     .app-screen-card {
-        background: white;
+        background: #1e293b;
         border-radius: 32px;
         padding: 12px;
-        box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1), 0 10px 20px -5px rgba(0,0,0,0.04);
+        box-shadow: 0 20px 40px -5px rgba(0,0,0,0.3), 0 10px 20px -5px rgba(0,0,0,0.2);
         position: relative;
         max-width: 300px;
         margin: 0 auto;
@@ -177,21 +185,31 @@
     /* CTA Section */
     .cta-section {
         padding: 120px 0;
-        background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+        background: linear-gradient(135deg, rgba(234, 88, 12, 0.1) 0%, rgba(15, 23, 42, 1) 100%);
         text-align: center;
         position: relative;
     }
     
     .cta-card {
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.5);
+        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
         border-radius: 32px;
         padding: 60px 40px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+        box-shadow: 0 20px 40px rgba(234, 88, 12, 0.4);
         max-width: 800px;
         margin: 0 auto;
+    }
+    
+    .cta-card .btn-download {
+        background: #ffffff !important;
+        color: #ea580c !important;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;
+    }
+    
+    .cta-card .text-muted {
+        color: #ffedd5 !important;
     }
 
     /* Animations */
@@ -243,8 +261,35 @@
                 <div class="col-lg-6 delay-300 fade-in-up">
                     <div class="hero-mockup-container">
                         <div class="hero-mockup">
-                            <!-- Ảnh Demo Trải nghiệm chính / Splash screen -->
-                            <img src="~/images/app-showcase/giao_dien_ban_dau.jpg" onerror="this.src='https://placehold.co/800x1600/3b82f6/white?text=A%cc%89nh+Mo%cc%9b%cc%89+%C4%90a%cc%82%cc%80u'" alt="App Splash Screen" class="img-fluid w-100 h-100 object-fit-cover" />
+                            <!-- Hiệu ứng Slider tự động quét qua các ảnh -->
+                            <div id="heroMockupCarousel" class="carousel slide h-100" data-bs-ride="carousel" data-bs-interval="2000">
+                                <div class="carousel-inner h-100">
+                                    <div class="carousel-item active h-100">
+                                        <img src="~/images/app-showcase/giao_dien_luc_vua_mo_app.jpg" onerror="this.src='https://placehold.co/800x1600/3b82f6/white?text=App'" class="d-block w-100 h-100 object-fit-cover" alt="Mở App">
+                                    </div>
+                                    <div class="carousel-item h-100">
+                                        <img src="~/images/app-showcase/giao_dien_ban_dau.jpg" onerror="this.src='https://placehold.co/800x1600/3b82f6/white?text=Splash'" class="d-block w-100 h-100 object-fit-cover" alt="Giao diện bắt đầu">
+                                    </div>
+                                    <div class="carousel-item h-100">
+                                        <img src="~/images/app-showcase/giao_dien_trang_chu_hien_tour.jpg" class="d-block w-100 h-100 object-fit-cover" alt="Trang chủ">
+                                    </div>
+                                    <div class="carousel-item h-100">
+                                        <img src="~/images/app-showcase/giao_dien_map_cua_1_tour.jpg" class="d-block w-100 h-100 object-fit-cover" alt="Bản đồ">
+                                    </div>
+                                    <div class="carousel-item h-100">
+                                        <img src="~/images/app-showcase/giao_dien_list_zones_cua_1_tour.jpg" class="d-block w-100 h-100 object-fit-cover" alt="Danh sách khu vực">
+                                    </div>
+                                    <div class="carousel-item h-100">
+                                        <img src="~/images/app-showcase/giao_dien_chi_tiet_point.jpg" class="d-block w-100 h-100 object-fit-cover" alt="Chi tiết địa điểm">
+                                    </div>
+                                    <div class="carousel-item h-100">
+                                        <img src="~/images/app-showcase/giao_dien_popup_doc_thuyet_minh_tu_dong.jpg" class="d-block w-100 h-100 object-fit-cover" alt="Thuyết minh">
+                                    </div>
+                                    <div class="carousel-item h-100">
+                                        <img src="~/images/app-showcase/giao_dien_cai_dat.jpg" class="d-block w-100 h-100 object-fit-cover" alt="Cài đặt">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -274,10 +319,38 @@
                 </div>
             </div>
 
-            <!-- Feature 2: Chi tiết địa điểm (Point) -->
+            <!-- Feature 2: Bản đồ hành trình -->
             <div class="row feature-row fade-in-up">
                 <div class="col-md-6 feature-text-block">
-                    <span class="feature-badge">02. Thông Tin Chi Tiết Điểm Đến</span>
+                    <span class="feature-badge">02. Bản Đồ Hành Trình</span>
+                    <h3 class="h1 mb-4">Theo dõi lộ trình trên bản đồ số</h3>
+                    <p class="text-muted fs-5 mb-4">Tích hợp hệ thống bản đồ trực quan giúp định vị nhanh chóng, xem bao quát các địa điểm lân cận để bạn tự do khám phá thế giới xung quanh.</p>
+                </div>
+                <div class="col-md-6 text-center">
+                    <div class="app-screen-card">
+                        <img src="~/images/app-showcase/giao_dien_map_cua_1_tour.jpg" onerror="this.src='https://placehold.co/800x1600/f8fafc/94a3b8?text=Ba%cc%89n+%C4%90o%cc%82%cc%80'" alt="Bản đồ Tour" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature 3: Danh sách khu vực (Zone) -->
+            <div class="row feature-row fade-in-up">
+                <div class="col-md-6 order-2 order-md-1">
+                    <div class="app-screen-card">
+                        <img src="~/images/app-showcase/giao_dien_list_zones_cua_1_tour.jpg" onerror="this.src='https://placehold.co/800x1600/f1f5f9/94a3b8?text=Khu+Vu%cc%a3%cc%8bc'" alt="Danh sách khu vực trong Tour" />
+                    </div>
+                </div>
+                <div class="col-md-6 order-1 order-md-2 feature-text-block">
+                    <span class="feature-badge">03. Danh Sách Từng Khu Vực</span>
+                    <h3 class="h1 mb-4">Tổ chức lộ trình du lịch khoa học</h3>
+                    <p class="text-muted fs-5 mb-4">Mỗi Tour lớn được hệ thống nhóm thành các khu vực (Zones) rõ nét. Bạn sẽ không bao giờ bỏ sót điểm đắc địa hay đi lòng vòng mất thời gian.</p>
+                </div>
+            </div>
+
+            <!-- Feature 4: Chi tiết địa điểm (Point) -->
+            <div class="row feature-row fade-in-up">
+                <div class="col-md-6 feature-text-block">
+                    <span class="feature-badge">04. Thông Tin Chi Tiết Điểm Đến</span>
                     <h3 class="h1 mb-4">Mọi thông tin bạn cần về địa điểm</h3>
                     <p class="text-muted fs-5 mb-4">Bạn muốn biết địa danh đó có gì hay? Màn hình chi tiết điểm tham quan (Point) sẽ hiển thị đầy đủ hình ảnh, mô tả phong phú. Giúp bạn luôn tự do tự tại như một người bản địa.</p>
                 </div>
@@ -288,7 +361,7 @@
                 </div>
             </div>
 
-            <!-- Feature 3: Popup thuyết minh -->
+            <!-- Feature 5: Popup thuyết minh -->
             <div class="row feature-row fade-in-up">
                 <div class="col-md-6 order-2 order-md-1">
                     <div class="app-screen-card">
@@ -296,16 +369,16 @@
                     </div>
                 </div>
                 <div class="col-md-6 order-1 order-md-2 feature-text-block">
-                    <span class="feature-badge">03. Trợ Lý Thuyết Minh Tự Động</span>
+                    <span class="feature-badge">05. Trợ Lý Thuyết Minh Tự Động</span>
                     <h3 class="h1 mb-4">Lắng nghe câu chuyện âm thanh</h3>
                     <p class="text-muted fs-5 mb-4">Mang tính đột phá lớn nhất: Giao diện sẽ tự động xuất hiện popup chạy audio đọc thuyết minh khi hệ thống nhận diện bạn đang bước vào bán kính của một khu vực tham quan! Nhẹ nhàng lắng nghe các câu chuyện lịch sử tự động.</p>
                 </div>
             </div>
 
-            <!-- Feature 4: Cài đặt và Đổi ngôn ngữ -->
+            <!-- Feature 6: Cài đặt và Đổi ngôn ngữ -->
             <div class="row feature-row fade-in-up">
                 <div class="col-md-6 feature-text-block">
-                    <span class="feature-badge">04. Cài Đặt Cá Nhân Tùy Chỉnh</span>
+                    <span class="feature-badge">06. Cài Đặt Cá Nhân Tùy Chỉnh</span>
                     <h3 class="h1 mb-4">Linh hoạt Thay đổi Ngôn Ngữ</h3>
                     <p class="text-muted fs-5 mb-4">Với mục tiêu giúp khách nước ngoài dễ dàng tiếp cận, ứng dụng được trang bị mục Cài đặt trực quan hỗ trợ đổi từ tiếng Việt sang các thứ tiếng thông dụng, đảm bảo hành trình toàn cầu trọn vẹn.</p>
                 </div>
