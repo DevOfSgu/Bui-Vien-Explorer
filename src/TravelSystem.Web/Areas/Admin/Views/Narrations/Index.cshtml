@@ -31,6 +31,14 @@
     </div>
 }
 
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success d-flex align-items-center" style="border-radius: 10px;">
+        <i class="fa-solid fa-circle-check me-2"></i>
+        <span>@TempData["Success"]</span>
+    </div>
+}
+
 <div class="card-custom">
     <!-- Filter Row -->
     <div class="d-flex justify-content-between mb-4 pb-3 border-bottom border-light">
@@ -101,8 +109,12 @@
                                     <form asp-action="Approve" method="post" style="display:inline;">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@item.Id" />
-                                        <button type="submit" class="btn btn-sm btn-success" style="border-radius: 6px;">
-                                            <i class="fa-solid fa-check"></i> Duyệt
+                                        <button type="submit" class="btn btn-sm btn-success js-approve-btn" style="border-radius: 6px;">
+                                            <span class="js-approve-idle"><i class="fa-solid fa-check"></i> Duyệt</span>
+                                            <span class="js-approve-loading d-none">
+                                                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                                Đang duyệt...
+                                            </span>
                                         </button>
                                     </form>
                                     <form asp-action="Reject" method="post" style="display:inline;">
@@ -112,6 +124,13 @@
                                             <i class="fa-solid fa-xmark"></i> Từ chối
                                         </button>
                                     </form>
+                                } else if (item.ApprovalStatus == "Approved") {
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" style="border-radius: 6px;">
+                                        <i class="fa-solid fa-eye"></i> Xem
+                                    </a>
+                                    <a asp-action="Manage" asp-route-zoneId="@item.ZoneId" class="btn btn-sm btn-primary" style="border-radius: 6px;">
+                                        <i class="fa-solid fa-pen"></i> Chỉnh sửa
+                                    </a>
                                 } else {
                                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" style="border-radius: 6px;">
                                         <i class="fa-solid fa-eye"></i> Xem
@@ -167,3 +186,23 @@
         </nav>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const approveForms = document.querySelectorAll('form[asp-action="Approve"], form[action*="/Approve"]');
+            approveForms.forEach(function (form) {
+                form.addEventListener('submit', function () {
+                    const button = form.querySelector('.js-approve-btn');
+                    if (!button || button.disabled) return;
+
+                    button.disabled = true;
+                    const idle = button.querySelector('.js-approve-idle');
+                    const loading = button.querySelector('.js-approve-loading');
+                    if (idle) idle.classList.add('d-none');
+                    if (loading) loading.classList.remove('d-none');
+                });
+            });
+        })();
+    </script>
+}

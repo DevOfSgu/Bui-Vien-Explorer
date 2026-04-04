@@ -130,6 +130,66 @@
             color: #6b7280;
         }
 
+        .notification-btn {
+            color: #64748b;
+            position: relative;
+            background: none;
+            border: none;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .notification-btn:hover {
+            color: #ef4444;
+            transform: scale(1.1);
+        }
+
+        .notification-badge {
+            background-color: #ef4444;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: none;
+        }
+
+        .notification-popup {
+            position: absolute;
+            left: 50%;
+            bottom: 54px;
+            transform: translateX(-50%);
+            min-width: 220px;
+            max-width: 260px;
+            background: #111827;
+            color: #fff;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 12px;
+            line-height: 1.4;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 30;
+        }
+
+        .notification-popup.show {
+            opacity: 1;
+        }
+
+        .notification-popup::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: -6px;
+            width: 12px;
+            height: 12px;
+            background: #111827;
+            transform: translateX(-50%) rotate(45deg);
+        }
+
         /* Topbar & Main Content */
         #content-wrapper {
             margin-left: 260px;
@@ -307,6 +367,14 @@
         </ul>
 
         <div class="sidebar-footer border-top mt-auto p-3">
+            <div class="d-flex justify-content-center mb-2 position-relative">
+                <button id="vendorNotificationBell" class="notification-btn position-relative p-2" type="button">
+                    <i class="fa-regular fa-bell fs-5"></i>
+                    <span id="vendorNotificationBadge" class="notification-badge"></span>
+                </button>
+                <div id="vendorNotificationPopup" class="notification-popup" role="status" aria-live="polite"></div>
+            </div>
+
             <div class="d-flex align-items-center justify-content-between bg-light p-2 rounded-3 shadow-sm" style="background-color: #f8fafc !important;">
                 <div class="d-flex align-items-center gap-2 overflow-hidden">
                     <img src="https://ui-avatars.com/api/?name=@vendorAvatarName&background=fed7aa&color=c2410c&rounded=true&bold=true" alt="Vendor" style="width: 32px; height: 32px; border-radius: 50%;">
@@ -330,6 +398,73 @@
     </div>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            const bell = document.getElementById('vendorNotificationBell');
+            const badge = document.getElementById('vendorNotificationBadge');
+            const popup = document.getElementById('vendorNotificationPopup');
+            if (!bell || !badge || !popup) return;
+
+            const queue = [];
+            let isShowing = false;
+
+            function setBadgeVisible(visible) {
+                badge.style.display = visible ? 'block' : 'none';
+            }
+
+            function showNextNotification() {
+                if (isShowing || queue.length === 0) {
+                    if (queue.length === 0) setBadgeVisible(false);
+                    return;
+                }
+
+                const item = queue.shift();
+                isShowing = true;
+                setBadgeVisible(queue.length > 0);
+                popup.textContent = item.message;
+                popup.classList.add('show');
+
+                setTimeout(() => {
+                    popup.classList.remove('show');
+                    isShowing = false;
+                    showNextNotification();
+                }, 3200);
+            }
+
+            async function pollNotifications() {
+                try {
+                    const response = await fetch('/Vendor/Notifications/Poll', {
+                        method: 'GET',
+                        credentials: 'same-origin',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+
+                    if (!response.ok) return;
+                    const data = await response.json();
+                    const items = Array.isArray(data.items) ? data.items : [];
+                    if (items.length === 0) return;
+
+                    for (const item of items) {
+                        queue.push(item);
+                    }
+
+                    setBadgeVisible(true);
+                    showNextNotification();
+                } catch {
+                    // keep polling silently
+                }
+            }
+
+            bell.addEventListener('click', function () {
+                if (!isShowing) {
+                    showNextNotification();
+                }
+            });
+
+            pollNotifications();
+            setInterval(pollNotifications, 8000);
+        })();
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -6,16 +6,18 @@ IF NOT EXISTS (
     SELECT name
     FROM sys.databases
     WHERE name = 'BuiVienExplorerDb'
-) BEGIN CREATE DATABASE BuiVienExplorerDb;
+) BEGIN
+    EXEC('CREATE DATABASE BuiVienExplorerDb;');
 END
-GO
 USE BuiVienExplorerDb;
 -- RESET: Xóa bảng cũ (nếu có) trước khi tạo lại
 -- Thứ tự xóa: bảng con trước, bảng cha sau (tránh lỗi FK)
 -- ============================================================
 IF OBJECT_ID('GuestFavorites', 'U') IS NOT NULL DROP TABLE GuestFavorites;
 IF OBJECT_ID('TourZones', 'U') IS NOT NULL DROP TABLE TourZones;
+IF OBJECT_ID('TourTranslations', 'U') IS NOT NULL DROP TABLE TourTranslations;
 IF OBJECT_ID('Tours', 'U') IS NOT NULL DROP TABLE Tours;
+IF OBJECT_ID('ZoneTranslations', 'U') IS NOT NULL DROP TABLE ZoneTranslations;
 IF OBJECT_ID('Analytics', 'U') IS NOT NULL DROP TABLE Analytics;
 IF OBJECT_ID('Narrations', 'U') IS NOT NULL DROP TABLE Narrations;
 IF OBJECT_ID('AudioFiles', 'U') IS NOT NULL DROP TABLE AudioFiles;
@@ -97,6 +99,19 @@ CREATE TABLE Zones (
     CONSTRAINT FK_Zones_Shops FOREIGN KEY (ShopId) REFERENCES Shops(Id)
 );
 -- ============================================================
+-- 4a. ZoneTranslations (Phần giới thiệu Zone đa ngôn ngữ)
+-- ============================================================
+CREATE TABLE ZoneTranslations (
+    Id INT IDENTITY(1, 1) PRIMARY KEY,
+    ZoneId INT NOT NULL,
+    Language NVARCHAR(5) NOT NULL,
+    Description NVARCHAR(1000) NOT NULL,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE(),
+    CONSTRAINT FK_ZoneTranslations_Zones FOREIGN KEY (ZoneId) REFERENCES Zones(Id) ON DELETE CASCADE,
+    CONSTRAINT UQ_ZoneTranslations_Zone_Language UNIQUE (ZoneId, Language)
+);
+-- ============================================================
 -- 5. Narrations (Kịch bản TTS đa ngôn ngữ)
 -- ============================================================
 CREATE TABLE Narrations (
@@ -164,6 +179,20 @@ CREATE TABLE Tours (
     UpdatedAt DATETIME DEFAULT GETDATE()
 );
 -- ============================================================
+-- 8a. TourTranslations (Tên/mô tả tour đa ngôn ngữ)
+-- ============================================================
+CREATE TABLE TourTranslations (
+    Id INT IDENTITY(1, 1) PRIMARY KEY,
+    TourId INT NOT NULL,
+    Language NVARCHAR(5) NOT NULL,
+    Name NVARCHAR(200) NOT NULL,
+    Description NVARCHAR(MAX),
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME DEFAULT GETDATE(),
+    CONSTRAINT FK_TourTranslations_Tours FOREIGN KEY (TourId) REFERENCES Tours(Id) ON DELETE CASCADE,
+    CONSTRAINT UQ_TourTranslations_Tour_Language UNIQUE (TourId, Language)
+);
+-- ============================================================
 -- 9. TourZones (Bảng trung gian N-N: Gắn POI vào Tour)
 -- ============================================================
 CREATE TABLE TourZones (
@@ -183,6 +212,8 @@ CREATE INDEX IDX_Analytics_Location ON Analytics(Latitude, Longitude);
 CREATE INDEX IDX_Analytics_Session ON Analytics(SessionId, CreatedAt);
 CREATE INDEX IX_GuestFav_GuestId ON GuestFavorites(GuestId);
 CREATE INDEX IX_GuestFav_ZoneId ON GuestFavorites(ZoneId);
+CREATE INDEX IX_ZoneTranslations_ZoneId ON ZoneTranslations(ZoneId);
+CREATE INDEX IX_TourTranslations_TourId ON TourTranslations(TourId);
 CREATE INDEX IX_TourZones_Tour ON TourZones(TourId);
 CREATE INDEX IX_TourZones_Zone ON TourZones(ZoneId);
 -- ============================================================

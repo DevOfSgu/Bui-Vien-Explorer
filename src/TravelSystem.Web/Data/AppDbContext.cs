@@ -5,7 +5,9 @@ namespace TravelSystem.Web.Data;
 
 public class AppDbContext : DbContext
 {
+    public DbSet<TravelSystem.Web.Models.AppNotification> AppNotifications { get; set; }
     public DbSet<Zone> Zones { get; set; }
+    public DbSet<ZoneTranslation> ZoneTranslations { get; set; }
     public DbSet<Narration> Narrations { get; set; }
     public DbSet<Shop> Shops { get; set; }
     public DbSet<User> Users { get; set; }
@@ -13,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<GuestFavorite> GuestFavorites { get; set; }
     public DbSet<ShopHour> ShopHours { get; set; }
     public DbSet<Tour> Tours { get; set; }
+    public DbSet<TourTranslation> TourTranslations { get; set; }
     public DbSet<TourZone> TourZones { get; set; }
 
 
@@ -37,6 +40,17 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<TravelSystem.Shared.Models.AppSetting>()
             .HasKey(s => s.Key);
 
+        modelBuilder.Entity<TravelSystem.Web.Models.AppNotification>()
+            .Property(n => n.RecipientRole)
+            .HasMaxLength(20);
+
+        modelBuilder.Entity<TravelSystem.Web.Models.AppNotification>()
+            .Property(n => n.Message)
+            .HasMaxLength(500);
+
+        modelBuilder.Entity<TravelSystem.Web.Models.AppNotification>()
+            .HasIndex(n => new { n.RecipientRole, n.RecipientUserId, n.IsRead, n.CreatedAt });
+
         // TourZone N-N (Composite Key)
         modelBuilder.Entity<TourZone>()
             .HasKey(tz => new { tz.TourId, tz.ZoneId });
@@ -50,6 +64,38 @@ public class AppDbContext : DbContext
             .HasOne(tz => tz.Zone)
             .WithMany()
             .HasForeignKey(tz => tz.ZoneId);
+
+        modelBuilder.Entity<ZoneTranslation>()
+            .HasIndex(zt => new { zt.ZoneId, zt.Language })
+            .IsUnique();
+
+        modelBuilder.Entity<ZoneTranslation>()
+            .Property(zt => zt.Language)
+            .HasMaxLength(5);
+
+        modelBuilder.Entity<ZoneTranslation>()
+            .HasOne(zt => zt.Zone)
+            .WithMany(z => z.Translations)
+            .HasForeignKey(zt => zt.ZoneId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<TourTranslation>()
+            .HasIndex(tt => new { tt.TourId, tt.Language })
+            .IsUnique();
+
+        modelBuilder.Entity<TourTranslation>()
+            .Property(tt => tt.Language)
+            .HasMaxLength(5);
+
+        modelBuilder.Entity<TourTranslation>()
+            .Property(tt => tt.Name)
+            .HasMaxLength(200);
+
+        modelBuilder.Entity<TourTranslation>()
+            .HasOne(tt => tt.Tour)
+            .WithMany(t => t.Translations)
+            .HasForeignKey(tt => tt.TourId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Configure Decimal Precision for Maps
         modelBuilder.Entity<Zone>()

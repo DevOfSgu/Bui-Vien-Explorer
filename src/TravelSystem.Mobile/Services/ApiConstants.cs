@@ -3,11 +3,9 @@ namespace TravelSystem.Mobile.Services;
 public static class ApiConstants
 {
 #if DEBUG
-    // For debug testing on real devices/emulators via ngrok tunnel.
-    // Update this URL whenever ngrok forwarding domain changes.
+    // Debug can target the deployed web API directly.
     private const string DebugTunnelBaseApiUrl = "https://nonstereotyped-biometrical-amir.ngrok-free.dev/";
 #else
-    // Production: replace with your deployed API domain.
     private const string ProductionBaseApiUrl = "https://nonstereotyped-biometrical-amir.ngrok-free.dev/";
 #endif
 

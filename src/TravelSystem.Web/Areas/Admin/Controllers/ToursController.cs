@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TravelSystem.Shared.Models;
 using TravelSystem.Web.Data;
+using TravelSystem.Web.Services;
 
 namespace TravelSystem.Web.Areas.Admin.Controllers
 {
@@ -12,11 +13,13 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
     {
         private readonly AppDbContext _db;
         private readonly IWebHostEnvironment _env;
+        private readonly IAudioTranslationService _translationService;
 
-        public ToursController(AppDbContext db, IWebHostEnvironment env)
+        public ToursController(AppDbContext db, IWebHostEnvironment env, IAudioTranslationService translationService)
         {
             _db = db;
             _env = env;
+            _translationService = translationService;
         }
 
         // GET: Admin/Tours
@@ -67,6 +70,9 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                     }
                     await _db.SaveChangesAsync();
                 }
+
+                await UpsertTourTranslationsAsync(tour.Id, tour.Name, tour.Description);
+                await _db.SaveChangesAsync();
 
                 return RedirectToAction(nameof(Index));
             }
@@ -160,6 +166,10 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 }
 
                 await _db.SaveChangesAsync();
+
+                await UpsertTourTranslationsAsync(dbTour.Id, dbTour.Name, dbTour.Description);
+                await _db.SaveChangesAsync();
+
                 return RedirectToAction(nameof(Index));
             }
 
@@ -185,6 +195,61 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 await _db.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
+        }
+
+        private async Task UpsertTourTranslationsAsync(int tourId, string sourceName, string? sourceDescription)
+        {
+            var supportedLanguages = new[] { "vi", "en", "ja", "ko" };
+            var existing = await _db.TourTranslations
+                .Where(tt => tt.TourId == tourId)
+                .ToDictionaryAsync(tt => tt.Language);
+
+            foreach (var language in supportedLanguages)
+            {
+                var translatedName = sourceName;
+                var translatedDescription = sourceDescription;
+
+                if (language != "vi")
+                {
+                    translatedName = await TranslateWithFallbackAsync(sourceName, language);
+                    translatedDescription = await TranslateWithFallbackAsync(sourceDescription, language);
+                }
+
+                if (existing.TryGetValue(language, out var current))
+                {
+                    current.Name = translatedName;
+                    current.Description = translatedDescription;
+                    current.UpdatedAt = DateTime.UtcNow;
+                    continue;
+                }
+
+                _db.TourTranslations.Add(new TourTranslation
+                {
+                    TourId = tourId,
+                    Language = language,
+                    Name = translatedName,
+                    Description = translatedDescription,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                });
+            }
+        }
+
+        private async Task<string> TranslateWithFallbackAsync(string? sourceText, string targetLanguage)
+        {
+            if (string.IsNullOrWhiteSpace(sourceText))
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                return await _translationService.TranslateAsync(sourceText, targetLanguage);
+            }
+            catch
+            {
+                return sourceText;
+            }
         }
     }
 }

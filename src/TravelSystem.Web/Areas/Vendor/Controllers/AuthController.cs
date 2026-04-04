@@ -10,10 +10,12 @@ namespace TravelSystem.Web.Areas.Vendor.Controllers
     public class AuthController : Controller
     {
         private readonly AppDbContext _db;
+        private readonly TravelSystem.Web.Services.INotificationService _notificationService;
 
-        public AuthController(AppDbContext db)
+        public AuthController(AppDbContext db, TravelSystem.Web.Services.INotificationService notificationService)
         {
             _db = db;
+            _notificationService = notificationService;
         }
 
         [HttpGet]
@@ -113,6 +115,10 @@ namespace TravelSystem.Web.Areas.Vendor.Controllers
 
             _db.Users.Add(newUser);
             await _db.SaveChangesAsync();
+
+            await _notificationService.NotifyAdminsAsync(
+                $"Vendor mới đăng ký: {storeName} ({username})",
+                Url.Action("Index", "Users", new { area = "Admin" }));
 
             ViewBag.Success = "Registration successful! Your store is pending admin approval.";
             return View();

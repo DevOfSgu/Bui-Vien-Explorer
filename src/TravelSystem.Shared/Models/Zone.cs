@@ -20,4 +20,6 @@ public class Zone
     public string? LockReason { get; set; }      // Lý do khóa
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+
+    public List<ZoneTranslation> Translations { get; set; } = new();
 }

@@ -193,6 +193,67 @@
         <views:AudioPlayerPopup x:Name="AudioPlayer" 
                                AbsoluteLayout.LayoutFlags="All"
                                AbsoluteLayout.LayoutBounds="0,0,1,1"/>
+
+        <!-- Closed-hours popup -->
+        <Grid x:Name="ClosedHoursOverlay"
+              IsVisible="False"
+              BackgroundColor="#77000000"
+              AbsoluteLayout.LayoutFlags="All"
+              AbsoluteLayout.LayoutBounds="0,0,1,1">
+            <Border Margin="22"
+                    Padding="18,16"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    MaximumWidthRequest="420"
+                    StrokeThickness="0"
+                    BackgroundColor="{AppThemeBinding Light=#FFFDF8, Dark=#2A2218}"
+                    StrokeShape="RoundRectangle 18">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                        <Label Grid.Column="0"
+                               Text="⚠"
+                               FontSize="18"
+                               VerticalTextAlignment="Center"
+                               TextColor="{AppThemeBinding Light=#B45309, Dark=#FBBF24}" />
+                        <Label Grid.Column="1"
+                               Text="{Binding [closed_hours_title], Source={x:Static services:LocalizationManager.Instance}}"
+                               FontFamily="SpaceGroteskBold"
+                               FontAttributes="Bold"
+                               FontSize="24"
+                               LineBreakMode="WordWrap"
+                               MaxLines="2"
+                               TextColor="{AppThemeBinding Light=#B91C1C, Dark=#FCA5A5}" />
+                    </Grid>
+
+                    <Label x:Name="ClosedHoursMessageLabel"
+                           LineBreakMode="WordWrap"
+                           FontSize="17"
+                           TextColor="{AppThemeBinding Light=#1F2937, Dark=#F3F4F6}" />
+
+                    <Border Padding="10,6"
+                            BackgroundColor="{AppThemeBinding Light=#E8F5E9, Dark=#123321}"
+                            StrokeShape="RoundRectangle 10"
+                            StrokeThickness="0">
+                        <Label x:Name="ClosedHoursRangeLabel"
+                               FontAttributes="Bold"
+                               FontFamily="SpaceGroteskBold"
+                               FontSize="16"
+                               HorizontalOptions="Center"
+                               TextColor="{AppThemeBinding Light=#166534, Dark=#86EFAC}" />
+                    </Border>
+
+                        <Button Text="{Binding [closed_hours_ok], Source={x:Static services:LocalizationManager.Instance}}"
+                            Clicked="OnClosedHoursPopupOkClicked"
+                            HeightRequest="42"
+                            CornerRadius="12"
+                            HorizontalOptions="End"
+                            BackgroundColor="{AppThemeBinding Light=#EF4444, Dark=#DC2626}"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            WidthRequest="92" />
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
     </AbsoluteLayout>
 
 

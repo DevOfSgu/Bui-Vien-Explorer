@@ -11,10 +11,12 @@ namespace TravelSystem.Web.Areas.Vendor.Controllers
     public class NarrationsController : Controller
     {
         private readonly AppDbContext _db;
+        private readonly TravelSystem.Web.Services.INotificationService _notificationService;
 
-        public NarrationsController(AppDbContext db)
+        public NarrationsController(AppDbContext db, TravelSystem.Web.Services.INotificationService notificationService)
         {
             _db = db;
+            _notificationService = notificationService;
         }
 
         public async Task<IActionResult> Index(int? zoneId, int page = 1)
@@ -115,6 +117,16 @@ namespace TravelSystem.Web.Areas.Vendor.Controllers
 
             _db.Narrations.Add(narration);
             await _db.SaveChangesAsync();
+
+            var zoneName = await _db.Zones
+                .Where(z => z.Id == narration.ZoneId)
+                .Select(z => z.Name)
+                .FirstOrDefaultAsync() ?? $"Zone #{narration.ZoneId}";
+
+            await _notificationService.NotifyAdminsAsync(
+                $"Vendor đã tạo script mới cho khu vực: {zoneName}",
+                Url.Action("Index", "Narrations", new { area = "Admin", zoneId = narration.ZoneId }));
+
             TempData["Success"] = "Script submitted for admin approval.";
             return RedirectToAction(nameof(Index), new { zoneId = narration.ZoneId });
         }
@@ -170,6 +182,16 @@ namespace TravelSystem.Web.Areas.Vendor.Controllers
                 dbNarration.ApprovalStatus = "Pending"; // Vendor edits reset status to Pending
                 dbNarration.AudioStatus = "pending";
                 await _db.SaveChangesAsync();
+
+                var zoneName = await _db.Zones
+                    .Where(z => z.Id == dbNarration.ZoneId)
+                    .Select(z => z.Name)
+                    .FirstOrDefaultAsync() ?? $"Zone #{dbNarration.ZoneId}";
+
+                await _notificationService.NotifyAdminsAsync(
+                    $"Vendor đã gửi lại script cần duyệt cho khu vực: {zoneName}",
+                    Url.Action("Index", "Narrations", new { area = "Admin", zoneId = dbNarration.ZoneId }));
+
                 TempData["Success"] = "Updated script submitted for admin approval.";
             }
 
@@ -178,23 +200,51 @@ namespace TravelSystem.Web.Areas.Vendor.Controllers
 
         private async Task<int?> GetVendorShopIdAsync()
         {
-            var shopIdClaim = User.FindFirst("ShopId")?.Value;
-            if (int.TryParse(shopIdClaim, out var shopIdFromClaim))
+            // Resolve from DB first so vendor-shop reassignments take effect without requiring re-login.
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (int.TryParse(userIdClaim, out var userId))
             {
-                return shopIdFromClaim;
+                var currentShopId = await _db.Users
+                    .AsNoTracking()
+                    .Where(u => u.Id == userId && u.Role == 1 && u.IsActive)
+                    .Select(u => u.ShopId)
+                    .FirstOrDefaultAsync();
+
+                if (currentShopId.HasValue)
+                {
+                    return currentShopId;
+                }
             }
 
             var username = User.Identity?.Name;
             if (string.IsNullOrWhiteSpace(username))
             {
+                var shopIdClaim = User.FindFirst("ShopId")?.Value;
+                if (int.TryParse(shopIdClaim, out var shopIdFromClaim))
+                {
+                    return shopIdFromClaim;
+                }
+
                 return null;
             }
 
             var vendor = await _db.Users
                 .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Username == username && u.Role == 1);
+                .FirstOrDefaultAsync(u => u.Username == username && u.Role == 1 && u.IsActive);
 
-            return vendor?.ShopId;
+            if (vendor?.ShopId != null)
+            {
+                return vendor.ShopId;
+            }
+
+            // Last fallback for legacy sessions.
+            var fallbackShopIdClaim = User.FindFirst("ShopId")?.Value;
+            if (int.TryParse(fallbackShopIdClaim, out var fallbackShopId))
+            {
+                return fallbackShopId;
+            }
+
+            return null;
         }
 
         private async Task NormalizeLegacySourceNarrationsAsync(IReadOnlyCollection<int> zoneIds)

@@ -13,6 +13,7 @@ public partial class MainPageViewModel : ObservableObject
 {
     private readonly ApiService _apiService;
     private readonly DatabaseService _databaseService;
+    private readonly AudioPreloadService _audioPreloadService;
     private readonly LocalizationManager _localizationManager;
     private readonly SemaphoreSlim _navigationLock = new(1, 1);
 
@@ -38,10 +39,11 @@ public partial class MainPageViewModel : ObservableObject
         OnPropertyChanged(nameof(HasError));
     }
 
-    public MainPageViewModel(ApiService apiService, DatabaseService databaseService)
+    public MainPageViewModel(ApiService apiService, DatabaseService databaseService, AudioPreloadService audioPreloadService)
     {
         _apiService = apiService;
         _databaseService = databaseService;
+        _audioPreloadService = audioPreloadService;
         _localizationManager = LocalizationManager.Instance;
         _localizationManager.PropertyChanged += OnLocalizationChanged;
     }
@@ -67,6 +69,12 @@ public partial class MainPageViewModel : ObservableObject
         {
             IsLoading = true;
             ErrorMessage = string.Empty;
+
+            if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
+            {
+                await _apiService.SyncCoreDataFromServerIfOnlineAsync();
+                await _audioPreloadService.StartPreloadAsync();
+            }
 
             var tours = await _apiService.GetToursAsync();
             

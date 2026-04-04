@@ -5,6 +5,9 @@ using CommunityToolkit.Maui.Views;
 using CommunityToolkit.Maui.Core;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Controls;
+using Microsoft.Maui.Graphics;
 
 namespace TravelSystem.Mobile.Views;
 
@@ -102,6 +105,14 @@ public partial class AudioPlayerPopup : ContentView
         {
             Debug.WriteLine($"[ERROR][AUDIO] Error stopping playback: {ex.Message}");
         }
+    }
+
+    public void StopPlaybackImmediately()
+    {
+        _initCts?.Cancel();
+        _resumeMp3AfterInterruption = false;
+        StopAllPlayback();
+        this.IsVisible = false;
     }
 
     public void Initialize(IAudioGuideService audioService, PoiStopItem stop, string language)
@@ -400,12 +411,7 @@ public partial class AudioPlayerPopup : ContentView
         if (_stop != null)
         {
             TrackPlayNarrationIfNeeded();
-            this.IsVisible = false;
-            
-            if (_isUsingMp3)
-                AudioMediaPlayer.Pause();
-            else
-                _audioService?.Pause();
+            StopPlaybackImmediately();
 
             SeeDetailsRequested?.Invoke(_stop);
         }
@@ -414,15 +420,7 @@ public partial class AudioPlayerPopup : ContentView
     private void OnCloseClicked(object sender, EventArgs e)
     {
         TrackPlayNarrationIfNeeded();
-
-        if (_isUsingMp3)
-            AudioMediaPlayer.Stop();
-        else if (_audioService != null)
-        {
-            _audioService.PlaybackProgressChanged -= OnPlaybackProgressChanged;
-            _audioService.Stop();
-        }
-        this.IsVisible = false;
+        StopPlaybackImmediately();
     }
 
     private void TrackPlayNarrationIfNeeded()

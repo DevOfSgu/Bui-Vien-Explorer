@@ -19,33 +19,173 @@ public class ZonesController : ControllerBase
     // GET /api/zones
     // Lấy danh sách tất cả zones (loại bỏ zones bị ẩn)
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] string? lang = null)
     {
+        var language = NormalizeLanguage(lang);
+
         var zones = await _db.Zones
+            .AsNoTracking()
             .Where(z => z.IsActive && !z.IsHidden)
             .OrderBy(z => z.OrderIndex)
+            .Select(z => new
+            {
+                z.Id,
+                z.Name,
+                z.ImageUrl,
+                z.Latitude,
+                z.Longitude,
+                z.Radius,
+                z.OrderIndex,
+                z.ZoneType,
+                z.ShopId,
+                z.IsActive,
+                z.IsMain,
+                z.IsLocked,
+                z.IsHidden,
+                z.LockReason,
+                z.CreatedAt,
+                z.UpdatedAt,
+                RequestedDescription = z.Translations
+                    .Where(t => t.Language == language)
+                    .Select(t => t.Description)
+                    .FirstOrDefault(),
+                VietnameseDescription = z.Translations
+                    .Where(t => t.Language == "vi")
+                    .Select(t => t.Description)
+                    .FirstOrDefault(),
+                AnyDescription = z.Translations
+                    .OrderBy(t => t.Id)
+                    .Select(t => t.Description)
+                    .FirstOrDefault(),
+                LegacyDescription = z.Description
+            })
             .ToListAsync();
-        return Ok(zones);
+
+        var response = zones.Select(z => new
+        {
+            z.Id,
+            z.Name,
+            Description = z.RequestedDescription ?? z.VietnameseDescription ?? z.AnyDescription ?? z.LegacyDescription,
+            z.ImageUrl,
+            z.Latitude,
+            z.Longitude,
+            z.Radius,
+            z.OrderIndex,
+            z.ZoneType,
+            z.ShopId,
+            z.IsActive,
+            z.IsMain,
+            z.IsLocked,
+            z.IsHidden,
+            z.LockReason,
+            z.CreatedAt,
+            z.UpdatedAt
+        });
+        return Ok(response);
     }
 
     // GET /api/zones/{id}
     // Lấy 1 zone theo ID
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<IActionResult> GetById(int id, [FromQuery] string? lang = null)
     {
-        var zone = await _db.Zones.FindAsync(id);
-        if (zone == null || zone.IsHidden) return NotFound(new { message = $"Zone {id} không tồn tại." });
-        return Ok(zone);
+        var language = NormalizeLanguage(lang);
+
+        var zone = await _db.Zones
+            .AsNoTracking()
+            .Where(z => z.Id == id && !z.IsHidden)
+            .Select(z => new
+            {
+                z.Id,
+                z.Name,
+                z.ImageUrl,
+                z.Latitude,
+                z.Longitude,
+                z.Radius,
+                z.OrderIndex,
+                z.ZoneType,
+                z.ShopId,
+                z.IsActive,
+                z.IsMain,
+                z.IsLocked,
+                z.IsHidden,
+                z.LockReason,
+                z.CreatedAt,
+                z.UpdatedAt,
+                RequestedDescription = z.Translations
+                    .Where(t => t.Language == language)
+                    .Select(t => t.Description)
+                    .FirstOrDefault(),
+                VietnameseDescription = z.Translations
+                    .Where(t => t.Language == "vi")
+                    .Select(t => t.Description)
+                    .FirstOrDefault(),
+                AnyDescription = z.Translations
+                    .OrderBy(t => t.Id)
+                    .Select(t => t.Description)
+                    .FirstOrDefault(),
+                LegacyDescription = z.Description
+            })
+            .FirstOrDefaultAsync();
+
+        if (zone == null) return NotFound(new { message = $"Zone {id} không tồn tại." });
+
+        return Ok(new
+        {
+            zone.Id,
+            zone.Name,
+            Description = zone.RequestedDescription ?? zone.VietnameseDescription ?? zone.AnyDescription ?? zone.LegacyDescription,
+            zone.ImageUrl,
+            zone.Latitude,
+            zone.Longitude,
+            zone.Radius,
+            zone.OrderIndex,
+            zone.ZoneType,
+            zone.ShopId,
+            zone.IsActive,
+            zone.IsMain,
+            zone.IsLocked,
+            zone.IsHidden,
+            zone.LockReason,
+            zone.CreatedAt,
+            zone.UpdatedAt
+        });
     }
 
     // GET /api/zones/{id}/detail
     // Lấy chi tiết zone kèm địa chỉ + giờ mở cửa của shop liên kết (nếu có)
     [HttpGet("{id:int}/detail")]
-    public async Task<IActionResult> GetDetail(int id)
+    public async Task<IActionResult> GetDetail(int id, [FromQuery] string? lang = null)
     {
+        var language = NormalizeLanguage(lang);
+
         var zone = await _db.Zones
             .AsNoTracking()
-            .FirstOrDefaultAsync(z => z.Id == id && z.IsActive && !z.IsHidden);
+            .Where(z => z.Id == id && z.IsActive && !z.IsHidden)
+            .Select(z => new
+            {
+                z.Id,
+                z.Name,
+                z.ImageUrl,
+                z.Latitude,
+                z.Longitude,
+                z.Radius,
+                z.ShopId,
+                RequestedDescription = z.Translations
+                    .Where(t => t.Language == language)
+                    .Select(t => t.Description)
+                    .FirstOrDefault(),
+                VietnameseDescription = z.Translations
+                    .Where(t => t.Language == "vi")
+                    .Select(t => t.Description)
+                    .FirstOrDefault(),
+                AnyDescription = z.Translations
+                    .OrderBy(t => t.Id)
+                    .Select(t => t.Description)
+                    .FirstOrDefault(),
+                LegacyDescription = z.Description
+            })
+            .FirstOrDefaultAsync();
 
         if (zone == null)
         {
@@ -78,7 +218,7 @@ public class ZonesController : ControllerBase
         {
             zone.Id,
             zone.Name,
-            zone.Description,
+            Description = zone.RequestedDescription ?? zone.VietnameseDescription ?? zone.AnyDescription ?? zone.LegacyDescription,
             zone.ImageUrl,
             zone.Latitude,
             zone.Longitude,
@@ -86,6 +226,23 @@ public class ZonesController : ControllerBase
             Address = address,
             Hours = hours
         });
+    }
+
+    private static string NormalizeLanguage(string? lang)
+    {
+        if (string.IsNullOrWhiteSpace(lang))
+        {
+            return "vi";
+        }
+
+        var normalized = lang.Trim().ToLowerInvariant();
+        var dashIndex = normalized.IndexOf('-');
+        if (dashIndex > 0)
+        {
+            normalized = normalized[..dashIndex];
+        }
+
+        return normalized.Length > 5 ? normalized[..5] : normalized;
     }
 
     private static string? FormatHours(IEnumerable<ShopHourView> hours)

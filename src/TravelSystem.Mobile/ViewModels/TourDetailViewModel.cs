@@ -1,6 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Controls;
 using Microsoft.Maui.Devices.Sensors;
+using Microsoft.Maui.Networking;
 using System.Diagnostics;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -50,6 +53,8 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     private DateTime _lastPollingAttemptAtUtc = DateTime.MinValue;
     private string _remoteExploreHintText = string.Empty;
     private bool _isRemoteExploreHintVisible;
+    private bool _remoteExploreHintShownInCurrentFarSession;
+    private CancellationTokenSource? _remoteHintAutoHideCts;
 
     // Cache vị trí tĩnh giữa các lần điều hướng để tránh GPS cold-start
     private static Location? _cachedUserLocation;
@@ -97,6 +102,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     private static readonly TimeSpan PollFallbackInterval = TimeSpan.FromSeconds(4);
     private static readonly TimeSpan SimulationStepInterval = TimeSpan.FromMilliseconds(700);
     private static readonly TimeSpan SimulationPauseAtPoi = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan RemoteExploreHintDisplayDuration = TimeSpan.FromSeconds(4);
 
     public event EventHandler<PoiStopItem>? StopSelected;
 
@@ -183,7 +189,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         UpdateRemoteExploreHint(UserLocation);
     }
 
-    private async Task NavigateToZoneDetail(PoiStopItem stop)
+    private async Task NavigateToZoneDetail(PoiStopItem? stop)
     {
         if (stop == null) return;
 
@@ -257,6 +263,8 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             _currentAutoInsideZoneId = null;
             _simulatedLocation = null;
             ResetStationaryLock();
+            CancelRemoteHintAutoHide();
+            _remoteExploreHintShownInCurrentFarSession = false;
             RemoteExploreHintText = string.Empty;
             IsRemoteExploreHintVisible = false;
             IsLoading = false; // reset để LoadData không bị block bởi IsLoading guard
@@ -583,7 +591,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         }
     }
 
-    private async Task ToggleFavorite(PoiStopItem stop)
+    private async Task ToggleFavorite(PoiStopItem? stop)
     {
         if (stop == null) return;
 
@@ -695,7 +703,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         }
     }
 
-    private void SelectStop(PoiStopItem stop, bool triggerEvent = true, bool fromAutoSelect = false)
+    private void SelectStop(PoiStopItem? stop, bool triggerEvent = true, bool fromAutoSelect = false)
     {
         if (stop == null) return;
 
@@ -1298,6 +1306,8 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     {
         if (location == null)
         {
+            CancelRemoteHintAutoHide();
+            _remoteExploreHintShownInCurrentFarSession = false;
             IsRemoteExploreHintVisible = false;
             RemoteExploreHintText = string.Empty;
             return;
@@ -1309,13 +1319,54 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
 
         if (distanceMeters < RemoteExploreHintThresholdMeters)
         {
+            CancelRemoteHintAutoHide();
+            _remoteExploreHintShownInCurrentFarSession = false;
             IsRemoteExploreHintVisible = false;
             RemoteExploreHintText = string.Empty;
             return;
         }
 
         RemoteExploreHintText = _localizationManager.Format("tour_remote_explore_hint", distanceKm);
+
+        if (_remoteExploreHintShownInCurrentFarSession)
+        {
+            return;
+        }
+
         IsRemoteExploreHintVisible = true;
+        _remoteExploreHintShownInCurrentFarSession = true;
+        StartRemoteHintAutoHide();
+    }
+
+    private void StartRemoteHintAutoHide()
+    {
+        CancelRemoteHintAutoHide();
+
+        var cts = new CancellationTokenSource();
+        _remoteHintAutoHideCts = cts;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(RemoteExploreHintDisplayDuration, cts.Token);
+                if (cts.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                IsRemoteExploreHintVisible = false;
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        });
+    }
+
+    private void CancelRemoteHintAutoHide()
+    {
+        _remoteHintAutoHideCts?.Cancel();
+        _remoteHintAutoHideCts?.Dispose();
+        _remoteHintAutoHideCts = null;
     }
 }
 
