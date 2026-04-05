@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bui Vien Explorer — Project Presentation</title>
+    <title>TravelSystem Mobile - Bui Vien Explorer (PRD Presentation)</title>
     <style>
         :root {
             --primary: #0d47a1;
@@ -553,14 +553,14 @@
     <nav>
         <div class="logo">🧭 Bui Vien Explorer</div>
         <ul class="nav-links">
-            <li><a href="#overview">Tổng Quan</a></li>
-            <li><a href="#projects">Projects</a></li>
-            <li><a href="#db">Database</a></li>
-            <li><a href="#mobile">Mobile</a></li>
-            <li><a href="#gps">GPS & Geofence</a></li>
-            <li><a href="#audio">Audio</a></li>
-            <li><a href="#offline">Offline</a></li>
-            <li><a href="#admin">Admin</a></li>
+            <li><a href="#overview">Tong Quan</a></li>
+            <li><a href="#projects">Personas</a></li>
+            <li><a href="#db">User Stories</a></li>
+            <li><a href="#mobile">Journey</a></li>
+            <li><a href="#gps">Architecture</a></li>
+            <li><a href="#audio">Scope</a></li>
+            <li><a href="#offline">NFR</a></li>
+            <li><a href="#admin">Roadmap</a></li>
             <li><a href="#api">APIs</a></li>
             <li><a href="#stack">Stack</a></li>
         </ul>
@@ -568,15 +568,16 @@
 
     <!-- HERO -->
     <div class="hero">
-        <h1>Bui Vien Explorer</h1>
-        <p class="subtitle">Hệ thống hướng dẫn du lịch & địa điểm thú vị (POI) cho Quận 4, TP.HCM. Ứng dụng mobile hỗ trợ GPS, geofencing, phát âm thanh, yêu thích offline với backend web admin.</p>
+        <h1>TravelSystem Mobile - Bui Vien Explorer</h1>
+        <p class="subtitle">PRD da duoc phe duyet (03/2026): ung dung huong dan du lich theo tour cho pho di bo Bui Vien, toi uu offline-first, dinh vi thoi gian thuc, va Anonymous Session.</p>
         <div class="badges">
             <span class="badge">ASP.NET Core 10</span>
             <span class="badge">.NET MAUI</span>
             <span class="badge">SQL Server + SQLite</span>
             <span class="badge">GPS Geofencing</span>
+            <span class="badge">Anonymous Session</span>
             <span class="badge">Offline-First</span>
-            <span class="badge">Admin Dashboard</span>
+            <span class="badge">Approved 03/2026</span>
         </div>
     </div>
 
@@ -584,28 +585,28 @@
     <section>
         <div class="stats-row">
             <div class="stat-card">
-                <div class="value">3</div>
-                <div class="label">Projects</div>
+                <div class="value">8</div>
+                <div class="label">PRD Sections</div>
             </div>
             <div class="stat-card">
-                <div class="value">5</div>
-                <div class="label">Controllers</div>
+                <div class="value">4</div>
+                <div class="label">Core Phases</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">8</div>
+                <div class="label">User Stories</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">3</div>
+                <div class="label">Main Personas</div>
             </div>
             <div class="stat-card">
                 <div class="value">2</div>
-                <div class="label">Admin Areas</div>
-            </div>
-            <div class="stat-card">
-                <div class="value">4</div>
-                <div class="label">Mobile Pages</div>
-            </div>
-            <div class="stat-card">
-                <div class="value">4</div>
                 <div class="label">Platforms</div>
             </div>
             <div class="stat-card">
-                <div class="value">2</div>
-                <div class="label">Databases</div>
+                <div class="value">Approved</div>
+                <div class="label">Status (03/2026)</div>
             </div>
         </div>
     </section>
@@ -615,677 +616,444 @@
         <div class="section-header">
             <div class="icon" style="background:#e3f2fd;color:var(--primary);">🏗️</div>
             <div>
-                <div class="section-num">Chapter 01</div>
-                <h2>Kiến Trúc Tổng Quan</h2>
+                <div class="section-num">Section 01</div>
+                <h2>Tong Quan San Pham</h2>
             </div>
         </div>
-
-        <p>Kiến trúc <strong>3-tier</strong> với ASP.NET Core 10 backend, .NET MAUI mobile app, và shared library. Backend sử dụng SQL Server, mobile sử dụng SQLite offline-first.</p>
-
-        <h3>Backend Stack</h3>
-        <ul style="padding-left: 1.5rem; margin-bottom: 1rem;">
-            <li>ASP.NET Core 10.0 Web Framework</li>
-            <li>Entity Framework Core 10 (ORM)</li>
-            <li>SQL Server (Production)</li>
-            <li>MVC Controllers + Services pattern</li>
-            <li>Cookie-based Authentication (Admin + Vendor dual-scheme)</li>
-        </ul>
-
-        <h3>Mobile Stack</h3>
-        <ul style="padding-left: 1.5rem; margin-bottom: 1rem;">
-            <li>.NET MAUI (Cross-platform UI)</li>
-            <li>Targets: Android, iOS, macOS, Windows</li>
-            <li>SQLite (Local offline database)</li>
-            <li>MVVM Pattern with Xaml</li>
-            <li>HttpClient for API communication</li>
-        </ul>
-
-        <h3>Shared Library</h3>
-        <ul style="padding-left: 1.5rem; margin-bottom: 1rem;">
-            <li>Shared data models (LocalZone, LocalRoute, etc.)</li>
-            <li>SqliteConnectionFactory</li>
-            <li>Entity validation & annotations</li>
-        </ul>
-    </section>
-
-    <!-- PROJECTS -->
-    <section id="projects">
-        <div class="section-header">
-            <div class="icon" style="background:#e8f5e9;color:var(--success);">📦</div>
-            <div>
-                <div class="section-num">Chapter 02</div>
-                <h2>Cấu Trúc Projects</h2>
-            </div>
-        </div>
-
-        <div class="arch-grid">
-            <div class="arch-module">
-                <div class="mod-icon">🌐</div>
-                <div class="mod-name">TravelSystem.Web</div>
-                <div class="mod-desc">ASP.NET Core 10, Controllers, EF Core DbContext, Admin + Vendor Areas</div>
-            </div>
-            <div class="arch-module">
-                <div class="mod-icon">📱</div>
-                <div class="mod-name">TravelSystem.Mobile</div>
-                <div class="mod-desc">.NET MAUI App, Views (XAML), ViewModels, Services, DatabaseService</div>
-            </div>
-            <div class="arch-module">
-                <div class="mod-icon">🔗</div>
-                <div class="mod-name">TravelSystem.Shared</div>
-                <div class="mod-desc">Models, Factories, Validation, Shared DTOs</div>
-            </div>
-        </div>
-
-        <h3>Controllers & Areas</h3>
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Location</th>
-                        <th>Tác Dụng</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><code>RoutesController</code></td>
-                        <td>GET tuyến du lịch, danh sách POI theo tuyến</td>
-                    </tr>
-                    <tr>
-                        <td><code>ZonesController</code></td>
-                        <td>CRUD POI (Point of Interest), geofence data</td>
-                    </tr>
-                    <tr>
-                        <td><code>NarrationsController</code></td>
-                        <td>Nội dung hướng dẫn, audio scripts, TTS generation</td>
-                    </tr>
-                    <tr>
-                        <td><code>FavoritesController</code></td>
-                        <td>Quản lý POI yêu thích người dùng</td>
-                    </tr>
-                    <tr>
-                        <td><code>HomeController</code></td>
-                        <td>Landing page, analytics dashboard</td>
-                    </tr>
-                    <tr>
-                        <td><code>/Admin/*</code></td>
-                        <td>Admin Dashboard: POI management, Users, Analytics</td>
-                    </tr>
-                    <tr>
-                        <td><code>/Vendor/*</code></td>
-                        <td>Vendor Portal: Edit own POIs, view own analytics</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <!-- DATABASE -->
-    <section id="db">
-        <div class="section-header">
-            <div class="icon" style="background:#fce4ec;color:#c62828;">🗄️</div>
-            <div>
-                <div class="section-num">Chapter 03</div>
-                <h2>Database Schema</h2>
-            </div>
-        </div>
-
-        <p>Backend sử dụng <strong>SQL Server</strong> với Entity Framework Core. Mobile sử dụng <strong>SQLite</strong> để cache offline.</p>
-
-        <h3>SQL Server — Core Entities</h3>
-
-        <div class="card-grid">
-            <div class="card">
-                <h3>🗺️ Zone (POI)</h3>
-                <ul>
-                    <li><code>Id</code> (UUID)</li>
-                    <li><code>RouteId</code> (FK)</li>
-                    <li><code>Name</code> (string)</li>
-                    <li><code>Latitude, Longitude</code> (decimal)</li>
-                    <li><code>GeofenceRadius</code> (meters, default 30m)</li>
-                    <li><code>DisplayOrder</code> (int)</li>
-                </ul>
-            </div>
-            <div class="card">
-                <h3>🧭 Route</h3>
-                <ul>
-                    <li><code>Id</code> (UUID)</li>
-                    <li><code>Name</code> (string)</li>
-                    <li><code>Description</code> (text)</li>
-                    <li><code>CreatedAt, UpdatedAt</code></li>
-                </ul>
-            </div>
-            <div class="card">
-                <h3>🎤 Narration</h3>
-                <ul>
-                    <li><code>Id</code> (UUID)</li>
-                    <li><code>ZoneId</code> (FK)</li>
-                    <li><code>Language</code> (vi, en, fr...)</li>
-                    <li><code>Text</code> (guiding script)</li>
-                    <li><code>AudioUrl</code> (MP3 path)</li>
-                    <li><code>AudioStatus</code> (pending/ready/failed)</li>
-                </ul>
-            </div>
-            <div class="card">
-                <h3>❤️ Favorite</h3>
-                <ul>
-                    <li><code>Id</code> (UUID)</li>
-                    <li><code>UserId</code> (string)</li>
-                    <li><code>ZoneId</code> (FK)</li>
-                    <li><code>SavedAt</code> (timestamp)</li>
-                </ul>
-            </div>
-            <div class="card">
-                <h3>📊 Analytics</h3>
-                <ul>
-                    <li><code>Id</code> (UUID)</li>
-                    <li><code>UserId</code> (string)</li>
-                    <li><code>ZoneId</code> (FK)</li>
-                    <li><code>ActionType</code> (entered, listened, saved)</li>
-                    <li><code>Timestamp</code></li>
-                    <li><code>DurationSeconds</code></li>
-                </ul>
-            </div>
-            <div class="card">
-                <h3>⚙️ AppSetting</h3>
-                <ul>
-                    <li><code>Key</code> (string, PK)</li>
-                    <li><code>Value</code> (string)</li>
-                    <li>Config key-value storage</li>
-                </ul>
-            </div>
-        </div>
-
-        <h3>SQLite — Mobile Local Cache</h3>
-        <p>Mobile mirror các entities từ SQL Server:</p>
 
         <div class="highlight info">
-            <strong>Offline-First Strategy:</strong>
-            <ul style="margin-top: .5rem;">
-                <li>LocalZone, LocalRoute, LocalNarration → Cache từ API</li>
-                <li>LocalFavorite → Stored locally, sync when online</li>
-                <li>LocalAnalytics → Log user activity, batch upload</li>
-                <li>AppSetting → User preferences (language, settings)</li>
-            </ul>
+            <strong>San pham:</strong> TravelSystem Mobile - Bui Vien Explorer<br>
+            <strong>Nen tang:</strong> .NET MAUI (Mobile), ASP.NET Core 10 (Web Admin/Vendor)<br>
+            <strong>Trang thai:</strong> Approved (Cap nhat thang 3/2026)
+        </div>
+
+        <h3>Tam nhin & Muc tieu</h3>
+        <p>Ung dung duoc thiet ke cho boi canh di bo phuc tap nhu pho Tay Bui Vien, tap trung vao trai nghiem offline-first va dinh vi thoi gian thuc. Vong lap trai nghiem chinh: <strong>Kham pha Tour - Dieu huong tai cho - Luu diem quan tam - Quay lai sau</strong>.</p>
+
+        <h3>Unique Selling Points</h3>
+        <div class="card-grid">
+            <div class="card">
+                <h3>Xu ly GPS nang cao</h3>
+                <ul>
+                    <li>Loc nhieu GPS theo accuracy</li>
+                    <li>Chong nhay vi tri voi Hysteresis</li>
+                    <li>Debounce xac nhan vao vung</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>Hoat dong on dinh khi mat mang</h3>
+                <ul>
+                    <li>Offline-first voi SQLite</li>
+                    <li>UI doc du lieu local ngay lap tuc</li>
+                    <li>Sync nen khi co ket noi tro lai</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>Anonymous Session</h3>
+                <ul>
+                    <li>Khong bat buoc dang ky tai khoan</li>
+                    <li>Bao ve danh tinh nguoi dung</li>
+                    <li>GuestId duoc tao va luu tai local</li>
+                </ul>
+            </div>
         </div>
     </section>
 
-    <!-- MOBILE -->
-    <section id="mobile">
+    <!-- PERSONAS -->
+    <section id="projects">
         <div class="section-header">
-            <div class="icon" style="background:#e3f2fd;color:var(--info);">📱</div>
+            <div class="icon" style="background:#e8f5e9;color:var(--success);">👥</div>
             <div>
-                <div class="section-num">Chapter 04</div>
-                <h2>Mobile App Workflow</h2>
+                <div class="section-num">Section 02</div>
+                <h2>Chan Dung Nguoi Dung (Personas)</h2>
             </div>
         </div>
-
-        <h3>Startup Flow — 4 Phases</h3>
-        <div class="timeline">
-            <div class="timeline-item">
-                <h4>Pha 1 — App Initialize</h4>
-                <p>MauiProgram.cs khởi tạo DI containers, register services, pages, viewmodels. Setup fonts (Space Grotesk), logging.</p>
-            </div>
-            <div class="timeline-item">
-                <h4>Pha 2 — Language Selection</h4>
-                <p>Check AppSetting['SelectedLanguage']. Nếu null → Show LanguageSelectionPage. User chọn ngôn ngữ (vi, en, fr...) → Save to SQLite.</p>
-            </div>
-            <div class="timeline-item">
-                <h4>Pha 3 — Data Sync (Parallel)</h4>
-                <p>Đồng thời: getOfflineZones() từ SQLite (0ms), fetch từ API, request GPS permissions, load narrations theo ngôn ngữ chọn.</p>
-            </div>
-            <div class="timeline-item">
-                <h4>Pha 4 — Main Screen Ready</h4>
-                <p>Map renders tất cả POI, GPS marker hiển thị vị trí user, geofence monitoring xong → app ready phát audio.</p>
-            </div>
-        </div>
-
-        <h3>Key Services</h3>
 
         <div class="card-grid">
             <div class="card">
-                <h3>DatabaseService.cs</h3>
-                <p>SQLite CRUD operations:</p>
+                <h3>Du khach quoc te (Backpacker)</h3>
                 <ul>
-                    <li>GetZonesAsync()</li>
-                    <li>SaveZonesAsync(zones)</li>
-                    <li>GetFavoritesAsync()</li>
-                    <li>AddFavoriteAsync(zone)</li>
-                    <li>RemoveFavoriteAsync(zoneId)</li>
-                    <li>GetSettingAsync(key)</li>
-                    <li>SetSettingAsync(key, value)</li>
+                    <li>Can ban do offline va audio da ngon ngu</li>
+                    <li>Muon trai nghiem ranh tay, khong dang ky phuc tap</li>
+                    <li>Can dieu huong on dinh khi di bo</li>
                 </ul>
             </div>
             <div class="card">
-                <h3>ApiService.cs</h3>
-                <p>Backend API communication:</p>
+                <h3>Gioi tre kham pha</h3>
                 <ul>
-                    <li>GetRoutesAsync()</li>
-                    <li>GetZonesByRouteAsync(routeId)</li>
-                    <li>GetNarrationsAsync(zoneId, language)</li>
-                    <li>PostAnalyticsAsync(log)</li>
-                    <li>Retry logic + error handling</li>
+                    <li>Tim tour am thuc/pub crawl theo vibe</li>
+                    <li>Luu nhanh quan yeu thich khi dang offline</li>
+                    <li>Xem gio mo cua/dong cua thuc te</li>
                 </ul>
             </div>
             <div class="card">
-                <h3>LocationService (Planned)</h3>
-                <p>GPS tracking + debounce:</p>
+                <h3>Chu ho kinh doanh / Vendor</h3>
                 <ul>
-                    <li>watchPosition() liên tục</li>
-                    <li>Throttle 5s (tối ưu pin)</li>
-                    <li>High accuracy mode</li>
-                    <li>Background + foreground tracking</li>
-                    <li>OnLocationUpdated event</li>
+                    <li>Cap nhat gio mo cua va mo ta cua quan</li>
+                    <li>Dam bao thong tin hien thi dung cho nguoi di bo</li>
+                    <li>Tang kha nang tiep can khach ngang qua</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>Admin He thong</h3>
+                <ul>
+                    <li>Quan ly Tour (Routes) va POI (Zones)</li>
+                    <li>Kiem soat du lieu sync cho mobile</li>
+                    <li>Van hanh dashboard va portal</li>
                 </ul>
             </div>
         </div>
+    </section>
 
-        <h3>Mobile Views</h3>
+    <!-- USER STORIES -->
+    <section id="db">
+        <div class="section-header">
+            <div class="icon" style="background:#fce4ec;color:#c62828;">🧾</div>
+            <div>
+                <div class="section-num">Section 03</div>
+                <h2>User Stories</h2>
+            </div>
+        </div>
+
+        <h3>3.1 Onboarding & Home</h3>
         <div class="table-wrap">
             <table>
                 <thead>
                     <tr>
-                        <th>Page</th>
-                        <th>Tác Dụng</th>
-                        <th>ViewModel</th>
+                        <th>ID</th>
+                        <th>Story</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><code>MainPage.xaml</code></td>
-                        <td>Trang chủ, hiển thị bản đồ + POI list</td>
-                        <td>MainPageViewModel</td>
+                        <td><code>US-01</code></td>
+                        <td>Cap Anonymous Session ngay khi mo app de khong can tao tai khoan.</td>
                     </tr>
                     <tr>
-                        <td><code>LanguageSelectionPage.xaml</code></td>
-                        <td>Chọn ngôn ngữ (lần đầu)</td>
-                        <td>LanguageSelectionViewModel</td>
+                        <td><code>US-02</code></td>
+                        <td>Pre-warm quyen vi tri va dong bo du lieu ngam tai man hinh cho.</td>
                     </tr>
                     <tr>
-                        <td><code>SavedPage.xaml</code></td>
-                        <td>Danh sách POI yêu thích ❤️</td>
-                        <td>SavedPageViewModel (planned)</td>
+                        <td><code>US-03</code></td>
+                        <td>Hien thi danh sach Tours o Home de nguoi dung chon tour phu hop.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>3.2 Navigation & Map</h3>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Story</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>US-04</code></td>
+                        <td>Marker vi tri user di chuyen muot, han che giat lag va nhay lung tung.</td>
                     </tr>
                     <tr>
-                        <td><code>SettingsPage.xaml</code></td>
-                        <td>Cài đặt: ngôn ngữ, geofence radius</td>
-                        <td>SettingsPageViewModel (planned)</td>
+                        <td><code>US-05</code></td>
+                        <td>Auto-focus POI gan nhat on dinh khi dung giua 2 diem sat nhau.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>3.3 POI Detail & Saved</h3>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Story</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>US-06</code></td>
+                        <td>Xem chi tiet POI va trang thai mo/dong cua theo ShopHours.</td>
+                    </tr>
+                    <tr>
+                        <td><code>US-07</code></td>
+                        <td>Luu POI yeu thich offline va tu dong sync len server khi co Wifi.</td>
+                    </tr>
+                    <tr>
+                        <td><code>US-08</code></td>
+                        <td>Quan ly Saved va tuy chinh ngon ngu/giao dien o Settings.</td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </section>
 
-    <!-- GPS & GEOFENCE -->
+    <!-- CORE JOURNEY -->
+    <section id="mobile">
+        <div class="section-header">
+            <div class="icon" style="background:#e3f2fd;color:var(--info);">🧭</div>
+            <div>
+                <div class="section-num">Section 04</div>
+                <h2>Core User Journey (4 Giai Doan)</h2>
+            </div>
+        </div>
+
+        <div class="timeline">
+            <div class="timeline-item">
+                <h4>Giai doan 1: Smart Initialization</h4>
+                <p>Tao SessionId an danh, nap AppSettings tu SQLite, kiem tra local data, trigger background sync, pre-warm location de giam latency.</p>
+            </div>
+            <div class="timeline-item">
+                <h4>Giai doan 2: Home Tab - Kham pha Tour</h4>
+                <p>Man hinh Home hien danh sach Routes/Tours. Nguoi dung chon tour va bam Start Tour de vao ban do chi tiet.</p>
+            </div>
+            <div class="timeline-item">
+                <h4>Giai doan 3: Tour Map Execution</h4>
+                <p>Render Zones len map, lay vi tri user lien tuc voi Stream + Polling fallback, tinh Haversine va kich hoat Hysteresis + Debounce.</p>
+            </div>
+            <div class="timeline-item">
+                <h4>Giai doan 4: Detail, Saved, Settings</h4>
+                <p>Mo POI detail, kiem tra ShopHours, luu favorite local-first vao GuestFavorites, sau do worker dong bo server khi co mang.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- TECHNICAL -->
     <section id="gps">
         <div class="section-header">
-            <div class="icon" style="background:#e8f5e9;color:var(--success);">📡</div>
+            <div class="icon" style="background:#e8f5e9;color:var(--success);">⚙️</div>
             <div>
-                <div class="section-num">Chapter 05</div>
-                <h2>GPS & Geofencing</h2>
+                <div class="section-num">Section 05</div>
+                <h2>Thong So Ky Thuat Loi</h2>
             </div>
         </div>
 
-        <p>Xử lý vị trí GPS, kiểm tra zone entry/exit, trigger narration tự động.</p>
-
-        <h3>3 Giai Đoạn Xử Lý (Planned)</h3>
-
+        <h3>Advanced Location Engine</h3>
         <div class="tier-list">
             <div class="tier-item">
-                <div class="tier-label" style="background:#1565c0;">Giai Đoạn 1</div>
+                <div class="tier-label" style="background:#1565c0;">Engine 1</div>
                 <div class="tier-content">
-                    <strong>GPS Collection (LocationService)</strong>
-                    <span><code>watchPosition()</code> liên tục → throttle 5s → tránh tính toán liên tục, tối ưu pin. Update chấm vị trí trên map.</span>
+                    <strong>Stream + Polling Fallback</strong>
+                    <span>Uu tien LocationChanged event. Neu qua 10s khong co event thi kich hoat Polling de tranh UI bi dong bang.</span>
                 </div>
             </div>
             <div class="tier-item">
-                <div class="tier-label" style="background:#0a3f91;">Giai Đoạn 2</div>
+                <div class="tier-label" style="background:#0a3f91;">Engine 2</div>
                 <div class="tier-content">
-                    <strong>Zone Detection (GeofenceService)</strong>
-                    <span>Tính Haversine distance từ user → mỗi POI. Nếu ≤ radius (default 30m) → pending entry. Ra ngoài → cooldown 5 phút (tránh spam).</span>
+                    <strong>Noise Filtering + Debounce</strong>
+                    <span>Loai bo diem co Accuracy &gt; 50m. Chi xac nhan vao zone khi user dung lien tuc trong ban kinh suot 3 giay.</span>
                 </div>
             </div>
             <div class="tier-item">
-                <div class="tier-label" style="background:#265c8b;">Giai Đoạn 3</div>
+                <div class="tier-label" style="background:#265c8b;">Engine 3</div>
                 <div class="tier-content">
-                    <strong>Audio Decision (NarrationService)</strong>
-                    <span>Debounce 3 giây → confirm user really here → chọn POI ưu tiên (priority score) → queue for playback.</span>
+                    <strong>Hysteresis Anti Ping-Pong</strong>
+                    <span>Enter radius = 15m, Exit radius = 20m de tranh nhay qua lai giua 2 POI sat nhau.</span>
                 </div>
             </div>
-        </div>
-
-        <h3>Haversine Distance Calculation</h3>
-        <div class="code-block">
-<span class="keyword">private</span> <span class="keyword">double</span> CalculateHaversine(<span class="keyword">double</span> lat1, <span class="keyword">double</span> lon1, <span class="keyword">double</span> lat2, <span class="keyword">double</span> lon2)
-{
-    <span class="keyword">const</span> <span class="keyword">double</span> R = <span class="number">6371000</span>; <span class="comment">// Earth radius (meters)</span>
-    <span class="keyword">var</span> dLat = ToRad(lat2 - lat1);
-    <span class="keyword">var</span> dLon = ToRad(lon2 - lon1);
-    <span class="keyword">var</span> a = Math.Sin(dLat / <span class="number">2</span>) * Math.Sin(dLat / <span class="number">2</span>) +
-              Math.Cos(ToRad(lat1)) * Math.Cos(ToRad(lat2)) *
-              Math.Sin(dLon / <span class="number">2</span>) * Math.Sin(dLon / <span class="number">2</span>);
-    <span class="keyword">var</span> c = <span class="number">2</span> * Math.Asin(Math.Sqrt(a));
-    <span class="keyword">return</span> R * c; <span class="comment">// Distance in meters</span>
-}
         </div>
 
         <div class="highlight warning">
-            <strong>Key Constants:</strong>
+            <strong>Location Parameters:</strong>
             <ul style="margin-top: .5rem;">
-                <li>GPS Throttle: 5 seconds</li>
-                <li>Geofence Debounce: 3 seconds</li>
-                <li>Default Radius: 30 meters</li>
-                <li>Cooldown Period: 5 minutes</li>
+                <li>Polling fallback trigger: 10 giay</li>
+                <li>Accuracy threshold: 50 met</li>
+                <li>Debounce confirmation: 3 giay</li>
+                <li>Hysteresis: Enter 15m / Exit 20m</li>
             </ul>
         </div>
+
+        <h3>Offline-First Sync Architecture</h3>
+        <div class="card-grid">
+            <div class="card">
+                <h3>Source of Truth tren Mobile</h3>
+                <ul>
+                    <li>SQLite la nguon du lieu render UI</li>
+                    <li>LocalZone, LocalRoute, LocalFavorite</li>
+                    <li>Khong render truc tiep tu API</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>Favorite Sync Worker</h3>
+                <ul>
+                    <li>Save local ngay lap tuc (&lt;100ms)</li>
+                    <li>Day vao queue dong bo</li>
+                    <li>Server 200 OK - danh dau da sync</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>Data Refresh Worker</h3>
+                <ul>
+                    <li>Fetch Routes/Zones/ShopHours</li>
+                    <li>Replace SQLite theo lo</li>
+                    <li>Update UI qua binding/event</li>
+                </ul>
+            </div>
+        </div>
     </section>
 
-    <!-- AUDIO -->
+    <!-- FEATURES -->
     <section id="audio">
         <div class="section-header">
-            <div class="icon" style="background:#f3e5f5;color:#7b1fa2;">🎧</div>
+            <div class="icon" style="background:#f3e5f5;color:#7b1fa2;">🧩</div>
             <div>
-                <div class="section-num">Chapter 06</div>
-                <h2>Audio Narration (Planned)</h2>
+                <div class="section-num">Section 06</div>
+                <h2>Danh Sach Tinh Nang (Feature Scope)</h2>
             </div>
         </div>
 
-        <h3>2-Tier Audio Strategy</h3>
-
-        <div class="tier-list">
-            <div class="tier-item">
-                <div class="tier-label" style="background:#2e7d32;">Tier 1</div>
-                <div class="tier-content">
-                    <strong>Pre-generated MP3 (0ms)</strong>
-                    <span>POI có <code>AudioUrl</code> đã sẵn → fetch trực tiếp, phát ngay. Cached locally.</span>
-                </div>
-            </div>
-            <div class="tier-item">
-                <div class="tier-label" style="background:#0a3f91;">Tier 2</div>
-                <div class="tier-content">
-                    <strong>Local Text-to-Speech (1-3s)</strong>
-                    <span>Fallback nếu không có audio file. Sử dụng <code>TextToSpeech.SpeakAsync()</code> built-in API (iOS/Android native).</span>
-                </div>
-            </div>
-        </div>
-
-        <h3>NarrationService (Planned)</h3>
-
+        <h3>Mobile Client (.NET MAUI)</h3>
         <div class="card-grid">
             <div class="card">
-                <h3>PlayNarrationAsync(zone)</h3>
-                <ul>
-                    <li>Get narration theo language</li>
-                    <li>Fallback chain: target → en → vi</li>
-                    <li>Tier 1: Try AudioUrl</li>
-                    <li>Tier 2: Fallback TTS</li>
-                </ul>
+                <h3>Navigation UI</h3>
+                <p>AppShell voi Bottom TabBar: Home, Saved, Settings.</p>
             </div>
             <div class="card">
-                <h3>Stop playback</h3>
-                <ul>
-                    <li>Stop audio file playback</li>
-                    <li>Cancel TTS</li>
-                    <li>Clear notification</li>
-                </ul>
+                <h3>Tour Execution</h3>
+                <p>Map integration, pin theo tour, marker vi tri user thoi gian thuc.</p>
+            </div>
+            <div class="card">
+                <h3>Smart Geofencing</h3>
+                <p>Tinh khoang cach noi bo tren mobile, trigger POI on dinh.</p>
+            </div>
+            <div class="card">
+                <h3>Audio Player</h3>
+                <p>Phat MP3 hoac Text-to-Speech khi user vao vung POI.</p>
+            </div>
+            <div class="card">
+                <h3>Anonymous Identity</h3>
+                <p>Tao GUID lan dau mo app, luu Preferences lam GuestId.</p>
+            </div>
+            <div class="card">
+                <h3>State Management</h3>
+                <p>Hien thi Open/Closed dua theo gio he thong va ShopHours.</p>
             </div>
         </div>
 
-        <div class="highlight info">
-            <strong>Feature:</strong> Phát audio tự động khi user vào zone, tự dừng khi ra khỏi zone hoặc có notification/call đến.
+        <h3>Web Backend (ASP.NET Core 10)</h3>
+        <div class="card-grid">
+            <div class="card">
+                <h3>Mobile Sync APIs</h3>
+                <ul>
+                    <li>Routes, Zones, ShopHours, Narrations</li>
+                    <li>GuestFavorites sync endpoints</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>Admin Dashboard</h3>
+                <ul>
+                    <li>CRUD Tour (Routes)</li>
+                    <li>CRUD POI (Zones)</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>Vendor Portal</h3>
+                <ul>
+                    <li>Cap nhat ShopHours</li>
+                    <li>Cap nhat trang thai hoat dong</li>
+                </ul>
+            </div>
         </div>
     </section>
 
-    <!-- OFFLINE -->
+    <!-- NFR -->
     <section id="offline">
         <div class="section-header">
-            <div class="icon" style="background:#e8eaf6;color:#283593;">📴</div>
+            <div class="icon" style="background:#e8eaf6;color:#283593;">✅</div>
             <div>
-                <div class="section-num">Chapter 07</div>
-                <h2>Offline-First Architecture</h2>
+                <div class="section-num">Section 07</div>
+                <h2>Yeu Cau Phi Chuc Nang (NFR)</h2>
             </div>
         </div>
-
-        <p>Mobile app hoạt động 100% offline với SQLite cache. Sync khi có mạng.</p>
-
-        <h3>4 Lớp Phòng Ngự</h3>
 
         <div class="card-grid">
             <div class="card">
-                <h3>Lớp 1 — SQLite Cache</h3>
-                <p>Mỗi lần open app: check LocalZone table → hiển thị ngay (0ms). Auto-load từ API nếu rỗng.</p>
+                <h3>Zero Latency UI</h3>
+                <p>Phan hoi thao tac favorite &lt; 100ms nho local-first write.</p>
             </div>
             <div class="card">
-                <h3>Lớp 2 — Auto Sync</h3>
-                <p>Khi online: check LastSyncTime. Nếu > 6 hours → auto-sync toàn bộ data. Retry với exponential backoff nếu fail.</p>
+                <h3>Battery Drain Control</h3>
+                <p>Location tracking tieu thu pin khong vuot 5-7% moi gio su dung lien tuc.</p>
             </div>
             <div class="card">
-                <h3>Lớp 3 — Language Fallback</h3>
-                <p>Narration fallback chain: target lang → English → Vietnamese. Never show blank screen.</p>
+                <h3>Data Resiliency</h3>
+                <p>Khong mat favorite hay analytics log khi app bi force-kill vi da ghi SQLite ngay lap tuc.</p>
             </div>
-            <div class="card">
-                <h3>Lớp 4 — Offline Analytics</h3>
-                <p>LocalAnalytics log activity → batch upload khi online. No data loss.</p>
-            </div>
-        </div>
-
-        <div class="highlight success">
-            <strong>User Experience:</strong> User có thể dùng app hoàn toàn offline. Dữ liệu sync tự động khi có kết nối. Analytics được ghi lại cả khi offline.
         </div>
     </section>
 
-    <!-- ADMIN -->
+    <!-- ROADMAP -->
     <section id="admin">
         <div class="section-header">
-            <div class="icon" style="background:#fff8e1;color:#f57f17;">🎛️</div>
+            <div class="icon" style="background:#fff8e1;color:#f57f17;">🗺️</div>
             <div>
-                <div class="section-num">Chapter 08</div>
-                <h2>Admin Dashboard & Vendor Portal</h2>
+                <div class="section-num">Section 08</div>
+                <h2>Lo Trinh Trien Khai (Milestones)</h2>
             </div>
         </div>
 
-        <p>Backend cung cấp 2 admin areas với authentication riêng biệt.</p>
-
-        <h3>Authentication Scheme</h3>
-
-        <div class="code-block">
-<span class="comment">// Program.cs setup</span>
-builder.Services.AddAuthentication()
-    .AddCookie(<span class="string">"AdminAuth"</span>, options => 
-    {
-        options.LoginPath = <span class="string">"/Admin/Auth/Login"</span>;
-        options.ExpireTimeSpan = TimeSpan.FromHours(<span class="number">8</span>);
-        options.Cookie.Name = <span class="string">"AdminAuthCookie"</span>;
-    })
-    .AddCookie(<span class="string">"VendorAuth"</span>, options =>
-    {
-        options.LoginPath = <span class="string">"/Vendor/Auth/Login"</span>;
-        options.ExpireTimeSpan = TimeSpan.FromHours(<span class="number">8</span>);
-        options.Cookie.Name = <span class="string">"VendorAuthCookie"</span>;
-    });
-        </div>
-
-        <h3>Features</h3>
-
-        <div class="card-grid">
-            <div class="card">
-                <h3>👨‍💼 Admin Dashboard</h3>
-                <ul>
-                    <li>Routes Management: CRUD</li>
-                    <li>Zones (POI): Create/Edit/Delete, set geofence</li>
-                    <li>Narrations: Manage scripts, audio status</li>
-                    <li>Analytics: Dashboard, heatmap</li>
-                    <li>User Management</li>
-                </ul>
+        <div class="timeline">
+            <div class="timeline-item">
+                <h4>Phase 1 (Tuan 1-2): Core Architecture & Offline Engine</h4>
+                <p>Thiet lap SQLite local models, startup flow (Anonymous Session, pre-warm location, background sync), va local-first GuestFavorites.</p>
             </div>
-            <div class="card">
-                <h3>🏪 Vendor Portal</h3>
-                <ul>
-                    <li>View own POIs only</li>
-                    <li>Edit description (không được xóa/thêm)</li>
-                    <li>View own analytics</li>
-                    <li>Request audio regeneration</li>
-                </ul>
+            <div class="timeline-item">
+                <h4>Phase 2 (Tuan 3-4): GPS & Spatial Engine</h4>
+                <p>LocationService (Stream + Polling fallback), GeofenceService (Noise Filter, Haversine, Hysteresis, Debounce).</p>
             </div>
-        </div>
-    </section>
-
-    <!-- APIs -->
-    <section id="api">
-        <div class="section-header">
-            <div class="icon" style="background:#e0f2f1;color:var(--accent);">🔌</div>
-            <div>
-                <div class="section-num">Chapter 09</div>
-                <h2>API Endpoints</h2>
+            <div class="timeline-item">
+                <h4>Phase 3 (Tuan 5-6): UI & User Journey</h4>
+                <p>Dung AppShell tabs, Home -> Map -> POI Detail, hien thi Open/Closed, hoan thien Saved & Settings.</p>
             </div>
-        </div>
-
-        <h3>Zones (POI) APIs</h3>
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Method</th>
-                        <th>Endpoint</th>
-                        <th>Mô Tả</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><code>GET</code></td>
-                        <td>/api/zones</td>
-                        <td>Danh sách tất cả POI</td>
-                    </tr>
-                    <tr>
-                        <td><code>GET</code></td>
-                        <td>/api/zones/{id}</td>
-                        <td>Chi tiết 1 POI</td>
-                    </tr>
-                    <tr>
-                        <td><code>GET</code></td>
-                        <td>/api/routes/{routeId}/zones</td>
-                        <td>Danh sách POI theo tuyến</td>
-                    </tr>
-                    <tr>
-                        <td><code>POST</code></td>
-                        <td>/api/zones</td>
-                        <td>Tạo POI (Admin only)</td>
-                    </tr>
-                    <tr>
-                        <td><code>PUT</code></td>
-                        <td>/api/zones/{id}</td>
-                        <td>Cập nhật POI</td>
-                    </tr>
-                    <tr>
-                        <td><code>DELETE</code></td>
-                        <td>/api/zones/{id}</td>
-                        <td>Xóa POI</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <h3>Routes APIs</h3>
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Method</th>
-                        <th>Endpoint</th>
-                        <th>Mô Tả</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><code>GET</code></td>
-                        <td>/api/routes</td>
-                        <td>Danh sách tuyến</td>
-                    </tr>
-                    <tr>
-                        <td><code>GET</code></td>
-                        <td>/api/routes/{id}</td>
-                        <td>Chi tiết tuyến</td>
-                    </tr>
-                    <tr>
-                        <td><code>POST</code></td>
-                        <td>/api/routes</td>
-                        <td>Tạo tuyến (Admin only)</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <h3>Narrations APIs</h3>
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Method</th>
-                        <th>Endpoint</th>
-                        <th>Mô Tả</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><code>GET</code></td>
-                        <td>/api/narrations?zoneId={id}&language=en</td>
-                        <td>Lấy script narration</td>
-                    </tr>
-                    <tr>
-                        <td><code>POST</code></td>
-                        <td>/api/narrations</td>
-                        <td>Tạo/cập nhật narration</td>
-                    </tr>
-                    <tr>
-                        <td><code>POST</code></td>
-                        <td>/api/narrations/{id}/generate-audio</td>
-                        <td>Generate MP3 từ text (TTS)</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <h3>Analytics & Favorites APIs</h3>
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Method</th>
-                        <th>Endpoint</th>
-                        <th>Mô Tả</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><code>GET</code></td>
-                        <td>/api/analytics</td>
-                        <td>Dashboard stats</td>
-                    </tr>
-                    <tr>
-                        <td><code>POST</code></td>
-                        <td>/api/analytics</td>
-                        <td>Mobile submit activity log</td>
-                    </tr>
-                    <tr>
-                        <td><code>GET</code></td>
-                        <td>/api/favorites</td>
-                        <td>Danh sách yêu thích của user</td>
-                    </tr>
-                    <tr>
-                        <td><code>POST</code></td>
-                        <td>/api/favorites</td>
-                        <td>Add favorite</td>
-                    </tr>
-                    <tr>
-                        <td><code>DELETE</code></td>
-                        <td>/api/favorites/{zoneId}</td>
-                        <td>Remove favorite</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="timeline-item">
+                <h4>Phase 4 (Tuan 7-8): Audio Integration & Field Test</h4>
+                <p>Tich hop TTS/MP3, test thuc dia tai Bui Vien de tinh chinh tham so Hysteresis va Debounce.</p>
+            </div>
         </div>
     </section>
 
     <!-- STACK -->
+    <section id="api">
+        <div class="section-header">
+            <div class="icon" style="background:#e0f2f1;color:var(--accent);">🔌</div>
+            <div>
+                <div class="section-num">Appendix</div>
+                <h2>API va He Thong Quan Tri</h2>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nhom</th>
+                        <th>Pham vi API theo PRD</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Tour Data</td>
+                        <td>Routes, Zones, ShopHours, Narrations cho mobile sync</td>
+                    </tr>
+                    <tr>
+                        <td>Guest Data</td>
+                        <td>GuestFavorites dong bo hai chieu local-server</td>
+                    </tr>
+                    <tr>
+                        <td>Admin Dashboard</td>
+                        <td>CRUD tuyen duong va diem dung (routes/zones)</td>
+                    </tr>
+                    <tr>
+                        <td>Vendor Portal</td>
+                        <td>Cap nhat ShopHours va trang thai hoat dong cua quan</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
     <section id="stack">
         <div class="section-header">
             <div class="icon" style="background:#fce4ec;color:#b71c1c;">🛠️</div>
@@ -1297,92 +1065,39 @@ builder.Services.AddAuthentication()
 
         <div class="card-grid">
             <div class="card">
-                <h3>Backend</h3>
-                <ul>
-                    <li><strong>ASP.NET Core 10.0</strong></li>
-                    <li><strong>Entity Framework Core 10</strong></li>
-                    <li><strong>SQL Server</strong> (Production)</li>
-                    <li>MVC Controllers</li>
-                    <li>Cookie Authentication</li>
-                    <li>Entity Validation (DataAnnotations)</li>
-                </ul>
-            </div>
-            <div class="card">
                 <h3>Mobile</h3>
                 <ul>
-                    <li><strong>.NET MAUI</strong> (Cross-platform)</li>
-                    <li>Targets: Android, iOS, macOS, Windows</li>
-                    <li><strong>XAML</strong> UI markup</li>
-                    <li>MVVM Pattern</li>
-                    <li><strong>SQLite</strong> (Local storage)</li>
-                    <li>HttpClient (API calls)</li>
+                    <li>.NET MAUI</li>
+                    <li>SQLite local-first</li>
+                    <li>Map + GPS + Geofencing</li>
+                    <li>TTS / MP3 playback</li>
                 </ul>
             </div>
             <div class="card">
-                <h3>Shared</h3>
+                <h3>Backend</h3>
                 <ul>
-                    <li>Shared Models</li>
-                    <li>DTOs</li>
-                    <li>Factories</li>
-                    <li>Validation</li>
-                    <li>Entity Annotations</li>
+                    <li>ASP.NET Core 10</li>
+                    <li>Entity Framework Core</li>
+                    <li>SQL Server</li>
+                    <li>Admin + Vendor modules</li>
                 </ul>
             </div>
             <div class="card">
-                <h3>Libraries & Tools</h3>
+                <h3>Core Modules</h3>
                 <ul>
-                    <li><strong>Newtonsoft.Json</strong> — Serialization</li>
-                    <li><strong>sqlite-net-pcl</strong> — SQLite ORM</li>
-                    <li><strong>Space Grotesk</strong> — Custom font</li>
-                    <li><strong>MAUI Community Toolkit</strong></li>
+                    <li>LocationService</li>
+                    <li>GeofenceService</li>
+                    <li>Sync Worker</li>
+                    <li>Favorite Queue Worker</li>
                 </ul>
             </div>
         </div>
-
-        <div class="highlight success">
-            <strong>Free & Open Source Core:</strong> Tất cả framework (ASP.NET Core, .NET MAUI, EF Core, SQLite) đều miễn phí và open-source. Zero licensing cost.
-        </div>
-    </section>
-
-    <!-- PROJECT STATUS -->
-    <section>
-        <div class="section-header">
-            <div class="icon" style="background:#e0f2f1;color:#00695c;">📋</div>
-            <div>
-                <div class="section-num">Status</div>
-                <h2>Development Progress</h2>
-            </div>
-        </div>
-
-        <p>Xem chi tiết tại <strong><a href="./CHECKLIST.md">CHECKLIST.md</a></strong></p>
-
-        <h3>🔴 Ưu Tiên Cao (Critical)</h3>
-        <ul style="padding-left: 1.5rem; margin-bottom: 1.5rem;">
-            <li>LocalFavorite model + DatabaseService</li>
-            <li>LocationService (GPS tracking)</li>
-            <li>GeofenceService (Zone detection)</li>
-            <li>NarrationService (Audio playback)</li>
-        </ul>
-
-        <h3>🟡 Ưu Tiên Trung (Important)</h3>
-        <ul style="padding-left: 1.5rem; margin-bottom: 1.5rem;">
-            <li>AppShell TabBar + navigation</li>
-            <li>MapPage with POI markers</li>
-            <li>PoiListPage + PoiDetailPage</li>
-        </ul>
-
-        <h3>🟢 Ưu Tiên Thấp (Nice-to-have)</h3>
-        <ul style="padding-left: 1.5rem;">
-            <li>FavoritesPage</li>
-            <li>SettingsPage</li>
-            <li>Admin analytics dashboard</li>
-        </ul>
     </section>
 
     <footer>
-        <p><strong>Bui Vien Explorer</strong></p>
-        <p>Travel Guide System for District 4, HCMC</p>
-        <p style="margin-top:.5rem;">ASP.NET Core 10 + .NET MAUI + SQL Server + SQLite</p>
+        <p><strong>🧭 Bui Vien Explorer</strong></p>
+        <p>Travel Guide System for Bui Vien Walking Street, Ho Chi Minh City</p>
+        <p style="margin-top:.5rem;">ASP.NET Core 10 + .NET MAUI + SQL Server + SQLite + GPS Geofencing</p>
     </footer>
 
 </body>
