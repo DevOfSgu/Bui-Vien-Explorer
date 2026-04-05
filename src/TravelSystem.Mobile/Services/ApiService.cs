@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Globalization;
+using System.IO;
 using TravelSystem.Shared.Models;
 
 namespace TravelSystem.Mobile.Services;
@@ -36,10 +37,22 @@ public class ApiService
     {
         _logger = logger;
         _dbService = dbService;
+#if DEBUG && ANDROID
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+        };
+        _httpClient = new HttpClient(handler)
+        {
+            Timeout = TimeSpan.FromSeconds(30)
+        };
+        _logger.LogWarning("[API][DEBUG] SSL certificate validation is disabled on Android DEBUG build.");
+#else
         _httpClient = new HttpClient
         {
             Timeout = TimeSpan.FromSeconds(30) // Increased for initial sync
         };
+#endif
         // Prevent ngrok browser warning page from being returned to API calls.
         _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("ngrok-skip-browser-warning", "true");
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -131,8 +144,43 @@ public class ApiService
 
     private Uri GetBaseUri() => new(ApiConstants.GetBaseApiUrl(), UriKind.Absolute);
     private Uri BuildUri(string relativePath) => new(GetBaseUri(), relativePath);
-    private static string TourStopsCacheKey(int tourId) => $"cache_tour_stops_{tourId}_v3";
-    private static string ZoneDetailCacheKey(int zoneId) => $"cache_zone_detail_{zoneId}_v1";
+    private static string TourStopsCacheKey(int tourId, string language) => $"cache_tour_stops_{tourId}_{language}_v4";
+    private static string ZoneDetailCacheKey(int zoneId, string language) => $"cache_zone_detail_{zoneId}_{language}_v2";
+
+    private async Task<Uri> BuildToursUriAsync()
+    {
+        var normalized = await GetCurrentLanguageAsync();
+        return BuildUri($"{ApiConstants.ToursEndpoint}?lang={Uri.EscapeDataString(normalized)}");
+    }
+
+    private async Task<string> GetCurrentLanguageAsync()
+    {
+        var storedLanguage = await _dbService.GetSettingAsync("Language", "vi");
+        return NormalizeLanguageCode(storedLanguage);
+    }
+
+    private static string NormalizeLanguageCode(string? langCode)
+    {
+        if (string.IsNullOrWhiteSpace(langCode))
+        {
+            return "vi";
+        }
+
+        var normalized = langCode.Trim().ToLowerInvariant();
+        var dashIndex = normalized.IndexOf('-');
+        if (dashIndex > 0)
+        {
+            normalized = normalized[..dashIndex];
+        }
+
+        return normalized switch
+        {
+            "en" => "en",
+            "ja" => "ja",
+            "ko" => "ko",
+            _ => "vi"
+        };
+    }
 
     private async Task<IReadOnlyList<T>?> LoadCachedListAsync<T>(string key)
     {
@@ -194,32 +242,37 @@ public class ApiService
         }
     }
 
-    private async Task<IReadOnlyList<TourStopDto>?> FetchTourStopsFromServerAsync(int tourId, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<TourStopDto>?> FetchTourStopsFromServerAsync(int tourId, string language, CancellationToken cancellationToken)
     {
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutCts.CancelAfter(TourStopsRequestTimeout);
 
-        var stopsUri = BuildUri($"{ApiConstants.ToursEndpoint}/{tourId}/stops");
+        var stopsUri = BuildUri($"{ApiConstants.ToursEndpoint}/{tourId}/stops?lang={Uri.EscapeDataString(language)}");
         var stops = await _httpClient.GetFromJsonAsync<List<TourStopDto>>(stopsUri, timeoutCts.Token) ?? [];
         foreach (var stop in stops)
         {
             stop.ImageUrl = NormalizeImageUrl(stop.ImageUrl);
         }
 
+        LogTourStopsDiagnostics("SERVER", tourId, language, stops);
+
         return stops;
     }
 
     public async Task<IReadOnlyList<TourStopDto>?> GetTourStopsAsync(int tourId, CancellationToken cancellationToken = default)
     {
+        var language = await GetCurrentLanguageAsync();
+        var cacheKey = TourStopsCacheKey(tourId, language);
+
         try
         {
             if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
             {
-                var stops = await FetchTourStopsFromServerAsync(tourId, cancellationToken);
+                var stops = await FetchTourStopsFromServerAsync(tourId, language, cancellationToken);
                 if (stops is not null)
                 {
                     _tourStopsCache[tourId] = stops;
-                    await SaveCachedListAsync(TourStopsCacheKey(tourId), stops);
+                    await SaveCachedListAsync(cacheKey, stops);
                     _logger.LogInformation("[API] Fetched tour {TourId} stops from server: {StopCount}", tourId, stops.Count);
                     return stops;
                 }
@@ -235,14 +288,16 @@ public class ApiService
             if (_tourStopsCache.TryGetValue(tourId, out var cachedStops) && cachedStops.Count > 0)
             {
                 _logger.LogInformation("[API][CACHE] Tour {TourId} stops from memory cache: {StopCount}", tourId, cachedStops.Count);
+                LogTourStopsDiagnostics("MEMORY_CACHE", tourId, language, cachedStops);
                 return cachedStops;
             }
 
-            var sqliteCachedStops = await LoadCachedListAsync<TourStopDto>(TourStopsCacheKey(tourId));
+            var sqliteCachedStops = await LoadCachedListAsync<TourStopDto>(cacheKey);
             if (sqliteCachedStops is { Count: > 0 })
             {
                 _tourStopsCache[tourId] = sqliteCachedStops;
                 _logger.LogInformation("[API][CACHE] Tour {TourId} stops from SQLite cache: {StopCount}", tourId, sqliteCachedStops.Count);
+                LogTourStopsDiagnostics("SQLITE_CACHE", tourId, language, sqliteCachedStops);
                 return sqliteCachedStops;
             }
 
@@ -292,12 +347,93 @@ public class ApiService
         }
     }
 
+    public async Task RefreshNarrationAsync(int zoneId, string language, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+            {
+                return;
+            }
+
+            var normalizedLanguage = NormalizeLanguageCode(language);
+            var narrationUri = BuildUri($"{ApiConstants.NarrationsEndpoint}?zoneId={zoneId}&language={Uri.EscapeDataString(normalizedLanguage)}");
+            var narration = await _httpClient.GetFromJsonAsync<Narration>(narrationUri, cancellationToken);
+            if (narration == null)
+            {
+                return;
+            }
+
+            var localNarration = new LocalNarration
+            {
+                ZoneId = narration.ZoneId.ToString(),
+                Language = normalizedLanguage,
+                Text = narration.Text,
+                FileUrl = narration.FileUrl ?? string.Empty,
+                SyncedAt = DateTime.UtcNow.ToString("O"),
+                UpdatedAt = narration.UpdatedAt
+            };
+
+            await _dbService.UpsertNarrationsAsync(new[] { localNarration });
+            await DownloadNarrationAudioAsync(zoneId, normalizedLanguage, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[API][SYNC] Refresh narration failed for ZoneId={ZoneId}, Lang={Language}", zoneId, language);
+        }
+    }
+
+    private async Task DownloadNarrationAudioAsync(int zoneId, string language, CancellationToken cancellationToken)
+    {
+        var localNarration = await _dbService.GetNarrationAsync(zoneId, language);
+        if (localNarration == null || string.IsNullOrWhiteSpace(localNarration.FileUrl))
+        {
+            return;
+        }
+
+        try
+        {
+            await _dbService.UpdateDownloadStatusAsync(localNarration.Id, 1);
+
+            var audioDir = Path.Combine(FileSystem.AppDataDirectory, "audio_cache");
+            if (!Directory.Exists(audioDir))
+            {
+                Directory.CreateDirectory(audioDir);
+            }
+
+            var fileName = $"{zoneId}_{language}.mp3";
+            var localPath = Path.Combine(audioDir, fileName);
+
+            var downloadUrl = localNarration.FileUrl;
+            if (!downloadUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            {
+                var baseUrl = ApiConstants.GetBaseApiUrl().TrimEnd('/');
+                downloadUrl = $"{baseUrl}/{downloadUrl.TrimStart('/')}";
+            }
+
+            using var response = await _httpClient.GetAsync(downloadUrl, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                await _dbService.UpdateDownloadStatusAsync(localNarration.Id, 3);
+                return;
+            }
+
+            await using var fs = new FileStream(localPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            await response.Content.CopyToAsync(fs, cancellationToken);
+            await _dbService.UpdateDownloadStatusAsync(localNarration.Id, 2, localPath);
+        }
+        catch
+        {
+            await _dbService.UpdateDownloadStatusAsync(localNarration.Id, 3);
+        }
+    }
+
     public async Task<IReadOnlyList<TourSummaryDto>?> GetToursAsync(CancellationToken cancellationToken = default)
 
     {
         try
         {
-            var toursUri = BuildUri(ApiConstants.ToursEndpoint);
+            var toursUri = await BuildToursUriAsync();
             _logger.LogInformation("[API] GetTours network={NetworkAccess}, requesting: {Uri}", Connectivity.Current.NetworkAccess, toursUri);
             using var response = await _httpClient.GetAsync(toursUri, cancellationToken);
             var rawBody = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -370,7 +506,7 @@ public class ApiService
                 return;
             }
 
-            var toursUri = BuildUri(ApiConstants.ToursEndpoint);
+            var toursUri = await BuildToursUriAsync();
             var tours = await _httpClient.GetFromJsonAsync<List<TourSummaryDto>>(toursUri, cancellationToken) ?? [];
             foreach (var tour in tours)         
                 tour.ImageUrl = NormalizeImageUrl(tour.ImageUrl);
@@ -381,11 +517,12 @@ public class ApiService
             foreach (var tour in tours)
             {
                 if (cancellationToken.IsCancellationRequested) break;
-                var stops = await FetchTourStopsFromServerAsync(tour.Id, cancellationToken);
+                var currentLanguage = await GetCurrentLanguageAsync();
+                var stops = await FetchTourStopsFromServerAsync(tour.Id, currentLanguage, cancellationToken);
                 if (stops is { Count: > 0 })
                 {
                     _tourStopsCache[tour.Id] = stops;
-                    await SaveCachedListAsync(TourStopsCacheKey(tour.Id), stops);
+                    await SaveCachedListAsync(TourStopsCacheKey(tour.Id, currentLanguage), stops);
                     _logger.LogInformation("[API][SYNC] Tour {TourId} stops synced: {StopCount}", tour.Id, stops.Count);
                 }
             }
@@ -406,7 +543,8 @@ public class ApiService
     {
         try
         {
-            var zonesUri = BuildUri(ApiConstants.ZonesEndpoint);
+            var language = await GetCurrentLanguageAsync();
+            var zonesUri = BuildUri($"{ApiConstants.ZonesEndpoint}?lang={Uri.EscapeDataString(language)}");
             Debug.WriteLine($"[API] Loading zones from {zonesUri}");
             var zones = await _httpClient.GetFromJsonAsync<List<Zone>>(zonesUri, cancellationToken) ?? [];
             foreach (var zone in zones)
@@ -425,13 +563,14 @@ public class ApiService
 
     public async Task<ZoneDetailDto?> GetZoneDetailAsync(int zoneId, CancellationToken cancellationToken = default)
     {
-        var cacheKey = ZoneDetailCacheKey(zoneId);
+        var language = await GetCurrentLanguageAsync();
+        var cacheKey = ZoneDetailCacheKey(zoneId, language);
 
         try
         {
             if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
             {
-                var zoneDetailUri = BuildUri($"{ApiConstants.ZonesEndpoint}/{zoneId}/detail");
+                var zoneDetailUri = BuildUri($"{ApiConstants.ZonesEndpoint}/{zoneId}/detail?lang={Uri.EscapeDataString(language)}");
                 var detail = await _httpClient.GetFromJsonAsync<ZoneDetailDto>(zoneDetailUri, cancellationToken);
                 if (detail != null)
                 {
@@ -1080,6 +1219,27 @@ public class ApiService
 
         var relativePath = imageUrl.TrimStart('~', '/');
         return new Uri(GetBaseUri(), relativePath).ToString();
+    }
+
+    private void LogTourStopsDiagnostics(string source, int tourId, string language, IReadOnlyList<TourStopDto> stops)
+    {
+        var preview = string.Join(" | ", stops
+            .OrderBy(s => s.OrderIndex)
+            .Take(6)
+            .Select(s =>
+            {
+                var desc = string.IsNullOrWhiteSpace(s.Description)
+                    ? "(empty)"
+                    : (s.Description!.Length > 45 ? s.Description[..45] + "..." : s.Description);
+                return $"ZoneId={s.ZoneId},Idx={s.OrderIndex},Name='{s.Name}',Desc='{desc}'";
+            }));
+
+        _logger.LogInformation("[API][STOPS_DIAG] Source={Source} TourId={TourId} Lang={Lang} Count={Count} Preview={Preview}",
+            source,
+            tourId,
+            language,
+            stops.Count,
+            preview);
     }
 
     private sealed class ZoneSummaryDto

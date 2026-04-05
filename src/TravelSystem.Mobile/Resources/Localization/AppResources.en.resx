@@ -43,7 +43,11 @@
   <data name="settings_terms_msg" xml:space="preserve"><value>Opening Terms &amp; Policy...</value></data>
   <data name="tour_stops" xml:space="preserve"><value>Tour Stops</value></data>
   <data name="tour_stops_count" xml:space="preserve"><value>{0} stops</value></data>
+  <data name="tour_remote_explore_hint" xml:space="preserve"><value>You are {0:0.0} km away from Bui Vien. You can tap POI points to enjoy remote exploration.</value></data>
   <data name="tour_loading" xml:space="preserve"><value>Loading tour details...</value></data>
+  <data name="closed_hours_title" xml:space="preserve"><value>After Hours</value></data>
+  <data name="closed_hours_message" xml:space="preserve"><value>{0} is currently outside operating hours. Please come back during:</value></data>
+  <data name="closed_hours_ok" xml:space="preserve"><value>OK</value></data>
   <data name="zone_open_now" xml:space="preserve"><value>OPEN NOW</value></data>
   <data name="zone_closed_now" xml:space="preserve"><value>CLOSED NOW</value></data>
   <data name="zone_address" xml:space="preserve"><value>ADDRESS</value></data>

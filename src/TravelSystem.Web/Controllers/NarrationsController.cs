@@ -20,21 +20,33 @@ public class NarrationsController : ControllerBase
     {
         try
         {
+            var normalizedLanguage = NormalizeLanguage(language);
+
             if (zoneId == null || zoneId == 0)
             {
-                var allNarrations = await _db.Narrations
+                var allApprovedNarrations = await _db.Narrations
                     .Where(n => n.ApprovalStatus == "Approved")
+                    .OrderByDescending(n => n.UpdatedAt)
+                    .ThenByDescending(n => n.Id)
                     .ToListAsync();
-                return Ok(allNarrations);
+
+                var latestNarrations = allApprovedNarrations
+                    .GroupBy(n => new { n.ZoneId, Language = NormalizeLanguage(n.Language) })
+                    .Select(g => g.First())
+                    .ToList();
+
+                return Ok(latestNarrations);
             }
 
-            var narration = await _db.Narrations
+            var candidates = await _db.Narrations
                 .Where(n => n.ZoneId == zoneId.Value
-                    && n.Language == language
                     && n.ApprovalStatus == "Approved")
                 .OrderByDescending(n => n.UpdatedAt)
                 .ThenByDescending(n => n.Id)
-                .FirstOrDefaultAsync();
+                .ToListAsync();
+
+            var narration = candidates
+                .FirstOrDefault(n => NormalizeLanguage(n.Language) == normalizedLanguage);
 
             if (narration == null)
                 return NotFound(new { message = $"Không tìm thấy narration cho zone {zoneId} / ngôn ngữ '{language}'." });
@@ -57,6 +69,29 @@ public class NarrationsController : ControllerBase
             .OrderByDescending(n => n.UpdatedAt)
             .ThenByDescending(n => n.Id)
             .ToListAsync();
-        return Ok(narrations);
+
+        var latestNarrations = narrations
+            .GroupBy(n => NormalizeLanguage(n.Language))
+            .Select(g => g.First())
+            .ToList();
+
+        return Ok(latestNarrations);
+    }
+
+    private static string NormalizeLanguage(string? language)
+    {
+        if (string.IsNullOrWhiteSpace(language))
+        {
+            return "vi";
+        }
+
+        var normalized = language.Trim().ToLowerInvariant();
+        var dashIndex = normalized.IndexOf('-');
+        if (dashIndex > 0)
+        {
+            normalized = normalized[..dashIndex];
+        }
+
+        return normalized.Length > 5 ? normalized[..5] : normalized;
     }
 }

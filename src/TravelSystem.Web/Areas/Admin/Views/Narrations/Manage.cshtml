@@ -1,0 +1,104 @@
+@model IEnumerable<TravelSystem.Web.Areas.Admin.Controllers.NarrationsController.NarrationLanguageEditItem>
+@{
+    ViewData["Title"] = "Quản lý ngôn ngữ thuyết minh";
+    var first = Model.FirstOrDefault();
+}
+
+<div class="header-actions">
+    <div class="d-flex align-items-center gap-3">
+        <a asp-action="Index" asp-route-zoneId="@first?.ZoneId" class="btn btn-outline-secondary" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <div class="page-title">Chỉnh sửa theo ngôn ngữ - @(first?.ZoneName ?? "Zone")</div>
+    </div>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger d-flex align-items-center" style="border-radius: 10px;">
+        <i class="fa-solid fa-circle-exclamation me-2"></i>
+        <span>@TempData["Error"]</span>
+    </div>
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success d-flex align-items-center" style="border-radius: 10px;">
+        <i class="fa-solid fa-circle-check me-2"></i>
+        <span>@TempData["Success"]</span>
+    </div>
+}
+
+<div class="card-custom">
+    <div class="table-responsive">
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>NGÔN NGỮ</th>
+                    <th>TRẠNG THÁI DUYỆT</th>
+                    <th>TRẠNG THÁI AUDIO</th>
+                    <th>THAO TÁC</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        <span class="fw-bold">@item.LanguageName</span>
+                        <span class="text-muted">(@item.LanguageCode)</span>
+                    </td>
+                    <td>
+                        @if (item.ApprovalStatus == "Approved")
+                        {
+                            <span class="badge bg-success">Đã duyệt</span>
+                        }
+                        else if (item.ApprovalStatus == "Pending")
+                        {
+                            <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                        }
+                        else if (item.ApprovalStatus == "Rejected")
+                        {
+                            <span class="badge bg-danger">Từ chối</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Chưa có</span>
+                        }
+                    </td>
+                    <td>
+                        @if (item.AudioStatus == "ready")
+                        {
+                            <span class="badge bg-success">Sẵn sàng</span>
+                        }
+                        else if (item.AudioStatus == "error")
+                        {
+                            <span class="badge bg-danger">Lỗi</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark">Đang chờ</span>
+                        }
+                    </td>
+                    <td>
+                        @if (item.NarrationId.HasValue && item.ApprovalStatus == "Approved")
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.NarrationId.Value" class="btn btn-sm btn-primary" style="border-radius: 6px;">
+                                <i class="fa-solid fa-pen"></i> Chỉnh sửa ngôn ngữ này
+                            </a>
+                        }
+                        else if (item.NarrationId.HasValue)
+                        {
+                            <span class="text-muted">Chỉ chỉnh sửa sau khi duyệt</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Chưa có bản ghi</span>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

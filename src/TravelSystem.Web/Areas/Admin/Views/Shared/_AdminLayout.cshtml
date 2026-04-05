@@ -156,6 +156,42 @@
             position: absolute;
             top: 0;
             right: 0;
+            display: none;
+        }
+
+        .notification-popup {
+            position: absolute;
+            left: 50%;
+            bottom: 54px;
+            transform: translateX(-50%);
+            min-width: 220px;
+            max-width: 260px;
+            background: #111827;
+            color: #fff;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 12px;
+            line-height: 1.4;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 30;
+        }
+
+        .notification-popup.show {
+            opacity: 1;
+        }
+
+        .notification-popup::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: -6px;
+            width: 12px;
+            height: 12px;
+            background: #111827;
+            transform: translateX(-50%) rotate(45deg);
         }
 
         .user-profile {
@@ -354,11 +390,12 @@
             </li>
         </ul>
         <div class="sidebar-footer border-top mt-auto p-3">
-            <div class="d-flex justify-content-center mb-2">
-                <button class="notification-btn position-relative p-2 border-0 bg-transparent text-muted hover-text-danger transition-all">
+            <div class="d-flex justify-content-center mb-2 position-relative">
+                <button id="adminNotificationBell" class="notification-btn position-relative p-2 border-0 bg-transparent text-muted hover-text-danger transition-all" type="button">
                     <i class="fa-regular fa-bell fs-5"></i>
-                    <span class="notification-badge" style="width: 8px; height: 8px; top: 8px; right: 8px;"></span>
+                    <span id="adminNotificationBadge" class="notification-badge" style="width: 8px; height: 8px; top: 8px; right: 8px;"></span>
                 </button>
+                <div id="adminNotificationPopup" class="notification-popup" role="status" aria-live="polite"></div>
             </div>
 
             <div class="d-flex align-items-center justify-content-between bg-light p-2 rounded-3 shadow-sm" style="background-color: #f8fafc !important;">
@@ -384,6 +421,73 @@
     </div>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            const bell = document.getElementById('adminNotificationBell');
+            const badge = document.getElementById('adminNotificationBadge');
+            const popup = document.getElementById('adminNotificationPopup');
+            if (!bell || !badge || !popup) return;
+
+            const queue = [];
+            let isShowing = false;
+
+            function setBadgeVisible(visible) {
+                badge.style.display = visible ? 'block' : 'none';
+            }
+
+            function showNextNotification() {
+                if (isShowing || queue.length === 0) {
+                    if (queue.length === 0) setBadgeVisible(false);
+                    return;
+                }
+
+                const item = queue.shift();
+                isShowing = true;
+                setBadgeVisible(queue.length > 0);
+                popup.textContent = item.message;
+                popup.classList.add('show');
+
+                setTimeout(() => {
+                    popup.classList.remove('show');
+                    isShowing = false;
+                    showNextNotification();
+                }, 3200);
+            }
+
+            async function pollNotifications() {
+                try {
+                    const response = await fetch('/Admin/Notifications/Poll', {
+                        method: 'GET',
+                        credentials: 'same-origin',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+
+                    if (!response.ok) return;
+                    const data = await response.json();
+                    const items = Array.isArray(data.items) ? data.items : [];
+                    if (items.length === 0) return;
+
+                    for (const item of items) {
+                        queue.push(item);
+                    }
+
+                    setBadgeVisible(true);
+                    showNextNotification();
+                } catch {
+                    // keep polling silently
+                }
+            }
+
+            bell.addEventListener('click', function () {
+                if (!isShowing) {
+                    showNextNotification();
+                }
+            });
+
+            pollNotifications();
+            setInterval(pollNotifications, 8000);
+        })();
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

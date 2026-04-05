@@ -20,6 +20,7 @@ using Mapsui.Nts;
 using BruTile.Predefined;
 using BruTile.Web;
 using System.Globalization;
+using System.ComponentModel;
 
 namespace TravelSystem.Mobile.Views;
 
@@ -71,6 +72,9 @@ public partial class TourDetailPage : ContentPage
     private DateTime _lastMapDataChangedAtUtc = DateTime.MinValue;
     private static readonly List<IFeature> EmptyFeatures = [];
     private string _currentMapSource = "UNKNOWN";
+    private bool _isRemoteHintToastAnimating;
+
+    private Border? RemoteHintToastView => this.FindByName<Border>("RemoteHintToast");
 
     private static void TracePersistent(string category, string message)
     {
@@ -117,6 +121,8 @@ public partial class TourDetailPage : ContentPage
         {
             _viewModel.NavigateToZoneDetailCommand.Execute(stop);
         };
+
+        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         Debug.WriteLine("[MAP_CRASH_DEBUG] 3. Constructor FINISHED");
     }
 
@@ -222,6 +228,7 @@ public partial class TourDetailPage : ContentPage
     {
         base.OnAppearing();
         Shell.SetTabBarIsVisible(this, false);
+        SyncRemoteHintToastState(animate: false);
 
         _viewModel.StopSelected -= OnStopSelected;
         _viewModel.StopSelected += OnStopSelected;
@@ -256,6 +263,11 @@ public partial class TourDetailPage : ContentPage
     {
         base.OnDisappearing();
         Debug.WriteLine("[MAP_CRASH_DEBUG] 22. Disappearing - Cleaning up");
+        HideRemoteHintToast();
+
+        // Stop any active narration immediately when leaving this page.
+        AudioPlayer?.StopPlaybackImmediately();
+        _audioService.Stop(true);
 
         _viewModel.StopForegroundTracking();
         _viewModel.MapDataChanged -= OnMapDataChanged;
@@ -286,6 +298,79 @@ public partial class TourDetailPage : ContentPage
         });
 
         Debug.WriteLine("[MAP_CRASH_DEBUG] 23. Cleanup FINISHED");
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(TourDetailViewModel.IsRemoteExploreHintVisible)
+            && e.PropertyName != nameof(TourDetailViewModel.RemoteExploreHintText))
+        {
+            return;
+        }
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            SyncRemoteHintToastState(animate: e.PropertyName == nameof(TourDetailViewModel.IsRemoteExploreHintVisible));
+        });
+    }
+
+    private void SyncRemoteHintToastState(bool animate)
+    {
+        var remoteHintToast = RemoteHintToastView;
+        if (remoteHintToast == null) return;
+
+        if (_viewModel.IsRemoteExploreHintVisible)
+        {
+            _ = ShowRemoteHintToastAsync(animate);
+            return;
+        }
+
+        HideRemoteHintToast();
+    }
+
+    private async Task ShowRemoteHintToastAsync(bool animate)
+    {
+        var remoteHintToast = RemoteHintToastView;
+        if (remoteHintToast == null) return;
+        if (remoteHintToast.IsVisible && (!animate || _isRemoteHintToastAnimating)) return;
+
+        remoteHintToast.IsVisible = true;
+
+        if (!animate)
+        {
+            remoteHintToast.Opacity = 1;
+            remoteHintToast.TranslationY = 0;
+            return;
+        }
+
+        _isRemoteHintToastAnimating = true;
+        remoteHintToast.Opacity = 0;
+        remoteHintToast.TranslationY = -18;
+
+        try
+        {
+            await Task.WhenAll(
+                remoteHintToast.FadeTo(1, 220, Easing.CubicOut),
+                remoteHintToast.TranslateTo(0, 0, 220, Easing.CubicOut));
+        }
+        finally
+        {
+            _isRemoteHintToastAnimating = false;
+        }
+    }
+
+    private void HideRemoteHintToast()
+    {
+        var remoteHintToast = RemoteHintToastView;
+        if (remoteHintToast == null) return;
+
+        remoteHintToast.AbortAnimation("TranslationX");
+        remoteHintToast.AbortAnimation("TranslationY");
+        remoteHintToast.AbortAnimation("FadeTo");
+        remoteHintToast.Opacity = 0;
+        remoteHintToast.TranslationY = -18;
+        remoteHintToast.IsVisible = false;
+        _isRemoteHintToastAnimating = false;
     }
 
     // ─── Map Init ────────────────────────────────────────────────────────────
@@ -553,9 +638,33 @@ public partial class TourDetailPage : ContentPage
         {
             var lang = await _dbService.GetSettingAsync("Language", "vi");
             Debug.WriteLine($"[TOUR_PAGE] Current app language from DB: {lang}");
+            Debug.WriteLine($"[TOUR_PAGE][AUDIO_DIAG] Selected stop => ZoneId={stop.ZoneId}, Idx={stop.OrderIndex}, Name='{stop.Name}', Desc='{Preview(stop.Description)}'");
+
+            if (!IsWithinOperatingHours(stop, out var operatingRange))
+            {
+                // Ensure previous audio is cut immediately if user taps a closed zone.
+                AudioPlayer?.StopPlaybackImmediately();
+                _audioService.Stop(true);
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                    ShowClosedHoursPopup(stop.Name, operatingRange));
+                return;
+            }
+
+            using (var syncCts = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
+            {
+                await _apiService.RefreshNarrationAsync(stop.ZoneId, lang, syncCts.Token);
+            }
 
             // Warm cache lookup only; popup/player logic already handles MP3/TTS fallback internally.
-            _ = await _dbService.GetNarrationAsync(stop.ZoneId, lang);
+            var narration = await _dbService.GetNarrationAsync(stop.ZoneId, lang);
+            if (narration == null)
+            {
+                Debug.WriteLine($"[TOUR_PAGE][AUDIO_DIAG] Narration NOT FOUND for ZoneId={stop.ZoneId}, Lang={lang}");
+            }
+            else
+            {
+                Debug.WriteLine($"[TOUR_PAGE][AUDIO_DIAG] Narration FOUND => ZoneId={narration.ZoneId}, Lang={narration.Language}, Text='{Preview(narration.Text)}', FileUrl='{narration.FileUrl}'");
+            }
 
             // StopSelected can be raised from background tracking thread.
             // Ensure popup/UI operations always run on the main thread.
@@ -585,6 +694,76 @@ public partial class TourDetailPage : ContentPage
             new MRect(cx - half, cy - half, cx + half, cy + half),
             MBoxFit.Fit, 0, null);
         MapControlView.Refresh();
+    }
+
+    private static string Preview(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return "(empty)";
+        return text.Length > 90 ? text[..90] + "..." : text;
+    }
+
+    private static bool IsWithinOperatingHours(PoiStopItem stop, out string operatingRange)
+    {
+        operatingRange = stop.Hours;
+        if (string.IsNullOrWhiteSpace(stop.Hours) || stop.Hours == "--")
+        {
+            return true;
+        }
+
+        var raw = stop.Hours.Trim().Replace('–', '-');
+        var parts = raw.Split('-', 2, StringSplitOptions.TrimEntries);
+        if (parts.Length != 2)
+        {
+            return true;
+        }
+
+        var formats = new[] { "h:mm tt", "hh:mm tt", "H:mm", "HH:mm" };
+        if (!DateTime.TryParseExact(parts[0], formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var openTime)
+            || !DateTime.TryParseExact(parts[1], formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var closeTime))
+        {
+            return true;
+        }
+
+        var open = openTime.TimeOfDay;
+        var close = closeTime.TimeOfDay;
+        var now = DateTime.Now.TimeOfDay;
+
+        operatingRange = $"{openTime.ToString("h:mm tt", CultureInfo.InvariantCulture)} - {closeTime.ToString("h:mm tt", CultureInfo.InvariantCulture)}";
+
+        if (open <= close)
+        {
+            return now >= open && now <= close;
+        }
+
+        // Overnight window (e.g., 8:00 PM - 2:00 AM)
+        return now >= open || now <= close;
+    }
+
+    private void ShowClosedHoursPopup(string stopName, string operatingRange)
+    {
+        if (ClosedHoursMessageLabel != null)
+        {
+            var message = LocalizationManager.Instance.Format("closed_hours_message", stopName);
+            ClosedHoursMessageLabel.Text = message;
+        }
+
+        if (ClosedHoursRangeLabel != null)
+        {
+            ClosedHoursRangeLabel.Text = operatingRange;
+        }
+
+        if (ClosedHoursOverlay != null)
+        {
+            ClosedHoursOverlay.IsVisible = true;
+        }
+    }
+
+    private void OnClosedHoursPopupOkClicked(object? sender, EventArgs e)
+    {
+        if (ClosedHoursOverlay != null)
+        {
+            ClosedHoursOverlay.IsVisible = false;
+        }
     }
 
     private void OnMapDataChanged(object? sender, EventArgs e)

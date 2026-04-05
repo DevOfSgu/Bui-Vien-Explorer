@@ -2,6 +2,30 @@
 @model IEnumerable<Analytics>
 @{
     ViewData["Title"] = "Nhật ký truy cập";
+
+    TimeZoneInfo ResolveVietnamTimeZone()
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh");
+        }
+    }
+
+    DateTime ToVietnamTime(DateTime dateTime)
+    {
+        var utc = dateTime.Kind switch
+        {
+            DateTimeKind.Utc => dateTime,
+            DateTimeKind.Local => dateTime.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(dateTime, DateTimeKind.Utc)
+        };
+
+        return TimeZoneInfo.ConvertTimeFromUtc(utc, ResolveVietnamTimeZone());
+    }
 }
 
 <div class="header-actions">
@@ -26,21 +50,21 @@
                     
                     <!-- Dummy data to show UI layout -->
                     <tr>
-                        <td class="text-muted">@((DateTime.UtcNow.AddMinutes(-10)).ToString("dd/MM/yyyy, HH:mm"))</td>
+                        <td class="text-muted">@(ToVietnamTime(DateTime.UtcNow.AddMinutes(-10)).ToString("dd/MM/yyyy, HH:mm"))</td>
                         <td><span class="badge-soft badge-gray">b9c2a3f1...</span></td>
                         <td><small style="font-family: monospace;">10.7688° N, 106.6924° E</small></td>
                         <td><span class="badge-soft badge-red">PlayNarration</span></td>
                         <td>120s</td>
                     </tr>
                     <tr>
-                        <td class="text-muted">@((DateTime.UtcNow.AddMinutes(-25)).ToString("dd/MM/yyyy, HH:mm"))</td>
+                        <td class="text-muted">@(ToVietnamTime(DateTime.UtcNow.AddMinutes(-25)).ToString("dd/MM/yyyy, HH:mm"))</td>
                         <td><span class="badge-soft badge-gray">f8a91b2c...</span></td>
                         <td><small style="font-family: monospace;">10.7690° N, 106.6920° E</small></td>
                         <td><span class="badge-soft badge-gray">LocationPing</span></td>
                         <td>-</td>
                     </tr>
                     <tr>
-                        <td class="text-muted">@((DateTime.UtcNow.AddMinutes(-40)).ToString("dd/MM/yyyy, HH:mm"))</td>
+                        <td class="text-muted">@(ToVietnamTime(DateTime.UtcNow.AddMinutes(-40)).ToString("dd/MM/yyyy, HH:mm"))</td>
                         <td><span class="badge-soft badge-gray">1a2b3c4d...</span></td>
                         <td><small style="font-family: monospace;">10.7695° N, 106.6918° E</small></td>
                         <td><span class="badge-soft badge-gray">EnterZone</span></td>
@@ -50,7 +74,7 @@
                 @foreach (var log in Model)
                 {
                     <tr>
-                        <td class="text-muted">@log.CreatedAt.ToString("dd/MM/yyyy, HH:mm")</td>
+                        <td class="text-muted">@ToVietnamTime(log.CreatedAt).ToString("dd/MM/yyyy, HH:mm")</td>
                         <td><span class="badge-soft badge-gray">@log.SessionId.ToString().Substring(0,8)...</span></td>
                         <td><small style="font-family: monospace;">@log.Latitude.ToString("0.0000")° N, @log.Longitude.ToString("0.0000")° E</small></td>
                         <td>

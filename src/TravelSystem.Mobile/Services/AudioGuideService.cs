@@ -22,9 +22,11 @@ public interface IAudioGuideService
 
 public class AudioGuideService : IAudioGuideService
 {
+    private readonly IAppAudioInterruptionService _audioInterruptionService;
     private CancellationTokenSource? _ttsCts;
     private bool _isPlaying;
     private bool _isPaused;
+    private bool _resumeAfterInterruption;
     private double _currentSpeed = 1.0;
     private string[] _sentences = Array.Empty<string>();
     private int _currentSentenceIndex = 0;
@@ -36,6 +38,12 @@ public class AudioGuideService : IAudioGuideService
     public bool IsPlaying => _isPlaying;
     public int TotalSentences => _sentences.Length;
     public int CurrentSentenceIndex => _currentSentenceIndex;
+
+    public AudioGuideService(IAppAudioInterruptionService audioInterruptionService)
+    {
+        _audioInterruptionService = audioInterruptionService;
+        _audioInterruptionService.InterruptionChanged += OnInterruptionChanged;
+    }
 
     public double CurrentSpeed 
     { 
@@ -172,6 +180,27 @@ public class AudioGuideService : IAudioGuideService
             _currentSentenceIndex = 0;
         }
         StatusChanged?.Invoke();
+    }
+
+    private void OnInterruptionChanged(bool isInterrupted)
+    {
+        if (isInterrupted)
+        {
+            _resumeAfterInterruption = _isPlaying;
+            if (_isPlaying)
+            {
+                Pause();
+            }
+
+            return;
+        }
+
+        if (_resumeAfterInterruption && _isPaused)
+        {
+            Resume();
+        }
+
+        _resumeAfterInterruption = false;
     }
 
     private async Task<Locale?> GetLocaleAsync(string languageCode)

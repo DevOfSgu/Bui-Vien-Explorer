@@ -9,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpClient<TravelSystem.Web.Services.IAudioTranslationService, TravelSystem.Web.Services.FreeAudioTranslationService>();
+builder.Services.AddScoped<TravelSystem.Web.Services.INotificationService, TravelSystem.Web.Services.NotificationService>();
 
 // Add DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -53,6 +54,31 @@ if (!string.IsNullOrEmpty(connectionString))
         using var command = new Microsoft.Data.SqlClient.SqlCommand(sql, connection);
         command.ExecuteNonQuery();
         Console.WriteLine("Database Patch: Zones.IsMain verified/added.");
+
+        var notificationSql = @"
+            IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'AppNotifications')
+            BEGIN
+                CREATE TABLE AppNotifications(
+                    Id INT IDENTITY(1,1) PRIMARY KEY,
+                    RecipientUserId INT NULL,
+                    RecipientRole NVARCHAR(20) NOT NULL,
+                    Message NVARCHAR(500) NOT NULL,
+                    LinkUrl NVARCHAR(500) NULL,
+                    IsRead BIT NOT NULL CONSTRAINT DF_AppNotifications_IsRead DEFAULT(0),
+                    CreatedAt DATETIME2 NOT NULL,
+                    ReadAt DATETIME2 NULL
+                );
+            END;
+
+            IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_AppNotifications_RecipientRole_RecipientUserId_IsRead_CreatedAt' AND object_id = OBJECT_ID('AppNotifications'))
+            BEGIN
+                CREATE INDEX IX_AppNotifications_RecipientRole_RecipientUserId_IsRead_CreatedAt
+                ON AppNotifications (RecipientRole, RecipientUserId, IsRead, CreatedAt);
+            END;
+        ";
+        using var notificationCommand = new Microsoft.Data.SqlClient.SqlCommand(notificationSql, connection);
+        notificationCommand.ExecuteNonQuery();
+        Console.WriteLine("Database Patch: AppNotifications verified/created.");
     }
     catch (Exception ex)
     {

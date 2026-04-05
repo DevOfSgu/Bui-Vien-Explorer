@@ -43,7 +43,11 @@
   <data name="settings_terms_msg" xml:space="preserve"><value>利用規約とポリシーを開いています...</value></data>
   <data name="tour_stops" xml:space="preserve"><value>ツアーストップ</value></data>
   <data name="tour_stops_count" xml:space="preserve"><value>{0}スポット</value></data>
+  <data name="tour_remote_explore_hint" xml:space="preserve"><value>現在ブイビエンから{0:0.0}km離れています。POIポイントをタップして遠隔探索を体験できます。</value></data>
   <data name="tour_loading" xml:space="preserve"><value>ツアー詳細を読み込み中...</value></data>
+  <data name="closed_hours_title" xml:space="preserve"><value>営業時間外</value></data>
+  <data name="closed_hours_message" xml:space="preserve"><value>{0}は現在営業時間外です。次の時間帯にお越しください:</value></data>
+  <data name="closed_hours_ok" xml:space="preserve"><value>確認</value></data>
   <data name="zone_open_now" xml:space="preserve"><value>営業中</value></data>
   <data name="zone_closed_now" xml:space="preserve"><value>営業時間外</value></data>
   <data name="zone_address" xml:space="preserve"><value>住所</value></data>

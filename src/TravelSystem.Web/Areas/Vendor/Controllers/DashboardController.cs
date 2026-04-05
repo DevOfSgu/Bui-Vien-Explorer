@@ -287,30 +287,41 @@ namespace TravelSystem.Web.Areas.Vendor.Controllers
 
         private async Task<int?> ResolveCurrentVendorShopIdAsync()
         {
-            var shopIdClaim = User.FindFirst("ShopId")?.Value;
-            if (int.TryParse(shopIdClaim, out var claimShopId))
-            {
-                return claimShopId;
-            }
-
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (int.TryParse(userIdClaim, out var userId))
             {
-                return await _db.Users
+                var currentShopId = await _db.Users
                     .AsNoTracking()
                     .Where(u => u.Id == userId && u.Role == 1 && u.IsActive)
                     .Select(u => u.ShopId)
                     .FirstOrDefaultAsync();
+
+                if (currentShopId.HasValue)
+                {
+                    return currentShopId;
+                }
             }
 
             var username = User.Identity?.Name;
             if (!string.IsNullOrWhiteSpace(username))
             {
-                return await _db.Users
+                var currentShopId = await _db.Users
                     .AsNoTracking()
                     .Where(u => u.Username == username && u.Role == 1 && u.IsActive)
                     .Select(u => u.ShopId)
                     .FirstOrDefaultAsync();
+
+                if (currentShopId.HasValue)
+                {
+                    return currentShopId;
+                }
+            }
+
+            // Last fallback for legacy sessions with stale claims.
+            var shopIdClaim = User.FindFirst("ShopId")?.Value;
+            if (int.TryParse(shopIdClaim, out var claimShopId))
+            {
+                return claimShopId;
             }
 
             return null;

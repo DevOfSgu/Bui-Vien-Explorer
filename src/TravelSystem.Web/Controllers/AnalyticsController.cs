@@ -46,7 +46,7 @@ public class AnalyticsController : ControllerBase
             Latitude = 0,
             Longitude = 0,
             DwellTimeSeconds = 0,
-            CreatedAt = request.CreatedAt == default ? DateTime.UtcNow : request.CreatedAt,
+            CreatedAt = NormalizeToUtc(request.CreatedAt),
             ZoneId = null
 
         });
@@ -95,7 +95,7 @@ public class AnalyticsController : ControllerBase
             Latitude = request.Latitude,
             Longitude = request.Longitude,
             DwellTimeSeconds = Math.Max(0, request.DwellTimeSeconds),
-            CreatedAt = request.CreatedAt == default ? DateTime.UtcNow : request.CreatedAt
+            CreatedAt = NormalizeToUtc(request.CreatedAt)
         });
 
         await _db.SaveChangesAsync();
@@ -139,5 +139,20 @@ public class AnalyticsController : ControllerBase
 
         var lang = parts[1].ToLowerInvariant();
         return $"PlayNarration|{lang}";
+    }
+
+    private static DateTime NormalizeToUtc(DateTime dateTime)
+    {
+        if (dateTime == default)
+        {
+            return DateTime.UtcNow;
+        }
+
+        return dateTime.Kind switch
+        {
+            DateTimeKind.Utc => dateTime,
+            DateTimeKind.Local => dateTime.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(dateTime, DateTimeKind.Utc)
+        };
     }
 }

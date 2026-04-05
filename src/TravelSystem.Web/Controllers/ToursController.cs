@@ -12,37 +12,78 @@ public class ToursController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly HttpClient _httpClient;
+    private readonly ILogger<ToursController> _logger;
 
-    public ToursController(AppDbContext db, IHttpClientFactory httpClientFactory)
+    public ToursController(AppDbContext db, IHttpClientFactory httpClientFactory, ILogger<ToursController> logger)
     {
         _db = db;
         _httpClient = httpClientFactory.CreateClient();
+        _logger = logger;
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] string? lang = null)
     {
+        var language = NormalizeLanguage(lang);
+
         var tours = await _db.Tours
             .AsNoTracking()
-            .Include(t => t.TourZones)
             .OrderBy(t => t.Id)
             .Select(t => new
             {
                 t.Id,
-                t.Name,
-                t.Description,
+                LegacyName = t.Name,
+                LegacyDescription = t.Description,
+                RequestedTranslation = t.Translations
+                    .Where(tt => tt.Language == language)
+                    .Select(tt => new { tt.Name, tt.Description })
+                    .FirstOrDefault(),
+                VietnameseTranslation = t.Translations
+                    .Where(tt => tt.Language == "vi")
+                    .Select(tt => new { tt.Name, tt.Description })
+                    .FirstOrDefault(),
+                AnyTranslation = t.Translations
+                    .OrderBy(tt => tt.Id)
+                    .Select(tt => new { tt.Name, tt.Description })
+                    .FirstOrDefault(),
                 t.ImageUrl,
-                t.Duration,
-                StopsCount = t.TourZones.Count(tz => tz.Zone != null && tz.Zone.IsActive && !tz.Zone.IsHidden)
+                StoredDuration = t.Duration,
+                Stops = t.TourZones
+                    .Where(tz => tz.Zone != null && tz.Zone.IsActive && !tz.Zone.IsHidden)
+                    .OrderBy(tz => tz.OrderIndex)
+                    .Select(tz => new TourStopCoordinate
+                    {
+                        Latitude = tz.Zone != null ? tz.Zone.Latitude : 0,
+                        Longitude = tz.Zone != null ? tz.Zone.Longitude : 0
+                    })
+                    .ToList()
             })
             .ToListAsync();
 
-        return Ok(tours);
+        var response = tours.Select(t => new
+        {
+            t.Id,
+            Name = t.RequestedTranslation?.Name
+                ?? t.VietnameseTranslation?.Name
+                ?? t.AnyTranslation?.Name
+                ?? t.LegacyName,
+            Description = t.RequestedTranslation?.Description
+                ?? t.VietnameseTranslation?.Description
+                ?? t.AnyTranslation?.Description
+                ?? t.LegacyDescription,
+            t.ImageUrl,
+            Duration = EstimateTourDurationMinutes(t.Stops, t.StoredDuration),
+            StopsCount = t.Stops.Count
+        });
+
+        return Ok(response);
     }
 
     [HttpGet("{id:int}/stops")]
-    public async Task<IActionResult> GetStops(int id)
+    public async Task<IActionResult> GetStops(int id, [FromQuery] string? lang = null)
     {
+        var language = NormalizeLanguage(lang);
+
         var tourExists = await _db.Tours.AsNoTracking().AnyAsync(t => t.Id == id);
         if (!tourExists)
         {
@@ -58,7 +99,21 @@ public class ToursController : ControllerBase
                 tz.ZoneId,
                 tz.OrderIndex,
                 Name = tz.Zone != null ? tz.Zone.Name : string.Empty,
-                Description = tz.Zone != null ? tz.Zone.Description : string.Empty,
+                Description = tz.Zone == null
+                    ? string.Empty
+                    : tz.Zone.Translations
+                        .Where(t => t.Language == language)
+                        .Select(t => t.Description)
+                        .FirstOrDefault()
+                        ?? tz.Zone.Translations
+                            .Where(t => t.Language == "vi")
+                            .Select(t => t.Description)
+                            .FirstOrDefault()
+                        ?? tz.Zone.Translations
+                            .OrderBy(t => t.Id)
+                            .Select(t => t.Description)
+                            .FirstOrDefault()
+                        ?? tz.Zone.Description,
                 ImageUrl = tz.Zone != null ? tz.Zone.ImageUrl : null,
                 Latitude = tz.Zone != null ? tz.Zone.Latitude : 0,
                 Longitude = tz.Zone != null ? tz.Zone.Longitude : 0,
@@ -108,7 +163,18 @@ public class ToursController : ControllerBase
             s.IsMain,
             Address = s.ShopId.HasValue && shopAddressMap.TryGetValue(s.ShopId.Value, out var address) ? address : null,
             Hours = s.ShopId.HasValue && shopHoursMap.TryGetValue(s.ShopId.Value, out var hours) ? hours : null
-        });
+        }).ToList();
+
+        _logger.LogInformation("[TOUR_STOPS_DIAG] TourId={TourId}, Lang={Lang}, Stops={Count}", id, language, response.Count);
+        foreach (var stop in response.Take(10))
+        {
+            var preview = string.IsNullOrWhiteSpace(stop.Description)
+                ? "(empty)"
+                : (stop.Description.Length > 120 ? stop.Description[..120] + "..." : stop.Description);
+
+            _logger.LogInformation("[TOUR_STOPS_DIAG] ZoneId={ZoneId}, Idx={OrderIndex}, Name={Name}, Desc={Desc}",
+                stop.ZoneId, stop.OrderIndex, stop.Name, preview);
+        }
 
         return Ok(response);
     }
@@ -151,7 +217,85 @@ public class ToursController : ControllerBase
         return dateTime.ToString("h:mm tt", CultureInfo.InvariantCulture);
     }
 
+    private static int EstimateTourDurationMinutes(IReadOnlyList<TourStopCoordinate> stops, int fallbackDurationMinutes)
+    {
+        if (stops.Count == 0)
+        {
+            return fallbackDurationMinutes > 0 ? fallbackDurationMinutes : 10;
+        }
+
+        const double averageWalkingKmPerHour = 4.2d;
+        const double averageDwellMinutesPerStop = 7d;
+        const double transitionBufferMinutes = 4d;
+
+        double totalDistanceKm = 0d;
+        for (var i = 1; i < stops.Count; i++)
+        {
+            totalDistanceKm += CalculateDistanceKm(stops[i - 1], stops[i]);
+        }
+
+        var walkingMinutes = (totalDistanceKm / averageWalkingKmPerHour) * 60d;
+        var dwellMinutes = stops.Count * averageDwellMinutesPerStop;
+        var estimatedMinutes = walkingMinutes + dwellMinutes + transitionBufferMinutes;
+
+        if (estimatedMinutes <= 0)
+        {
+            estimatedMinutes = fallbackDurationMinutes > 0 ? fallbackDurationMinutes : 10;
+        }
+
+        // Round to nearest 5 minutes for a stable UI value.
+        var roundedMinutes = (int)Math.Ceiling(estimatedMinutes / 5d) * 5;
+        return Math.Max(10, roundedMinutes);
+    }
+
+    private static double CalculateDistanceKm(TourStopCoordinate from, TourStopCoordinate to)
+    {
+        const double earthRadiusKm = 6371d;
+
+        var lat1 = DegreesToRadians((double)from.Latitude);
+        var lon1 = DegreesToRadians((double)from.Longitude);
+        var lat2 = DegreesToRadians((double)to.Latitude);
+        var lon2 = DegreesToRadians((double)to.Longitude);
+
+        var dLat = lat2 - lat1;
+        var dLon = lon2 - lon1;
+
+        var a = Math.Pow(Math.Sin(dLat / 2), 2)
+            + Math.Cos(lat1) * Math.Cos(lat2) * Math.Pow(Math.Sin(dLon / 2), 2);
+        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+
+        return earthRadiusKm * c;
+    }
+
+    private static double DegreesToRadians(double degrees)
+    {
+        return degrees * (Math.PI / 180d);
+    }
+
+    private static string NormalizeLanguage(string? lang)
+    {
+        if (string.IsNullOrWhiteSpace(lang))
+        {
+            return "vi";
+        }
+
+        var normalized = lang.Trim().ToLowerInvariant();
+        var dashIndex = normalized.IndexOf('-');
+        if (dashIndex > 0)
+        {
+            normalized = normalized[..dashIndex];
+        }
+
+        return normalized.Length > 5 ? normalized[..5] : normalized;
+    }
+
     private sealed record ShopHourView(int ShopId, int DayOfWeek, TimeSpan OpenTime, TimeSpan CloseTime);
+    private sealed class TourStopCoordinate
+    {
+        public decimal Latitude { get; init; }
+        public decimal Longitude { get; init; }
+    }
+
     [HttpGet("{id:int}/route")]
     public async Task<IActionResult> GetRoute(int id)
     {

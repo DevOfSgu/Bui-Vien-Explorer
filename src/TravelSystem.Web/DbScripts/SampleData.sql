@@ -558,6 +558,14 @@ VALUES (
         NULL
     );
 
+-- Normalize zone ownership by shop name to avoid identity-offset mismatches.
+-- Some environments reseed Shops from 0, which can shift hard-coded ShopId values.
+UPDATE z
+SET z.ShopId = s.Id
+FROM Zones z
+JOIN Shops s ON s.Name = z.Name
+WHERE ISNULL(z.ShopId, -1) <> s.Id;
+
 -- ============================================================
 -- 5. Insert 20 Narrations
 -- ============================================================

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TravelSystem.Shared.Models;
 using TravelSystem.Web.Data;
+using TravelSystem.Web.Services;
 
 namespace TravelSystem.Web.Areas.Admin.Controllers
 {
@@ -12,11 +13,13 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
     {
         private readonly AppDbContext _db;
         private readonly IWebHostEnvironment _env;
+        private readonly IAudioTranslationService _translationService;
 
-        public ZonesController(AppDbContext db, IWebHostEnvironment env)
+        public ZonesController(AppDbContext db, IWebHostEnvironment env, IAudioTranslationService translationService)
         {
             _db = db;
             _env = env;
+            _translationService = translationService;
         }
 
         // GET: Admin/Zones
@@ -73,6 +76,10 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
 
                 _db.Zones.Add(zone);
                 await _db.SaveChangesAsync();
+
+                await UpsertZoneTranslationsAsync(zone.Id, zone.Description);
+                await _db.SaveChangesAsync();
+
                 return RedirectToAction(nameof(Index));
             }
 
@@ -117,6 +124,8 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
 
             if (ModelState.IsValid)
             {
+                var shouldRefreshTranslations = !string.Equals(dbZone.Description, zone.Description, StringComparison.Ordinal);
+
                 // Handle Image Upload
                 if (imageFile != null)
                 {
@@ -140,6 +149,13 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 dbZone.IsMain = zone.IsMain;
                 dbZone.UpdatedAt = DateTime.UtcNow;
                 await _db.SaveChangesAsync();
+
+                if (shouldRefreshTranslations)
+                {
+                    await UpsertZoneTranslationsAsync(dbZone.Id, dbZone.Description);
+                    await _db.SaveChangesAsync();
+                }
+
                 return RedirectToAction(nameof(Index));
             }
 
@@ -227,6 +243,63 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 await _db.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
+        }
+
+        private async Task UpsertZoneTranslationsAsync(int zoneId, string? vietnameseDescription)
+        {
+            var sourceText = (vietnameseDescription ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(sourceText))
+            {
+                return;
+            }
+
+            var targetLanguages = new[] { "vi", "en", "ja", "ko" };
+            foreach (var language in targetLanguages)
+            {
+                var translatedText = language == "vi"
+                    ? sourceText
+                    : await TranslateWithFallbackAsync(sourceText, language);
+
+                var existingRecords = await _db.ZoneTranslations
+                    .Where(t => t.ZoneId == zoneId && t.Language == language)
+                    .OrderByDescending(t => t.UpdatedAt)
+                    .ThenByDescending(t => t.Id)
+                    .ToListAsync();
+
+                ZoneTranslation record;
+                if (existingRecords.Count == 0)
+                {
+                    record = new ZoneTranslation
+                    {
+                        ZoneId = zoneId,
+                        Language = language
+                    };
+                    _db.ZoneTranslations.Add(record);
+                }
+                else
+                {
+                    record = existingRecords[0];
+                    if (existingRecords.Count > 1)
+                    {
+                        _db.ZoneTranslations.RemoveRange(existingRecords.Skip(1));
+                    }
+                }
+
+                record.Description = translatedText;
+                record.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+
+        private async Task<string> TranslateWithFallbackAsync(string sourceText, string targetLanguage)
+        {
+            try
+            {
+                return await _translationService.TranslateAsync(sourceText, targetLanguage);
+            }
+            catch
+            {
+                return sourceText;
+            }
         }
     }
 }
