@@ -31,7 +31,6 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     private DateTime _lastLocationPingAtUtc = DateTime.MinValue;
     private int? _autoSelectCandidateZoneId;
     private DateTime _autoSelectCandidateSinceUtc = DateTime.MinValue;
-    private DateTime _autoSelectSuppressedUntilUtc = DateTime.MinValue;
     private DateTime _lastAutoSelectTriggeredAtUtc = DateTime.MinValue;
     private int? _lastAutoSelectTriggeredZoneId;
     private int? _currentAutoInsideZoneId;
@@ -64,13 +63,13 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     private const double GeofenceExitHysteresisFactor = 1.25;
     private const double MinPracticalGeofenceMeters = 28;
     private const double MaxGpsAccuracyCompensationMeters = 35;
-    private const double MaxEntryAccuracyCompensationMeters = 4;
-    private const double EntryAccuracyCompensationEligibleMeters = 12;
+    private const double MaxEntryAccuracyCompensationMeters = 8;
+    private const double EntryAccuracyCompensationEligibleMeters = 20;
     private const double AutoSwitchRequireDistanceMeters = 32;
     private const double FastAutoSelectDistanceMeters = 12;
     private const double FastAutoSelectMaxAccuracyMeters = 12;
     private const int CurrentZoneExitConfirmSamples = 2;
-    private const int CandidateEnterConfirmSamples = 2;
+    private const int CandidateEnterConfirmSamples = 1;
     private const double MapRefreshMoveThresholdMeters = 2.5;
     private const double GpsJitterIgnoreMeters = 2.2;
     private const double GpsSmoothingThresholdMeters = 8;
@@ -86,6 +85,10 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     private const double StationaryEnterMaxAccuracyMeters = 25;
     private const double RawPoiAssistMaxAccuracyMeters = 30;
     private const double FallbackAutoSelectMaxAccuracyMeters = 20;
+    private const double RouteSnapMaxDistanceMeters = 40;
+    // Bắt buộc snap tọa độ vào tuyến đường bất chấp GPS báo accuracy tốt thế nào,
+    // vỉ môi trường phố đi bộ Bùi Viện (chữ U) làm GPS bị phản xạ (ảo 1.3m accuracy nhưng vẫn trôi 30m).
+    private const double RouteSnapSkipWhenAccuracyBetterThanMeters = 0.0;
     private const double BuiVienLatitude = 10.764017;
     private const double BuiVienLongitude = 106.692527;
     private const double RemoteExploreHintThresholdMeters = 1000;
@@ -95,12 +98,11 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     private static readonly TimeSpan StationaryRelockCooldown = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan LocationPingInterval = TimeSpan.FromSeconds(60);
     private static readonly TimeSpan SimulationLocationPingInterval = TimeSpan.FromSeconds(8);
-    private static readonly TimeSpan AutoSelectDebounce = TimeSpan.FromSeconds(1.2);
-    private static readonly TimeSpan AutoSelectSwitchDebounce = TimeSpan.FromSeconds(1.8);
-    private static readonly TimeSpan FastAutoSelectDebounce = TimeSpan.FromSeconds(1.2);
+    private static readonly TimeSpan AutoSelectDebounce = TimeSpan.FromSeconds(0.35);
+    private static readonly TimeSpan AutoSelectSwitchDebounce = TimeSpan.FromSeconds(0.7);
+    private static readonly TimeSpan FastAutoSelectDebounce = TimeSpan.FromSeconds(0.35);
     private static readonly TimeSpan AutoSelectCooldown = TimeSpan.FromSeconds(2.5);
     private static readonly TimeSpan FallbackAutoSelectMaxAge = TimeSpan.FromSeconds(3);
-    private static readonly TimeSpan AutoSelectSuppressAfterManualSelection = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan StreamFreshWindow = TimeSpan.FromSeconds(2.6);
     private static readonly TimeSpan PollFallbackInterval = TimeSpan.FromSeconds(4);
     private static readonly TimeSpan SimulationStepInterval = TimeSpan.FromMilliseconds(700);
@@ -196,7 +198,6 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     {
         if (stop == null) return;
 
-        // Select the stop locally first for UI feedback (SILENT = No Audio)
         SelectStop(stop, triggerEvent: false);
 
         var parameters = new Dictionary<string, object>
@@ -223,10 +224,6 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         await Shell.Current.GoToAsync(nameof(Views.ZoneDetailPage), parameters);
     }
 
-    /// <summary>
-    /// Gọi sớm khi app khởi động (background) để cache kết quả quyền GPS
-    /// trước khi user mở TourDetailPage.
-    /// </summary>
     public async Task WarmUpLocationPermissionAsync()
     {
         try
@@ -254,7 +251,6 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             TourName = Uri.UnescapeDataString(tourNameObj?.ToString() ?? string.Empty);
         }
 
-        // Nếu chuyển sang tour khác → reset toàn bộ state liên quan tour cũ
         if (newTourId != TourId || PoiStops.Count == 0)
         {
             TourId = newTourId;
@@ -270,7 +266,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             _remoteExploreHintShownInCurrentFarSession = false;
             RemoteExploreHintText = string.Empty;
             IsRemoteExploreHintVisible = false;
-            IsLoading = false; // reset để LoadData không bị block bởi IsLoading guard
+            IsLoading = false;
             _locationCts?.Cancel();
             _locationCts?.Dispose();
             _locationCts = null;
@@ -291,7 +287,6 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         if (IsLoading) return;
 
         await _loadLock.WaitAsync();
-        var loadingStartedAt = DateTime.UtcNow;
         var sw = Stopwatch.StartNew();
 
         try
@@ -310,14 +305,12 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             try
             {
                 var guestId = await guestIdTask;
-                // 1. Lấy từ API (Server)
                 var remoteFavorites = await _apiService.GetFavoritesAsync(guestId);
                 if (remoteFavorites != null)
                 {
                     foreach (var f in remoteFavorites) favoriteZoneIds.Add(f.ZoneId);
                 }
 
-                // 2. Lấy từ DB cục bộ (Bao gồm các mục chưa sync hoặc local-only như Cổng Chào)
                 var localFavorites = await _dbService.GetLocalFavoritesAsync(guestId);
                 if (localFavorites != null)
                 {
@@ -326,10 +319,10 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
                         if (f.IsDeleted == 0)
                             favoriteZoneIds.Add(f.ZoneId);
                         else
-                            favoriteZoneIds.Remove(f.ZoneId); // Đã bị xóa local
+                            favoriteZoneIds.Remove(f.ZoneId);
                     }
                 }
-                
+
                 Trace($"Favorites resolved: Total={favoriteZoneIds.Count}");
             }
             catch (Exception ex)
@@ -360,15 +353,6 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
                 }
             }
 
-            /* 
-            // Removed default selection as per user request
-            if (PoiStops.Count > 0)
-            {
-                PoiStops[0].IsSelected = true;
-                Trace($"Initial selected ZoneId={PoiStops[0].ZoneId}");
-            }
-            */
-
             MapDataChanged?.Invoke(this, EventArgs.Empty);
             Trace("MapDataChanged invoked after loading stops");
 
@@ -379,12 +363,10 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
 
             if (_isForegroundTracking)
             {
-                // Keep continuous tracking alive after data reload.
                 _ = Task.Run(() => ForegroundTrackingLoopAsync(token));
             }
             else
             {
-                // One-shot location refresh when foreground tracking is off.
                 _ = Task.Run(() => UpdateUserLocationAndDistance(token, forceMapRefresh: true));
             }
         }
@@ -405,7 +387,6 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         _locationCts?.Cancel();
         _locationCts?.Dispose();
         _locationCts = new CancellationTokenSource();
-        // Chạy trên background thread để tránh block main thread khi xin quyền GPS
         _ = Task.Run(() => ForegroundTrackingLoopAsync(_locationCts.Token));
         _ = Task.Run(() => EnsureLocationListeningAsync(_locationCts.Token));
     }
@@ -498,6 +479,13 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         var location = e.Location;
         if (location == null) return;
 
+        // [LOG] Ghi nhận từng update từ stream để phát hiện stream drop
+        var acc = GetLocationAccuracyMeters(location);
+        Trace(
+            $"STREAM_UPDATE lat={location.Latitude:F6} lon={location.Longitude:F6} " +
+            $"acc={(acc == double.MaxValue ? "unknown" : $"{acc:0.0}m")} " +
+            $"speed={location.Speed?.ToString("0.00") ?? "n/a"}m/s");
+
         _latestStreamLocation = location;
         _latestStreamLocationAtUtc = DateTime.UtcNow;
     }
@@ -588,7 +576,6 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         _currentAutoInsideZoneId = stop.ZoneId;
         ResetAutoSelectCandidate();
 
-        // In simulation mode, emit EnterZone every pass so heatmap has enough signal density.
         _ = _apiService.TrackEnterZoneAsync(stop.ZoneId, stop.Latitude, stop.Longitude);
     }
 
@@ -609,12 +596,10 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             bool success = false;
             var before = stop.IsFavorite;
 
-            // Offline-first: enqueue local op when no network
             if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
             {
                 if (stop.IsFavorite)
                 {
-                    // remove locally
                     await _dbService.MarkLocalFavoriteDeletedAsync(guestId, stop.ZoneId);
                     await _dbService.InsertPendingOpAsync(new TravelSystem.Shared.Models.PendingFavoriteOp
                     {
@@ -628,7 +613,6 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
                 }
                 else
                 {
-                    // add locally
                     await _dbService.InsertOrUpdateLocalFavoriteAsync(new TravelSystem.Shared.Models.LocalFavorite
                     {
                         GuestId = guestId,
@@ -674,14 +658,12 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
                     }
                 }
 
-                // trigger background sync to reconcile any pending ops
                 _ = Task.Run(() => _apiService.SyncFavoritesIfOnlineAsync());
             }
 
             if (!success)
             {
                 Trace($"ToggleFavorite failed for ZoneId={stop.ZoneId} (perhaps it's a marker only)");
-                // Optimistic: Even if API fails (e.g. invalid server ID), allow local favorite for UI feedback
                 stop.IsFavorite = !before;
                 await _dbService.InsertOrUpdateLocalFavoriteAsync(new TravelSystem.Shared.Models.LocalFavorite
                 {
@@ -715,7 +697,6 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             poi.IsSelected = poi.ZoneId == stop.ZoneId;
         }
 
-        // Đẩy zone được chọn lên đầu danh sách
         var currentIndex = PoiStops.IndexOf(stop);
         if (currentIndex > 0)
         {
@@ -723,7 +704,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         }
 
         MapDataChanged?.Invoke(this, EventArgs.Empty);
-        
+
         if (triggerEvent)
         {
             StopSelected?.Invoke(this, stop);
@@ -735,14 +716,12 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
 
         if (!fromAutoSelect)
         {
-            // Keep manual selection sticky to avoid immediate auto-switching when nearby POI overlap.
-            _autoSelectSuppressedUntilUtc = DateTime.UtcNow + AutoSelectSuppressAfterManualSelection;
             _currentAutoInsideZoneId = stop.ZoneId;
             _currentZoneOutsideSamples = 0;
             _lastAutoSelectTriggeredAtUtc = DateTime.UtcNow;
             _lastAutoSelectTriggeredZoneId = stop.ZoneId;
             ResetAutoSelectCandidate();
-            Trace($"MANUAL_SELECT zone={stop.ZoneId} suppressAuto={AutoSelectSuppressAfterManualSelection.TotalSeconds:0}s");
+            Trace($"MANUAL_SELECT zone={stop.ZoneId} suppressAuto=0s");
         }
     }
 
@@ -755,6 +734,9 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         }
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // GPS CYCLE — FIX-2: Đơn giản hoá poll, bỏ double-attempt High→Medium
+    // ─────────────────────────────────────────────────────────────────────────
     private async Task UpdateUserLocationAndDistance(CancellationToken cancellationToken, bool forceMapRefresh = false)
     {
         var cycleSw = Stopwatch.StartNew();
@@ -768,9 +750,6 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
                 return;
             }
 
-            // Hybrid strategy:
-            // 1) Prefer latest stream location (low latency, stable cadence)
-            // 2) Fallback to polling only when stream is stale/unavailable
             var gpsFetchSw = Stopwatch.StartNew();
             var nowUtc = DateTime.UtcNow;
             var streamLocation = _latestStreamLocation;
@@ -780,26 +759,49 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
 
             Location? freshLocation = null;
             var source = "stream";
+
             if (streamLocation != null && streamAge <= StreamFreshWindow)
             {
+                // Stream còn tươi — dùng ngay, không poll
                 freshLocation = streamLocation;
+                Trace($"GPS_SOURCE stream age={streamAge.TotalSeconds:0.0}s");
             }
             else if (_lastPollingAttemptAtUtc == DateTime.MinValue || nowUtc - _lastPollingAttemptAtUtc >= PollFallbackInterval)
             {
-                _lastPollingAttemptAtUtc = nowUtc;
+                // [FIX-2] Chỉ dùng 1 lần poll với accuracy phù hợp:
+                //   - Khi stream đang listen nhưng stale → Medium đủ dùng, timeout ngắn
+                //   - Khi stream không listen (cold start) → High accuracy, timeout dài hơn
                 source = "poll";
-                var highAccuracyFix = await Geolocation.Default.GetLocationAsync(
-                    new GeolocationRequest(GeolocationAccuracy.High, TimeSpan.FromSeconds(1.5)),
+                _lastPollingAttemptAtUtc = nowUtc;
+
+                var (accuracy, timeout) = _isLocationListening
+                    ? (GeolocationAccuracy.Medium, TimeSpan.FromSeconds(1.0))   // stream backup
+                    : (GeolocationAccuracy.High,   TimeSpan.FromSeconds(2.0));  // cold start
+
+                Trace($"GPS_POLL attempt accuracy={accuracy} timeout={timeout.TotalSeconds:0.0}s streamListening={_isLocationListening} streamAge={(streamAge == TimeSpan.MaxValue ? "never" : $"{streamAge.TotalSeconds:0.0}s")}");
+
+                freshLocation = await Geolocation.Default.GetLocationAsync(
+                    new GeolocationRequest(accuracy, timeout),
                     cancellationToken);
-                freshLocation = highAccuracyFix
-                    ?? await Geolocation.Default.GetLocationAsync(
-                        new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(0.9)),
-                        cancellationToken);
+
+                // [LOG] Kết quả poll để phát hiện poll fail pattern
+                if (freshLocation == null)
+                {
+                    Trace($"GPS_POLL result=null — sẽ dùng lastKnown/cache fetchMs={gpsFetchSw.ElapsedMilliseconds}");
+                }
+                else
+                {
+                    var pollAcc = GetLocationAccuracyMeters(freshLocation);
+                    Trace($"GPS_POLL result=ok acc={(pollAcc == double.MaxValue ? "unknown" : $"{pollAcc:0.0}m")} fetchMs={gpsFetchSw.ElapsedMilliseconds}");
+                }
             }
             else
             {
                 source = "stream-stale-no-poll";
+                var timeSincePoll = nowUtc - _lastPollingAttemptAtUtc;
+                Trace($"GPS_SOURCE stream-stale-no-poll streamAge={streamAge.TotalSeconds:0.0}s nextPollIn={(PollFallbackInterval - timeSincePoll).TotalSeconds:0.0}s");
             }
+
             var gpsFetchMs = gpsFetchSw.ElapsedMilliseconds;
 
             var rawLocation = freshLocation
@@ -817,16 +819,27 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             {
                 source = "fallback-lastKnown/cache";
             }
+
+            // [FIX-2] Phân biệt rõ accuracy=unknown (null) khỏi accuracy=tốt
             var rawAccuracy = GetLocationAccuracyMeters(rawLocation);
+            var rawAccuracyIsUnknown = rawAccuracy == double.MaxValue;
+            var rawAccuracyDisplay = rawAccuracyIsUnknown ? "unknown" : $"{rawAccuracy:0.0}m";
+
             var rawAgeSeconds = rawLocation.Timestamp == default
                 ? -1
                 : (DateTimeOffset.UtcNow - rawLocation.Timestamp).TotalSeconds;
+
+            // [LOG] Cảnh báo khi dùng location có accuracy unknown — dễ phát hiện cache stale
+            if (rawAccuracyIsUnknown)
+            {
+                Trace($"GPS_WARN accuracy=unknown source={source} rawAge={(rawAgeSeconds < 0 ? "n/a" : $"{rawAgeSeconds:0.0}s")} — location này thiếu metadata accuracy");
+            }
 
             if (!hasFreshFixForAutoSelect
                 && freshLocation == null
                 && rawAgeSeconds >= 0
                 && rawAgeSeconds <= FallbackAutoSelectMaxAge.TotalSeconds
-                && rawAccuracy > 0
+                && !rawAccuracyIsUnknown              // [FIX-2] Không dùng location không có accuracy cho fallback auto-select
                 && rawAccuracy <= FallbackAutoSelectMaxAccuracyMeters)
             {
                 hasFreshFixForAutoSelect = true;
@@ -843,17 +856,31 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             var stabilized = StabilizeLocation(rawLocation);
             var displayLocation = ApplyStationaryLock(stabilized, rawLocation);
             var rawToDisplayMeters = Location.CalculateDistance(rawLocation, displayLocation, DistanceUnits.Kilometers) * 1000d;
+
             Trace(
                 $"GPS source={source} raw=({rawLocation.Latitude:F6},{rawLocation.Longitude:F6}) " +
                 $"display=({displayLocation.Latitude:F6},{displayLocation.Longitude:F6}) " +
-                $"rawAcc={rawAccuracy:0.0}m rawAge={(rawAgeSeconds < 0 ? "n/a" : $"{rawAgeSeconds:0.0}s")} " +
+                $"rawAcc={rawAccuracyDisplay} rawAge={(rawAgeSeconds < 0 ? "n/a" : $"{rawAgeSeconds:0.0}s")} " +
                 $"freshForAuto={hasFreshFixForAutoSelect} fetchMs={gpsFetchMs} " +
                 $"rawToDisplay={rawToDisplayMeters:0.0}m");
-            ApplyLocationAndRefresh(displayLocation, rawLocation, forceMapRefresh, allowAutoSelect: hasFreshFixForAutoSelect);
+
+            // [FIX-1] Truyền rawLocation vào SnapLocationToTourPath để quyết định có snap hay không
+            var routeSnappedDisplayLocation = SnapLocationToTourPath(displayLocation, rawLocation);
+            if (!ReferenceEquals(routeSnappedDisplayLocation, displayLocation))
+            {
+                var snapShiftMeters = Location.CalculateDistance(displayLocation, routeSnappedDisplayLocation, DistanceUnits.Kilometers) * 1000d;
+                Trace($"GPS_ROUTE_SNAP shift={snapShiftMeters:0.0}m from=({displayLocation.Latitude:F6},{displayLocation.Longitude:F6}) to=({routeSnappedDisplayLocation.Latitude:F6},{routeSnappedDisplayLocation.Longitude:F6})");
+            }
+
+            ApplyLocationAndRefresh(
+                routeSnappedDisplayLocation,
+                rawLocation,
+                forceMapRefresh,
+                allowAutoSelect: hasFreshFixForAutoSelect,
+                autoSelectLocation: routeSnappedDisplayLocation);
         }
         catch (Exception ex)
         {
-            // Keep default "--" if location unavailable.
             Trace($"GPS cycle error: {ex.Message}");
         }
         finally
@@ -897,12 +924,6 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     {
         var nowUtc = DateTime.UtcNow;
 
-        if (nowUtc < _autoSelectSuppressedUntilUtc)
-        {
-            Trace($"AUTO_SELECT skip reason=suppressed remain={(int)(_autoSelectSuppressedUntilUtc - nowUtc).TotalMilliseconds}ms");
-            return false;
-        }
-
         if (PoiStops.Count == 0)
         {
             _currentAutoInsideZoneId = null;
@@ -923,6 +944,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
                     currentStop.Radius > 0 ? currentStop.Radius : GeofenceTriggerMeters,
                     MinPracticalGeofenceMeters);
                 var exitRadius = (currentTriggerRadius * GeofenceExitHysteresisFactor) + userAccuracyCompensation;
+
                 if (currentDistanceMeters <= exitRadius)
                 {
                     _currentZoneOutsideSamples = 0;
@@ -972,8 +994,6 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         var entryAccuracyCompensationMeters = GetEntryAccuracyCompensationMeters(userLocation, rawLocation);
         var adjustedDistanceMeters = Math.Max(0d, nearestDistanceMeters - entryAccuracyCompensationMeters);
 
-        // Use the stop's radius if available, otherwise fallback to GeofenceTriggerMeters (80m).
-        // Keep a practical minimum radius to tolerate real-world GPS drift.
         double triggerRadius = Math.Max(
             nearestStop.Radius > 0 ? nearestStop.Radius : GeofenceTriggerMeters,
             MinPracticalGeofenceMeters);
@@ -1001,14 +1021,22 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         var requiredDebounce = isSwitchingBetweenStops ? AutoSelectSwitchDebounce : AutoSelectDebounce;
         var requiredInsideSamples = CandidateEnterConfirmSamples;
 
-        // Fast path: allow quicker capture when user is very close to POI and GPS quality is good.
         var displayAccuracy = GetLocationAccuracyMeters(userLocation);
-        var rawAccuracy = rawLocation == null ? 0 : GetLocationAccuracyMeters(rawLocation);
-        var bestAccuracy = displayAccuracy > 0 && rawAccuracy > 0
-            ? Math.Min(displayAccuracy, rawAccuracy)
-            : Math.Max(displayAccuracy, rawAccuracy);
+        var rawAcc = rawLocation == null ? double.MaxValue : GetLocationAccuracyMeters(rawLocation);
+
+        // [FIX-2] Tính bestAccuracy: bỏ qua giá trị unknown (double.MaxValue)
+        double bestAccuracy;
+        if (displayAccuracy == double.MaxValue && rawAcc == double.MaxValue)
+            bestAccuracy = double.MaxValue;
+        else if (displayAccuracy == double.MaxValue)
+            bestAccuracy = rawAcc;
+        else if (rawAcc == double.MaxValue)
+            bestAccuracy = displayAccuracy;
+        else
+            bestAccuracy = Math.Min(displayAccuracy, rawAcc);
+
         if (adjustedDistanceMeters <= FastAutoSelectDistanceMeters
-            && bestAccuracy > 0
+            && bestAccuracy != double.MaxValue
             && bestAccuracy <= FastAutoSelectMaxAccuracyMeters)
         {
             requiredDebounce = requiredDebounce <= FastAutoSelectDebounce
@@ -1073,7 +1101,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         ResetAutoSelectCandidate();
         Trace(
             $"AUTO_SELECT TRIGGERED zone={nearestStop.ZoneId} dist={adjustedDistanceMeters:0.0}m " +
-            $"radius={triggerRadius:0.0}m");
+            $"radius={triggerRadius:0.0}m acc={(bestAccuracy == double.MaxValue ? "unknown" : $"{bestAccuracy:0.0}m")}");
 
         if (_trackedEnterZones.Add(nearestStop.ZoneId))
         {
@@ -1132,6 +1160,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
                 || rawMovedFromAnchorMeters >= StationaryReleaseRawMoveMeters
                 || (speed > 0 && speed >= StationaryReleaseSpeedMetersPerSecond))
             {
+                Trace($"STATIONARY_LOCK released movedFromAnchor={movedFromAnchorMeters:0.0}m rawMoved={rawMovedFromAnchorMeters:0.0}m speed={speed:0.00}m/s");
                 ResetStationaryLock();
                 _stationaryLockSuppressedUntilUtc = nowUtc + StationaryRelockCooldown;
                 return stabilizedLocation;
@@ -1147,19 +1176,23 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
 
         var speedForEnter = rawLocation.Speed.GetValueOrDefault();
         var accuracyForEnter = GetLocationAccuracyMeters(rawLocation);
+        var accuracyForEnterOk = accuracyForEnter != double.MaxValue && accuracyForEnter <= StationaryEnterMaxAccuracyMeters;
+
         if (movedFromPreviousMeters <= StationaryEnterMoveMeters)
         {
             if ((speedForEnter <= 0 || speedForEnter <= StationaryEnterMaxSpeedMetersPerSecond)
-                && (accuracyForEnter <= 0 || accuracyForEnter <= StationaryEnterMaxAccuracyMeters))
+                && (accuracyForEnter == double.MaxValue || accuracyForEnterOk)) // unknown accuracy vẫn cho phép enter stationary
             {
                 if (_stationaryCandidateSinceUtc == DateTime.MinValue)
                 {
                     _stationaryCandidateSinceUtc = nowUtc;
+                    Trace($"STATIONARY_CANDIDATE started speed={speedForEnter:0.00}m/s acc={(accuracyForEnter == double.MaxValue ? "unknown" : $"{accuracyForEnter:0.0}m")}");
                 }
                 else if (nowUtc - _stationaryCandidateSinceUtc >= StationaryLockDebounce)
                 {
                     _isStationaryLocked = true;
                     _stationaryAnchorLocation = _cachedUserLocation;
+                    Trace($"STATIONARY_LOCK entered anchor=({_stationaryAnchorLocation.Latitude:F6},{_stationaryAnchorLocation.Longitude:F6})");
                     return _stationaryAnchorLocation;
                 }
             }
@@ -1192,16 +1225,11 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
 
     private static bool IsRawPoiAssistUsable(Location? rawLocation)
     {
-        if (rawLocation == null)
-        {
-            return false;
-        }
+        if (rawLocation == null) return false;
 
         var accuracy = GetLocationAccuracyMeters(rawLocation);
-        if (accuracy <= 0)
-        {
-            return false;
-        }
+        // [FIX-2] Bỏ qua location không có accuracy metadata
+        if (accuracy == double.MaxValue) return false;
 
         return accuracy <= RawPoiAssistMaxAccuracyMeters;
     }
@@ -1222,13 +1250,14 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
 
         var movedMeters = Location.CalculateDistance(_cachedUserLocation, rawLocation, DistanceUnits.Kilometers) * 1000d;
         var rawAccuracyMeters = GetLocationAccuracyMeters(rawLocation);
-        if (rawAccuracyMeters > MaxAcceptableGpsAccuracyMeters && movedMeters < PoorAccuracyRequireMoveMeters)
+
+        // [FIX-2] Nếu accuracy unknown thì không dùng để lọc nhiễu — pass through
+        if (rawAccuracyMeters != double.MaxValue && rawAccuracyMeters > MaxAcceptableGpsAccuracyMeters && movedMeters < PoorAccuracyRequireMoveMeters)
         {
-            // Bỏ fix quá nhiễu khi người dùng gần như chưa di chuyển.
             return _cachedUserLocation;
         }
 
-        if (rawAccuracyMeters > 0 && rawAccuracyMeters <= GoodAccuracySkipSmoothingMeters && movedMeters >= GpsSmoothingThresholdMeters)
+        if (rawAccuracyMeters != double.MaxValue && rawAccuracyMeters <= GoodAccuracySkipSmoothingMeters && movedMeters >= GpsSmoothingThresholdMeters)
         {
             return rawLocation;
         }
@@ -1261,10 +1290,8 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     private static double GetAccuracyCompensationMeters(Location location)
     {
         var accuracy = GetLocationAccuracyMeters(location);
-        if (accuracy <= 0)
-        {
-            return 0;
-        }
+        // [FIX-2] Unknown accuracy → không bù
+        if (accuracy == double.MaxValue) return 0;
 
         return Math.Min(accuracy, MaxGpsAccuracyCompensationMeters);
     }
@@ -1272,33 +1299,141 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     private static double GetEntryAccuracyCompensationMeters(Location displayLocation, Location? rawLocation)
     {
         var displayAcc = GetLocationAccuracyMeters(displayLocation);
-        var rawAcc = rawLocation == null ? 0 : GetLocationAccuracyMeters(rawLocation);
+        var rawAcc = rawLocation == null ? double.MaxValue : GetLocationAccuracyMeters(rawLocation);
 
-        var bestAcc = displayAcc > 0 && rawAcc > 0
-            ? Math.Min(displayAcc, rawAcc)
-            : Math.Max(displayAcc, rawAcc);
+        // [FIX-2] Chỉ tính bù khi có accuracy thực sự
+        double bestAcc;
+        if (displayAcc == double.MaxValue && rawAcc == double.MaxValue)
+            return 0; // cả hai đều unknown → không bù
+        else if (displayAcc == double.MaxValue)
+            bestAcc = rawAcc;
+        else if (rawAcc == double.MaxValue)
+            bestAcc = displayAcc;
+        else
+            bestAcc = Math.Min(displayAcc, rawAcc);
 
-        if (bestAcc <= 0 || bestAcc > EntryAccuracyCompensationEligibleMeters)
+        if (bestAcc > EntryAccuracyCompensationEligibleMeters)
         {
             return 0;
         }
 
-        // Entry compensation chỉ nhỏ để tránh false-positive lúc còn ở ngoài zone.
         return Math.Min(bestAcc * 0.35d, MaxEntryAccuracyCompensationMeters);
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // [FIX-2] GetLocationAccuracyMeters: trả về double.MaxValue khi không có
+    // accuracy metadata thay vì 0, để phân biệt "unknown" khỏi "rất tốt".
+    //
+    // Tất cả caller cần kiểm tra:  accuracy == double.MaxValue  → unknown
+    // Thay vì kiểm tra cũ:         accuracy <= 0               → unknown
+    // ─────────────────────────────────────────────────────────────────────────
     private static double GetLocationAccuracyMeters(Location location)
     {
         var accuracy = location.Accuracy;
         if (!accuracy.HasValue || accuracy.Value <= 0)
-        {
-            return 0;
-        }
+            return double.MaxValue; // unknown — không có metadata
 
         return accuracy.Value;
     }
 
-    private void ApplyLocationAndRefresh(Location location, Location? rawLocationForPoi, bool forceMapRefresh, bool allowAutoSelect)
+    // ─────────────────────────────────────────────────────────────────────────
+    // [FIX-1] SnapLocationToTourPath: Thêm tham số rawLocation để kiểm tra
+    // accuracy trước khi snap. Khi GPS đã chính xác hơn RouteSnapMaxDistanceMeters
+    // thì snap sẽ inject thêm sai số — bỏ qua hoàn toàn.
+    // ─────────────────────────────────────────────────────────────────────────
+    private Location SnapLocationToTourPath(Location location, Location? rawLocation = null)
+    {
+        if (PoiStops.Count < 2)
+        {
+            return location;
+        }
+
+        // [FIX-1] Bỏ qua snap khi GPS đã chính xác hơn ngưỡng snap
+        // Lý do: snap có thể gây sai lệch tới RouteSnapMaxDistanceMeters,
+        // nếu rawAccuracy < ngưỡng này thì snap làm tệ hơn thay vì tốt hơn.
+        var checkLocation = rawLocation ?? location;
+        var bestAccuracy = GetLocationAccuracyMeters(checkLocation);
+        if (bestAccuracy != double.MaxValue && bestAccuracy <= RouteSnapSkipWhenAccuracyBetterThanMeters)
+        {
+            Trace($"GPS_ROUTE_SNAP skip reason=accuracy-good acc={bestAccuracy:0.0}m threshold={RouteSnapSkipWhenAccuracyBetterThanMeters:0.0}m");
+            return location;
+        }
+
+        var orderedStops = PoiStops
+            .OrderBy(s => s.OrderIndex)
+            .ToList();
+
+        var originLatRad = location.Latitude * Math.PI / 180d;
+        var metersPerDegLat = 111_320d;
+        var metersPerDegLon = 111_320d * Math.Cos(originLatRad);
+        if (metersPerDegLon <= 0.000001d)
+        {
+            return location;
+        }
+
+        var px = location.Longitude * metersPerDegLon;
+        var py = location.Latitude * metersPerDegLat;
+
+        var bestDistSquared = double.MaxValue;
+        double bestProjX = px;
+        double bestProjY = py;
+        var foundProjection = false;
+
+        for (var i = 0; i < orderedStops.Count - 1; i++)
+        {
+            var a = orderedStops[i];
+            var b = orderedStops[i + 1];
+
+            var ax = a.Longitude * metersPerDegLon;
+            var ay = a.Latitude * metersPerDegLat;
+            var bx = b.Longitude * metersPerDegLon;
+            var by = b.Latitude * metersPerDegLat;
+
+            var vx = bx - ax;
+            var vy = by - ay;
+            var lenSquared = (vx * vx) + (vy * vy);
+            if (lenSquared <= 0.0001d)
+            {
+                continue;
+            }
+
+            var t = ((px - ax) * vx + (py - ay) * vy) / lenSquared;
+            if (t < 0d) t = 0d;
+            if (t > 1d) t = 1d;
+
+            var projX = ax + (t * vx);
+            var projY = ay + (t * vy);
+            var dx = px - projX;
+            var dy = py - projY;
+            var distSquared = (dx * dx) + (dy * dy);
+
+            if (distSquared < bestDistSquared)
+            {
+                bestDistSquared = distSquared;
+                bestProjX = projX;
+                bestProjY = projY;
+                foundProjection = true;
+            }
+        }
+
+        if (!foundProjection)
+        {
+            return location;
+        }
+
+        var bestDistMeters = Math.Sqrt(bestDistSquared);
+        if (bestDistMeters > RouteSnapMaxDistanceMeters)
+        {
+            Trace($"GPS_ROUTE_SNAP skip reason=too-far-from-path dist={bestDistMeters:0.0}m maxSnap={RouteSnapMaxDistanceMeters:0.0}m");
+            return location;
+        }
+
+        var snappedLat = bestProjY / metersPerDegLat;
+        var snappedLon = bestProjX / metersPerDegLon;
+        return new Location(snappedLat, snappedLon);
+    }
+
+    private void ApplyLocationAndRefresh(Location location, Location? rawLocationForPoi, bool forceMapRefresh, bool allowAutoSelect, Location? autoSelectLocation = null)
     {
         var nowUtc = DateTime.UtcNow;
         var applySeq = Interlocked.Increment(ref _locationApplySeq);
@@ -1329,13 +1464,16 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
 
         UpdateRemoteExploreHint(location);
 
-        var selectionChanged = allowAutoSelect && TryAutoSelectNearestStop(location, rawLocationForPoi);
+        var autoSelectReferenceLocation = autoSelectLocation ?? location;
+        var selectionChanged = allowAutoSelect && TryAutoSelectNearestStop(autoSelectReferenceLocation, rawLocationForPoi);
         var movementTriggered = ShouldRefreshMapByMovement(location, out var movedSinceMapRefreshMeters);
         var shouldRefreshMap = forceMapRefresh || selectionChanged || movementTriggered;
-        var rawPoiAcc = rawLocationForPoi == null ? 0 : GetLocationAccuracyMeters(rawLocationForPoi);
+        var rawPoiAcc = rawLocationForPoi == null ? double.MaxValue : GetLocationAccuracyMeters(rawLocationForPoi);
+        var rawPoiAccDisplay = rawPoiAcc == double.MaxValue ? "unknown" : $"{rawPoiAcc:0.0}m";
+
         Trace(
             $"APPLY#{applySeq} dt={(sinceLastApplyMs < 0 ? "n/a" : $"{sinceLastApplyMs:0}ms")} " +
-            $"loc=({location.Latitude:F6},{location.Longitude:F6}) rawPoiAcc={rawPoiAcc:0.0}m " +
+            $"loc=({location.Latitude:F6},{location.Longitude:F6}) rawPoiAcc={rawPoiAccDisplay} " +
             $"refresh?={shouldRefreshMap} force={forceMapRefresh} select={selectionChanged} " +
             $"moveTrigger={movementTriggered} moveSinceMap={(movedSinceMapRefreshMeters < 0 ? "n/a" : $"{movedSinceMapRefreshMeters:0.0}m")}");
 
@@ -1396,11 +1534,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             try
             {
                 await Task.Delay(RemoteExploreHintDisplayDuration, cts.Token);
-                if (cts.IsCancellationRequested)
-                {
-                    return;
-                }
-
+                if (cts.IsCancellationRequested) return;
                 IsRemoteExploreHintVisible = false;
             }
             catch (OperationCanceledException)
