@@ -13,6 +13,28 @@
 | **Database** | SQL Server (backend) + SQLite (mobile offline) |
 | **Key Features** | GPS tracking, Geofence triggers, TTS narration, Offline favorites, Analytics |
 
+### Chạy Web + SQL bằng Docker (Azure Translator/TTS)
+
+1. Tạo file `.env` từ `.env.example`.
+2. Điền các biến Azure trong `.env`.
+3. Chạy lệnh:
+
+```bash
+docker compose up -d --build
+```
+
+4. Mở web tại `http://localhost:5281`.
+
+Biến bắt buộc cần điền trong `.env`:
+- `AZURE_TRANSLATOR_KEY`
+- `AZURE_TRANSLATOR_REGION`
+- `AZURE_SPEECH_KEY`
+- `AZURE_SPEECH_REGION`
+
+Biến tùy chọn:
+- `AZURE_TRANSLATOR_ENDPOINT` (mặc định: `https://api.cognitive.microsofttranslator.com`)
+- `SQL_SA_PASSWORD` (mặc định: `Admin@12345`)
+
 ---
 
 ## 📊 Thống Kê Chính

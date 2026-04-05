@@ -23,7 +23,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             _env = env;
         }
 
-        public async Task<IActionResult> Index(int? zoneId, int page = 1)
+        public async Task<IActionResult> Index(int? zoneId, string? language, int page = 1)
         {
             const int pageSize = 20;
             var query = _db.Narrations.AsQueryable();
@@ -34,6 +34,14 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 ViewBag.SelectedZoneId = zoneId;
                 ViewBag.ZoneName = _db.Zones.Find(zoneId.Value)?.Name;
             }
+
+            var normalizedLanguage = NormalizeLanguage(language);
+            if (!string.IsNullOrWhiteSpace(normalizedLanguage) && normalizedLanguage != "all")
+            {
+                query = query.Where(n => n.Language != null && n.Language.ToLower().StartsWith(normalizedLanguage));
+            }
+
+            ViewBag.SelectedLanguage = string.IsNullOrWhiteSpace(normalizedLanguage) ? "all" : normalizedLanguage;
 
             var totalCount = await query.CountAsync();
             var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
@@ -198,8 +206,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
 
             try
             {
-                existing.FileUrl = await _audioService.GenerateTtsAsync(existing.Text, existing.Language, existing.ZoneId, _env.WebRootPath);
-                existing.AudioStatus = "ready";
+                await GenerateAndApplyAudioAsync(existing, existing.Text, existing.Language, existing.ZoneId);
             }
             catch
             {
@@ -236,7 +243,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
         // POST: Admin/Narrations/Approve/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Approve(int id)
+        public async Task<IActionResult> Approve(int id, string? returnUrl = null)
         {
             var narration = await _db.Narrations.FindAsync(id);
             if (narration != null && narration.ApprovalStatus != "Approved")
@@ -245,8 +252,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 narration.UpdatedAt = DateTime.UtcNow;
 
                 // Generate TTS for original language
-                narration.FileUrl = await _audioService.GenerateTtsAsync(narration.Text, narration.Language, narration.ZoneId, _env.WebRootPath);
-                narration.AudioStatus = "ready";
+                await GenerateAndApplyAudioAsync(narration, narration.Text, narration.Language, narration.ZoneId);
 
                 if (narration.Language.ToLower() == "vi")
                 {
@@ -266,14 +272,26 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 {
                     await NotifyVendorNarrationDecisionAsync(vendorUserId.Value, narration.ZoneId, "đã được duyệt");
                 }
+
+                TempData["Success"] = "Đã duyệt thành công.";
             }
+            else if (narration != null)
+            {
+                TempData["Success"] = "Bản ghi đã ở trạng thái duyệt.";
+            }
+
+            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+
             return RedirectToAction(nameof(Index), new { zoneId = narration?.ZoneId });
         }
 
         // POST: Admin/Narrations/Reject/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Reject(int id)
+        public async Task<IActionResult> Reject(int id, string? returnUrl = null)
         {
             var narration = await _db.Narrations.FindAsync(id);
             if (narration != null)
@@ -286,7 +304,15 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 {
                     await NotifyVendorNarrationDecisionAsync(vendorUserId.Value, narration.ZoneId, "bị từ chối");
                 }
+
+                TempData["Success"] = "Đã từ chối bản ghi.";
             }
+
+            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+
             return RedirectToAction(nameof(Index), new { zoneId = narration?.ZoneId });
         }
 
@@ -375,8 +401,22 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 existing.UpdatedAt = DateTime.UtcNow;
             }
 
-            existing.FileUrl = await _audioService.GenerateTtsAsync(text, language, zoneId, _env.WebRootPath);
-            existing.AudioStatus = "ready";
+            await GenerateAndApplyAudioAsync(existing, text, language, zoneId);
+        }
+
+        private async Task GenerateAndApplyAudioAsync(TravelSystem.Shared.Models.Narration narration, string text, string language, int zoneId)
+        {
+            var fileUrl = await _audioService.GenerateTtsAsync(text, language, zoneId, _env.WebRootPath);
+
+            if (string.IsNullOrWhiteSpace(fileUrl))
+            {
+                narration.AudioStatus = "error";
+                narration.FileUrl = null;
+                return;
+            }
+
+            narration.FileUrl = fileUrl;
+            narration.AudioStatus = "ready";
         }
 
         private static string NormalizeLanguage(string? language)

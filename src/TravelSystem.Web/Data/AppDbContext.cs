@@ -56,6 +56,16 @@ public class AppDbContext : DbContext
             .HasKey(tz => new { tz.TourId, tz.ZoneId });
 
         modelBuilder.Entity<TourZone>()
+            .Property(tz => tz.TourId)
+            .HasSentinel(-1)
+            .ValueGeneratedNever();
+
+        modelBuilder.Entity<TourZone>()
+            .Property(tz => tz.ZoneId)
+            .HasSentinel(-1)
+            .ValueGeneratedNever();
+
+        modelBuilder.Entity<TourZone>()
             .HasOne(tz => tz.Tour)
             .WithMany(t => t.TourZones)
             .HasForeignKey(tz => tz.TourId);

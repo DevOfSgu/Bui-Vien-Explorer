@@ -128,7 +128,7 @@ namespace TravelSystem.Web.Areas.Vendor.Controllers
                 Url.Action("Index", "Narrations", new { area = "Admin", zoneId = narration.ZoneId }));
 
             TempData["Success"] = "Script submitted for admin approval.";
-            return RedirectToAction(nameof(Index), new { zoneId = narration.ZoneId });
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Vendor/Narrations/Edit/5
@@ -195,7 +195,7 @@ namespace TravelSystem.Web.Areas.Vendor.Controllers
                 TempData["Success"] = "Updated script submitted for admin approval.";
             }
 
-            return RedirectToAction(nameof(Index), new { zoneId = dbNarration?.ZoneId });
+            return RedirectToAction(nameof(Index));
         }
 
         private async Task<int?> GetVendorShopIdAsync()

@@ -9,6 +9,9 @@
         @if (ViewBag.SelectedZoneId != null)
         {
             <div class="page-title">TTS Scripts for @(ViewBag.ZoneName ?? "Zone")</div>
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary text-decoration-none">
+                <i class="fa-solid fa-list me-1"></i> Show all zones
+            </a>
         }
         else
         {

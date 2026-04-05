@@ -2,6 +2,7 @@
 @model IEnumerable<Narration>
 @{
     ViewData["Title"] = "Âm thanh & thuyết minh";
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
 }
 
 <div class="header-actions">
@@ -31,14 +32,6 @@
     </div>
 }
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success d-flex align-items-center" style="border-radius: 10px;">
-        <i class="fa-solid fa-circle-check me-2"></i>
-        <span>@TempData["Success"]</span>
-    </div>
-}
-
 <div class="card-custom">
     <!-- Filter Row -->
     <div class="d-flex justify-content-between mb-4 pb-3 border-bottom border-light">
@@ -47,15 +40,17 @@
             <input type="text" class="search-bar" style="width: 400px; background-color: #fff; border: 1px solid #edf2f9;" placeholder="Tìm kiếm file âm thanh...">
         </div>
         
-        <div class="d-flex gap-2">
-            <select class="form-select text-muted" style="width: 200px; border-color: #edf2f9; font-size: 14px;">
-                <option>Tất cả ngôn ngữ</option>
-                <option>Tiếng Anh</option>
-                <option>Tiếng Việt</option>
-                <option>Tiếng Hàn</option>
+        <form asp-action="Index" method="get" class="d-flex gap-2">
+            <input type="hidden" name="zoneId" value="@ViewBag.SelectedZoneId" />
+            <select name="language" class="form-select text-muted" style="width: 200px; border-color: #edf2f9; font-size: 14px;" onchange="this.form.submit()">
+                <option value="all" selected="@(ViewBag.SelectedLanguage == "all")">Tất cả ngôn ngữ</option>
+                <option value="vi" selected="@(ViewBag.SelectedLanguage == "vi")">Tiếng Việt</option>
+                <option value="en" selected="@(ViewBag.SelectedLanguage == "en")">Tiếng Anh</option>
+                <option value="ja" selected="@(ViewBag.SelectedLanguage == "ja")">Tiếng Nhật</option>
+                <option value="ko" selected="@(ViewBag.SelectedLanguage == "ko")">Tiếng Hàn</option>
             </select>
-            <button class="btn btn-outline-secondary" style="border-color:#edf2f9;"><i class="fa-solid fa-filter text-muted"></i></button>
-        </div>
+            <button type="submit" class="btn btn-outline-secondary" style="border-color:#edf2f9;"><i class="fa-solid fa-filter text-muted"></i></button>
+        </form>
     </div>
 
     <!-- Data Table -->
@@ -109,6 +104,7 @@
                                     <form asp-action="Approve" method="post" style="display:inline;">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
                                         <button type="submit" class="btn btn-sm btn-success js-approve-btn" style="border-radius: 6px;">
                                             <span class="js-approve-idle"><i class="fa-solid fa-check"></i> Duyệt</span>
                                             <span class="js-approve-loading d-none">
@@ -120,6 +116,7 @@
                                     <form asp-action="Reject" method="post" style="display:inline;">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
                                         <button type="submit" class="btn btn-sm btn-danger" style="border-radius: 6px;">
                                             <i class="fa-solid fa-xmark"></i> Từ chối
                                         </button>
@@ -158,7 +155,7 @@
         <nav>
             <ul class="pagination pagination-sm mb-0">
                 <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                    <a class="page-link" asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-zoneId="@ViewBag.SelectedZoneId" style="border-color: #edf2f9; color: #94a3b8;">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-zoneId="@ViewBag.SelectedZoneId" asp-route-language="@ViewBag.SelectedLanguage" style="border-color: #edf2f9; color: #94a3b8;">
                         <i class="fa-solid fa-chevron-left"></i>
                     </a>
                 </li>
@@ -167,18 +164,18 @@
                     if (p == currentPage)
                     {
                         <li class="page-item active" style="--bs-pagination-active-bg: #ef4444; --bs-pagination-active-border-color: #ef4444;">
-                            <a class="page-link" asp-action="Index" asp-route-page="@p" asp-route-zoneId="@ViewBag.SelectedZoneId">@p</a>
+                            <a class="page-link" asp-action="Index" asp-route-page="@p" asp-route-zoneId="@ViewBag.SelectedZoneId" asp-route-language="@ViewBag.SelectedLanguage">@p</a>
                         </li>
                     }
                     else
                     {
                         <li class="page-item">
-                            <a class="page-link" asp-action="Index" asp-route-page="@p" asp-route-zoneId="@ViewBag.SelectedZoneId" style="border-color: #edf2f9; color: #64748b;">@p</a>
+                            <a class="page-link" asp-action="Index" asp-route-page="@p" asp-route-zoneId="@ViewBag.SelectedZoneId" asp-route-language="@ViewBag.SelectedLanguage" style="border-color: #edf2f9; color: #64748b;">@p</a>
                         </li>
                     }
                 }
                 <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                    <a class="page-link" asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-zoneId="@ViewBag.SelectedZoneId" style="border-color: #edf2f9; color: #64748b;">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-zoneId="@ViewBag.SelectedZoneId" asp-route-language="@ViewBag.SelectedLanguage" style="border-color: #edf2f9; color: #64748b;">
                         <i class="fa-solid fa-chevron-right"></i>
                     </a>
                 </li>
@@ -186,6 +183,23 @@
         </nav>
     </div>
 </div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="modal fade" id="approvalSuccessModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 14px;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title text-success fw-bold"><i class="fa-solid fa-circle-check me-2"></i>Thành công</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-2 pb-4">
+                    <div class="text-muted">@TempData["Success"]</div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @section Scripts {
     <script>
@@ -203,6 +217,12 @@
                     if (loading) loading.classList.remove('d-none');
                 });
             });
+
+            const successModalEl = document.getElementById('approvalSuccessModal');
+            if (successModalEl && typeof bootstrap !== 'undefined') {
+                const successModal = new bootstrap.Modal(successModalEl);
+                successModal.show();
+            }
         })();
     </script>
 }

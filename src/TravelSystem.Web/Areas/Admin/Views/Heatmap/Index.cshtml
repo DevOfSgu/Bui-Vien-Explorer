@@ -60,14 +60,13 @@
 </style>
 
 <div class="header-actions">
-    <div class="page-title">Heat map dọc tuyến Bùi Viện</div>
+    <div class="page-title">Heat map thống kê chung</div>
 </div>
 
 <div class="card-custom">
     <div class="heatmap-meta">
         <span class="heatmap-badge">Start: @Model.StartLatitude, @Model.StartLongitude</span>
         <span class="heatmap-badge">End: @Model.EndLatitude, @Model.EndLongitude</span>
-        <span class="heatmap-badge">Corridor: ±@Model.CorridorMeters m</span>
         <span class="heatmap-badge">Analytics: @Model.TotalAnalyticsRows</span>
         <span class="heatmap-badge">Matched: @Model.MatchedRows</span>
     </div>
@@ -76,7 +75,7 @@
         <div id="map" style="height: 680px; width: 100%; border-radius: 10px;"></div>
         <div class="heatmap-legend">
             <div><strong>Heat Intensity</strong></div>
-            <div style="margin-top:4px;">Dữ liệu được chiếu lên route thật Bùi Viện.</div>
+            <div style="margin-top:4px;">Chỉ vẽ theo sự kiện EnterZone từ analytics toàn hệ thống.</div>
             <div class="heatmap-scale"></div>
             <div class="heatmap-scale-label"><span>min</span><span>max</span></div>
         </div>
@@ -99,7 +98,10 @@
             attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
         }).addTo(map);
 
-        if (routePolyline && routePolyline.length > 1) {
+        if (heatPoints && heatPoints.length > 0) {
+            const heatBounds = L.latLngBounds(heatPoints.map(p => [p[0], p[1]]));
+            map.fitBounds(heatBounds, { padding: [24, 24] });
+        } else if (routePolyline && routePolyline.length > 1) {
             const routeBounds = L.latLngBounds(routePolyline);
             map.fitBounds(routeBounds, { padding: [24, 24] });
         }

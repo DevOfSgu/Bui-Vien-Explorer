@@ -1,14 +1,36 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.StaticFiles;
 using TravelSystem.Web.Data;
 
-// Load environment variables from .env file
-DotNetEnv.Env.Load();
+// Load environment variables from .env file (support running from solution root or project folder)
+var currentDir = Directory.GetCurrentDirectory();
+var envCandidates = new[]
+{
+    Path.Combine(currentDir, ".env"),
+    Path.Combine(currentDir, "..", ".env"),
+    Path.Combine(currentDir, "..", "..", ".env")
+}
+.Select(Path.GetFullPath)
+.Distinct(StringComparer.OrdinalIgnoreCase)
+.ToList();
+
+foreach (var envPath in envCandidates)
+{
+    if (!File.Exists(envPath))
+    {
+        continue;
+    }
+
+    DotNetEnv.Env.Load(envPath);
+    Console.WriteLine($"Loaded environment file: {envPath}");
+    break;
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddHttpClient<TravelSystem.Web.Services.IAudioTranslationService, TravelSystem.Web.Services.FreeAudioTranslationService>();
+builder.Services.AddHttpClient<TravelSystem.Web.Services.IAudioTranslationService, TravelSystem.Web.Services.AzureAudioTranslationService>();
 builder.Services.AddScoped<TravelSystem.Web.Services.INotificationService, TravelSystem.Web.Services.NotificationService>();
 
 // Add DbContext
@@ -103,8 +125,13 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseStaticFiles();
-app.MapStaticAssets();
+var staticFileContentTypeProvider = new FileExtensionContentTypeProvider();
+staticFileContentTypeProvider.Mappings[".apk"] = "application/vnd.android.package-archive";
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = staticFileContentTypeProvider
+});
 app.MapControllers();
 
 // Route for Areas (Admin & Vendor)
@@ -114,8 +141,7 @@ app.MapControllerRoute(
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 
 app.Run();

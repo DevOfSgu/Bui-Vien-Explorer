@@ -66,37 +66,40 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     private const double MaxGpsAccuracyCompensationMeters = 35;
     private const double MaxEntryAccuracyCompensationMeters = 4;
     private const double EntryAccuracyCompensationEligibleMeters = 12;
-    private const double AutoSwitchRequireDistanceMeters = 20;
-    private const double FastAutoSelectDistanceMeters = 10;
-    private const double FastAutoSelectMaxAccuracyMeters = 8;
+    private const double AutoSwitchRequireDistanceMeters = 32;
+    private const double FastAutoSelectDistanceMeters = 12;
+    private const double FastAutoSelectMaxAccuracyMeters = 12;
     private const int CurrentZoneExitConfirmSamples = 2;
     private const int CandidateEnterConfirmSamples = 2;
     private const double MapRefreshMoveThresholdMeters = 2.5;
-    private const double GpsJitterIgnoreMeters = 3.5;
-    private const double GpsSmoothingThresholdMeters = 12;
-    private const double GpsSmoothingAlpha = 0.55;
+    private const double GpsJitterIgnoreMeters = 2.2;
+    private const double GpsSmoothingThresholdMeters = 8;
+    private const double GpsSmoothingAlpha = 0.75;
     private const double GoodAccuracySkipSmoothingMeters = 6;
     private const double MaxAcceptableGpsAccuracyMeters = 45;
     private const double PoorAccuracyRequireMoveMeters = 18;
-    private const double StationaryEnterMoveMeters = 2;
+    private const double StationaryEnterMoveMeters = 1.2;
     private const double StationaryReleaseMoveMeters = 9;
     private const double StationaryReleaseRawMoveMeters = 5;
     private const double StationaryReleaseSpeedMetersPerSecond = 1.2;
     private const double StationaryEnterMaxSpeedMetersPerSecond = 0.35;
     private const double StationaryEnterMaxAccuracyMeters = 25;
     private const double RawPoiAssistMaxAccuracyMeters = 30;
+    private const double FallbackAutoSelectMaxAccuracyMeters = 20;
     private const double BuiVienLatitude = 10.764017;
     private const double BuiVienLongitude = 106.692527;
     private const double RemoteExploreHintThresholdMeters = 1000;
     private static readonly TimeSpan ForegroundTrackingInterval = TimeSpan.FromSeconds(2);
     private static readonly TimeSpan MaxAcceptedLocationAge = TimeSpan.FromSeconds(5);
-    private static readonly TimeSpan StationaryLockDebounce = TimeSpan.FromSeconds(6);
+    private static readonly TimeSpan StationaryLockDebounce = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan StationaryRelockCooldown = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan LocationPingInterval = TimeSpan.FromSeconds(60);
-    private static readonly TimeSpan AutoSelectDebounce = TimeSpan.FromSeconds(2);
-    private static readonly TimeSpan AutoSelectSwitchDebounce = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan SimulationLocationPingInterval = TimeSpan.FromSeconds(8);
+    private static readonly TimeSpan AutoSelectDebounce = TimeSpan.FromSeconds(1.2);
+    private static readonly TimeSpan AutoSelectSwitchDebounce = TimeSpan.FromSeconds(1.8);
     private static readonly TimeSpan FastAutoSelectDebounce = TimeSpan.FromSeconds(1.2);
-    private static readonly TimeSpan AutoSelectCooldown = TimeSpan.FromSeconds(6);
+    private static readonly TimeSpan AutoSelectCooldown = TimeSpan.FromSeconds(2.5);
+    private static readonly TimeSpan FallbackAutoSelectMaxAge = TimeSpan.FromSeconds(3);
     private static readonly TimeSpan AutoSelectSuppressAfterManualSelection = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan StreamFreshWindow = TimeSpan.FromSeconds(2.6);
     private static readonly TimeSpan PollFallbackInterval = TimeSpan.FromSeconds(4);
@@ -585,10 +588,8 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         _currentAutoInsideZoneId = stop.ZoneId;
         ResetAutoSelectCandidate();
 
-        if (_trackedEnterZones.Add(stop.ZoneId))
-        {
-            _ = _apiService.TrackEnterZoneAsync(stop.ZoneId, stop.Latitude, stop.Longitude);
-        }
+        // In simulation mode, emit EnterZone every pass so heatmap has enough signal density.
+        _ = _apiService.TrackEnterZoneAsync(stop.ZoneId, stop.Latitude, stop.Longitude);
     }
 
     private async Task ToggleFavorite(PoiStopItem? stop)
@@ -707,6 +708,8 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     {
         if (stop == null) return;
 
+        var previousSelectedZoneId = PoiStops.FirstOrDefault(x => x.IsSelected)?.ZoneId;
+
         foreach (var poi in PoiStops)
         {
             poi.IsSelected = poi.ZoneId == stop.ZoneId;
@@ -725,6 +728,10 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         {
             StopSelected?.Invoke(this, stop);
         }
+
+        Trace(
+            $"SELECT_STOP source={(fromAutoSelect ? "auto" : "manual")} zone={stop.ZoneId} " +
+            $"prev={(previousSelectedZoneId?.ToString() ?? "none")} triggerAudio={triggerEvent}");
 
         if (!fromAutoSelect)
         {
@@ -814,6 +821,18 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             var rawAgeSeconds = rawLocation.Timestamp == default
                 ? -1
                 : (DateTimeOffset.UtcNow - rawLocation.Timestamp).TotalSeconds;
+
+            if (!hasFreshFixForAutoSelect
+                && freshLocation == null
+                && rawAgeSeconds >= 0
+                && rawAgeSeconds <= FallbackAutoSelectMaxAge.TotalSeconds
+                && rawAccuracy > 0
+                && rawAccuracy <= FallbackAutoSelectMaxAccuracyMeters)
+            {
+                hasFreshFixForAutoSelect = true;
+                source += "+fallback-fresh";
+            }
+
             if (IsLocationStale(rawLocation) && _cachedUserLocation != null)
             {
                 rawLocation = _cachedUserLocation;
@@ -876,8 +895,11 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
 
     private bool TryAutoSelectNearestStop(Location userLocation, Location? rawLocation)
     {
-        if (DateTime.UtcNow < _autoSelectSuppressedUntilUtc)
+        var nowUtc = DateTime.UtcNow;
+
+        if (nowUtc < _autoSelectSuppressedUntilUtc)
         {
+            Trace($"AUTO_SELECT skip reason=suppressed remain={(int)(_autoSelectSuppressedUntilUtc - nowUtc).TotalMilliseconds}ms");
             return false;
         }
 
@@ -885,6 +907,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         {
             _currentAutoInsideZoneId = null;
             _lastAutoSelectTriggeredZoneId = null;
+            Trace("AUTO_SELECT skip reason=no-stops");
             return false;
         }
 
@@ -904,6 +927,9 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
                 {
                     _currentZoneOutsideSamples = 0;
                     ResetAutoSelectCandidate();
+                    Trace(
+                        $"AUTO_SELECT hold zone={currentZoneId} reason=still-inside-exit-radius " +
+                        $"dist={currentDistanceMeters:0.0}m exitRadius={exitRadius:0.0}m");
                     return false;
                 }
 
@@ -919,6 +945,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             _currentAutoInsideZoneId = null;
             _lastAutoSelectTriggeredZoneId = null;
             _currentZoneOutsideSamples = 0;
+            Trace($"AUTO_SELECT release previousZone={currentZoneId} reason=confirmed-outside");
         }
 
         PoiStopItem? nearestStop = null;
@@ -938,6 +965,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         if (nearestStop == null)
         {
             ResetAutoSelectCandidate();
+            Trace("AUTO_SELECT skip reason=no-nearest-stop");
             return false;
         }
 
@@ -953,6 +981,9 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         if (adjustedDistanceMeters > triggerRadius)
         {
             ResetAutoSelectCandidate();
+            Trace(
+                $"AUTO_SELECT skip reason=outside-trigger nearestZone={nearestStop.ZoneId} " +
+                $"dist={adjustedDistanceMeters:0.0}m trigger={triggerRadius:0.0}m");
             return false;
         }
 
@@ -960,10 +991,12 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         if (currentSelected?.ZoneId == nearestStop.ZoneId)
         {
             ResetAutoSelectCandidate();
+            Trace(
+                $"AUTO_SELECT skip reason=already-selected zone={nearestStop.ZoneId} " +
+                $"dist={adjustedDistanceMeters:0.0}m trigger={triggerRadius:0.0}m");
             return false;
         }
 
-        var nowUtc = DateTime.UtcNow;
         var isSwitchingBetweenStops = currentSelected != null && currentSelected.ZoneId != nearestStop.ZoneId;
         var requiredDebounce = isSwitchingBetweenStops ? AutoSelectSwitchDebounce : AutoSelectDebounce;
         var requiredInsideSamples = CandidateEnterConfirmSamples;
@@ -987,6 +1020,9 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         if (isSwitchingBetweenStops && adjustedDistanceMeters > AutoSwitchRequireDistanceMeters)
         {
             ResetAutoSelectCandidate();
+            Trace(
+                $"AUTO_SELECT skip reason=switch-too-far from={currentSelected?.ZoneId} to={nearestStop.ZoneId} " +
+                $"dist={adjustedDistanceMeters:0.0}m switchLimit={AutoSwitchRequireDistanceMeters:0.0}m");
             return false;
         }
 
@@ -1004,11 +1040,18 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         _candidateInsideSamples += 1;
         if (_candidateInsideSamples < requiredInsideSamples)
         {
+            Trace(
+                $"AUTO_SELECT wait reason=inside-samples zone={nearestStop.ZoneId} " +
+                $"samples={_candidateInsideSamples}/{requiredInsideSamples}");
             return false;
         }
 
         if (nowUtc - _autoSelectCandidateSinceUtc < requiredDebounce)
         {
+            Trace(
+                $"AUTO_SELECT wait reason=debounce zone={nearestStop.ZoneId} " +
+                $"elapsed={(nowUtc - _autoSelectCandidateSinceUtc).TotalMilliseconds:0}ms " +
+                $"required={requiredDebounce.TotalMilliseconds:0}ms");
             return false;
         }
 
@@ -1016,6 +1059,9 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
             && nowUtc - _lastAutoSelectTriggeredAtUtc < AutoSelectCooldown
             && _lastAutoSelectTriggeredZoneId != nearestStop.ZoneId)
         {
+            Trace(
+                $"AUTO_SELECT skip reason=cooldown from={_lastAutoSelectTriggeredZoneId?.ToString() ?? "none"} " +
+                $"to={nearestStop.ZoneId} remaining={(AutoSelectCooldown - (nowUtc - _lastAutoSelectTriggeredAtUtc)).TotalMilliseconds:0}ms");
             return false;
         }
 
@@ -1264,7 +1310,8 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
         UserLocation = location;
         _cachedUserLocation = location;
 
-        if (DateTime.UtcNow - _lastLocationPingAtUtc >= LocationPingInterval)
+        var activePingInterval = IsPoiSimulationEnabled ? SimulationLocationPingInterval : LocationPingInterval;
+        if (DateTime.UtcNow - _lastLocationPingAtUtc >= activePingInterval)
         {
             _lastLocationPingAtUtc = DateTime.UtcNow;
             _ = _apiService.TrackLocationPingAsync(location.Latitude, location.Longitude);

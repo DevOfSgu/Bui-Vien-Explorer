@@ -22,7 +22,7 @@ public class NarrationsController : ControllerBase
         {
             var normalizedLanguage = NormalizeLanguage(language);
 
-            if (zoneId == null || zoneId == 0)
+            if (zoneId == null)
             {
                 var allApprovedNarrations = await _db.Narrations
                     .Where(n => n.ApprovalStatus == "Approved")

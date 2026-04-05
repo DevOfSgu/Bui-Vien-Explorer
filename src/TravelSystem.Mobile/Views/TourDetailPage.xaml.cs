@@ -615,6 +615,8 @@ public partial class TourDetailPage : ContentPage
 
     private async void OnStopSelected(object? sender, PoiStopItem stop)
     {
+        TracePersistent("AUDIO_FLOW", $"STOP_SELECTED zone={stop.ZoneId} name='{stop.Name}'");
+
         MainThread.BeginInvokeOnMainThread(() =>
         {
             FocusOnStop(stop);
@@ -628,11 +630,20 @@ public partial class TourDetailPage : ContentPage
     }
 
     private bool _isShowingNarration = false;
+    private PoiStopItem? _pendingNarrationStop;
 
     private async Task ShowAudioNarrationAsync(PoiStopItem stop)
     {
-        if (_isShowingNarration) return;
+        if (_isShowingNarration)
+        {
+            _pendingNarrationStop = stop;
+            TracePersistent("AUDIO_FLOW", $"QUEUE zone={stop.ZoneId} reason=already-showing");
+            return;
+        }
+
         _isShowingNarration = true;
+        _pendingNarrationStop = null;
+        TracePersistent("AUDIO_FLOW", $"START zone={stop.ZoneId}");
 
         try
         {
@@ -642,6 +653,7 @@ public partial class TourDetailPage : ContentPage
 
             if (!IsWithinOperatingHours(stop, out var operatingRange))
             {
+                TracePersistent("AUDIO_FLOW", $"BLOCKED zone={stop.ZoneId} reason=outside-hours hours='{operatingRange}'");
                 // Ensure previous audio is cut immediately if user taps a closed zone.
                 AudioPlayer?.StopPlaybackImmediately();
                 _audioService.Stop(true);
@@ -652,7 +664,9 @@ public partial class TourDetailPage : ContentPage
 
             using (var syncCts = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
             {
+                TracePersistent("AUDIO_FLOW", $"REFRESH start zone={stop.ZoneId} lang={lang}");
                 await _apiService.RefreshNarrationAsync(stop.ZoneId, lang, syncCts.Token);
+                TracePersistent("AUDIO_FLOW", $"REFRESH done zone={stop.ZoneId} lang={lang}");
             }
 
             // Warm cache lookup only; popup/player logic already handles MP3/TTS fallback internally.
@@ -660,10 +674,12 @@ public partial class TourDetailPage : ContentPage
             if (narration == null)
             {
                 Debug.WriteLine($"[TOUR_PAGE][AUDIO_DIAG] Narration NOT FOUND for ZoneId={stop.ZoneId}, Lang={lang}");
+                TracePersistent("AUDIO_FLOW", $"NARRATION_MISS zone={stop.ZoneId} lang={lang}");
             }
             else
             {
                 Debug.WriteLine($"[TOUR_PAGE][AUDIO_DIAG] Narration FOUND => ZoneId={narration.ZoneId}, Lang={narration.Language}, Text='{Preview(narration.Text)}', FileUrl='{narration.FileUrl}'");
+                TracePersistent("AUDIO_FLOW", $"NARRATION_HIT zone={stop.ZoneId} lang={lang} fileUrl='{narration.FileUrl}'");
             }
 
             // StopSelected can be raised from background tracking thread.
@@ -673,14 +689,32 @@ public partial class TourDetailPage : ContentPage
                 AudioPlayer.Initialize(_audioService, stop, lang);
                 await AudioPlayer.ShowAsync();
             });
+            TracePersistent("AUDIO_FLOW", $"SHOW_OK zone={stop.ZoneId} lang={lang}");
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[TOUR_PAGE] Error showing audio popup: {ex.Message}");
+            TracePersistent("AUDIO_FLOW", $"ERROR zone={stop.ZoneId} message='{ex.Message}'");
         }
         finally
         {
             _isShowingNarration = false;
+
+            if (_pendingNarrationStop is { } pendingStop)
+            {
+                _pendingNarrationStop = null;
+                if (pendingStop.ZoneId != stop.ZoneId)
+                {
+                    TracePersistent("AUDIO_FLOW", $"REPLAY_PENDING zone={pendingStop.ZoneId} previous={stop.ZoneId}");
+                    _ = ShowAudioNarrationAsync(pendingStop);
+                }
+                else
+                {
+                    TracePersistent("AUDIO_FLOW", $"SKIP_PENDING zone={pendingStop.ZoneId} reason=same-as-current");
+                }
+            }
+
+            TracePersistent("AUDIO_FLOW", $"END zone={stop.ZoneId}");
         }
     }
 

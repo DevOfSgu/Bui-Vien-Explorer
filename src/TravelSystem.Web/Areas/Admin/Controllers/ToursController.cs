@@ -35,7 +35,10 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
         // GET: Admin/Tours/Create
         public async Task<IActionResult> Create()
         {
-            ViewBag.Zones = await _db.Zones.Where(z => z.IsActive).OrderBy(z => z.Name).ToListAsync();
+            ViewBag.Zones = await _db.Zones
+                .Where(z => z.IsActive || z.Id == 0)
+                .OrderBy(z => z.Name)
+                .ToListAsync();
             return View(new Tour());
         }
 
@@ -57,14 +60,21 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 _db.Tours.Add(tour);
                 await _db.SaveChangesAsync(); // Get Tour Id
 
-                if (selectedZoneIds != null)
+                var validZoneIds = await ResolveValidZoneIdsAsync(selectedZoneIds);
+                if (validZoneIds.Count > 0)
                 {
-                    for (int i = 0; i < selectedZoneIds.Length; i++)
+                    var selectedZones = await _db.Zones
+                        .Where(z => validZoneIds.Contains(z.Id))
+                        .ToDictionaryAsync(z => z.Id);
+
+                    for (int i = 0; i < validZoneIds.Count; i++)
                     {
+                        var zoneId = validZoneIds[i];
                         _db.TourZones.Add(new TourZone
                         {
                             TourId = tour.Id,
-                            ZoneId = selectedZoneIds[i],
+                            ZoneId = zoneId,
+                            Zone = selectedZones.TryGetValue(zoneId, out var zone) ? zone : null,
                             OrderIndex = i + 1
                         });
                     }
@@ -77,7 +87,10 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            ViewBag.Zones = await _db.Zones.Where(z => z.IsActive).OrderBy(z => z.Name).ToListAsync();
+            ViewBag.Zones = await _db.Zones
+                .Where(z => z.IsActive || z.Id == 0)
+                .OrderBy(z => z.Name)
+                .ToListAsync();
             return View(tour);
         }
 
@@ -93,7 +106,10 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
 
             if (tour == null) return NotFound();
 
-            ViewBag.Zones = await _db.Zones.Where(z => z.IsActive).OrderBy(z => z.Name).ToListAsync();
+            ViewBag.Zones = await _db.Zones
+                .Where(z => z.IsActive || z.Id == 0)
+                .OrderBy(z => z.Name)
+                .ToListAsync();
             return View(tour);
         }
 
@@ -129,7 +145,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 dbTour.UpdatedAt = DateTime.UtcNow;
                 // Update Zones: Sử dụng so sánh để tránh xung đột khóa chính (Tracking collision)
                 var currentTourZones = dbTour.TourZones.ToList();
-                var selectedIds = selectedZoneIds?.ToList() ?? new List<int>();
+                var selectedIds = await ResolveValidZoneIdsAsync(selectedZoneIds);
 
                 // 1. Xóa các điểm không còn trong danh sách chọn
                 foreach (var tz in currentTourZones)
@@ -141,11 +157,15 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 }
 
                 // 2. Thêm hoặc cập nhật (thứ tự) các điểm đã chọn
-                if (selectedZoneIds != null)
+                if (selectedIds.Count > 0)
                 {
-                    for (int i = 0; i < selectedZoneIds.Length; i++)
+                    var selectedZones = await _db.Zones
+                        .Where(z => selectedIds.Contains(z.Id))
+                        .ToDictionaryAsync(z => z.Id);
+
+                    for (int i = 0; i < selectedIds.Count; i++)
                     {
-                        var zoneId = selectedZoneIds[i];
+                        var zoneId = selectedIds[i];
                         var existing = currentTourZones.FirstOrDefault(tz => tz.ZoneId == zoneId);
                         
                         if (existing != null)
@@ -159,6 +179,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                             dbTour.TourZones.Add(new TourZone
                             {
                                 ZoneId = zoneId,
+                                Zone = selectedZones.TryGetValue(zoneId, out var zone) ? zone : null,
                                 OrderIndex = i + 1
                             });
                         }
@@ -173,7 +194,10 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            ViewBag.Zones = await _db.Zones.Where(z => z.IsActive).OrderBy(z => z.Name).ToListAsync();
+            ViewBag.Zones = await _db.Zones
+                .Where(z => z.IsActive || z.Id == 0)
+                .OrderBy(z => z.Name)
+                .ToListAsync();
             return View(tour);
         }
 
@@ -250,6 +274,26 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             {
                 return sourceText;
             }
+        }
+
+        private async Task<List<int>> ResolveValidZoneIdsAsync(IEnumerable<int>? zoneIds)
+        {
+            var normalizedIds = zoneIds?
+                .Where(id => id >= 0)
+                .Distinct()
+                .ToList() ?? new List<int>();
+
+            if (normalizedIds.Count == 0)
+            {
+                return new List<int>();
+            }
+
+            var existingIds = await _db.Zones
+                .Where(z => normalizedIds.Contains(z.Id) && (z.IsActive || z.Id == 0))
+                .Select(z => z.Id)
+                .ToHashSetAsync();
+
+            return normalizedIds.Where(existingIds.Contains).ToList();
         }
     }
 }

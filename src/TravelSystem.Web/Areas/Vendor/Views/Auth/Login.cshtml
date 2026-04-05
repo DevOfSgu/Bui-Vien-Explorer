@@ -153,6 +153,11 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+
+        /* Defensive fix: remove any stale Bootstrap backdrop that may block interaction */
+        .modal-backdrop {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -214,5 +219,22 @@
     <div class="footer-copyright">
         &copy; 2026 BUI VIEN EXPLORER TECHNOLOGIES. ALL RIGHTS RESERVED.
     </div>
+
+    <script>
+        (function () {
+            function clearStaleBackdrop() {
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+
+                document.querySelectorAll('.modal-backdrop').forEach(function (el) {
+                    el.remove();
+                });
+            }
+
+            clearStaleBackdrop();
+            window.addEventListener('pageshow', clearStaleBackdrop);
+        })();
+    </script>
 </body>
 </html>

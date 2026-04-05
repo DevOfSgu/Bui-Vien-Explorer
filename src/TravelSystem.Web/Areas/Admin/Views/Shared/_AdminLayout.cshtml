@@ -430,6 +430,63 @@
 
             const queue = [];
             let isShowing = false;
+            let audioEnabled = false;
+            let audioContext = null;
+
+            function enableNotificationAudio() {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+
+                try {
+                    if (!audioContext) {
+                        audioContext = new AudioCtx();
+                    }
+
+                    if (audioContext.state === 'suspended') {
+                        audioContext.resume();
+                    }
+
+                    audioEnabled = true;
+                } catch {
+                    audioEnabled = false;
+                }
+            }
+
+            function playNotificationSound() {
+                if (!audioEnabled || !audioContext) return;
+
+                try {
+                    if (audioContext.state === 'suspended') {
+                        audioContext.resume();
+                    }
+
+                    const now = audioContext.currentTime;
+                    const firstTone = audioContext.createOscillator();
+                    const secondTone = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+
+                    firstTone.type = 'triangle';
+                    firstTone.frequency.setValueAtTime(920, now);
+
+                    secondTone.type = 'triangle';
+                    secondTone.frequency.setValueAtTime(720, now + 0.12);
+
+                    gain.gain.setValueAtTime(0.0001, now);
+                    gain.gain.exponentialRampToValueAtTime(0.18, now + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+
+                    firstTone.connect(gain);
+                    secondTone.connect(gain);
+                    gain.connect(audioContext.destination);
+
+                    firstTone.start(now);
+                    firstTone.stop(now + 0.12);
+                    secondTone.start(now + 0.12);
+                    secondTone.stop(now + 0.24);
+                } catch {
+                    // keep notification flow working even when sound fails
+                }
+            }
 
             function setBadgeVisible(visible) {
                 badge.style.display = visible ? 'block' : 'none';
@@ -472,6 +529,7 @@
                     }
 
                     setBadgeVisible(true);
+                    playNotificationSound();
                     showNextNotification();
                 } catch {
                     // keep polling silently
@@ -479,10 +537,16 @@
             }
 
             bell.addEventListener('click', function () {
+                enableNotificationAudio();
+                playNotificationSound();
                 if (!isShowing) {
                     showNextNotification();
                 }
             });
+
+            document.addEventListener('click', enableNotificationAudio, { once: true });
+            document.addEventListener('keydown', enableNotificationAudio, { once: true });
+            document.addEventListener('touchstart', enableNotificationAudio, { once: true });
 
             pollNotifications();
             setInterval(pollNotifications, 8000);
