@@ -56,10 +56,16 @@ public class AzureAudioTranslationService : IAudioTranslationService
             return string.Empty;
         }
 
+        var sourceText = StripFallbackTranslationMarker(text);
+        if (string.IsNullOrWhiteSpace(sourceText))
+        {
+            return string.Empty;
+        }
+
         if (string.IsNullOrWhiteSpace(_translatorKey) || string.IsNullOrWhiteSpace(_translatorRegion))
         {
             _logger.LogWarning("[AZURE_TRANSLATE] Missing Translator configuration for target={TargetLanguage}.", targetLanguageCode);
-            return $"[Bản dịch {targetLanguageCode}] {text}";
+            return sourceText;
         }
 
         var language = NormalizeLanguage(targetLanguageCode);
@@ -72,7 +78,7 @@ public class AzureAudioTranslationService : IAudioTranslationService
 
         using var request = new HttpRequestMessage(HttpMethod.Post, url)
         {
-            Content = JsonContent.Create(new[] { new { Text = text } })
+            Content = JsonContent.Create(new[] { new { Text = sourceText } })
         };
 
         request.Headers.TryAddWithoutValidation("Ocp-Apim-Subscription-Key", _translatorKey);
@@ -87,7 +93,7 @@ public class AzureAudioTranslationService : IAudioTranslationService
                 _translatorRegion,
                 language,
                 Truncate(errorPayload, 300));
-            return $"[Bản dịch {targetLanguageCode}] {text}";
+            return sourceText;
         }
 
         await using var stream = await response.Content.ReadAsStreamAsync();
@@ -113,8 +119,16 @@ public class AzureAudioTranslationService : IAudioTranslationService
             translated?.Length ?? 0);
 
         return string.IsNullOrWhiteSpace(translated)
-            ? $"[Bản dịch {targetLanguageCode}] {text}"
+            ? sourceText
             : translated;
+    }
+
+    private static string StripFallbackTranslationMarker(string input)
+    {
+        var value = input.Trim();
+        // Legacy fallback format: [Bản dịch en] ...
+        value = Regex.Replace(value, @"^\[\s*Bản\s+dịch\s+[a-zA-Z-]+\s*\]\s*", string.Empty, RegexOptions.IgnoreCase);
+        return value.Trim();
     }
 
     public async Task<string> GenerateTtsAsync(string text, string languageCode, int zoneId, string webRootPath)

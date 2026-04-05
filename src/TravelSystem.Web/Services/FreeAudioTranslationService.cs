@@ -1,6 +1,7 @@
 using System.Net.Http;
 using System.Text.Json;
 using System.Web;
+using System.Text.RegularExpressions;
 
 namespace TravelSystem.Web.Services
 {
@@ -17,9 +18,15 @@ namespace TravelSystem.Web.Services
 
         public async Task<string> TranslateAsync(string text, string targetLanguageCode)
         {
+            var sourceText = StripFallbackTranslationMarker(text);
+            if (string.IsNullOrWhiteSpace(sourceText))
+            {
+                return string.Empty;
+            }
+
             try
             {
-                var url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=vi&tl={targetLanguageCode}&dt=t&q={HttpUtility.UrlEncode(text)}";
+                var url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=vi&tl={targetLanguageCode}&dt=t&q={HttpUtility.UrlEncode(sourceText)}";
                 var response = await _httpClient.GetAsync(url);
                 
                 if (response.IsSuccessStatusCode)
@@ -60,7 +67,13 @@ namespace TravelSystem.Web.Services
             {
                 // Fallback to mock text if API fails
             }
-            return $"[Bản dịch {targetLanguageCode}] {text}";
+            return sourceText;
+        }
+
+        private static string StripFallbackTranslationMarker(string input)
+        {
+            var value = (input ?? string.Empty).Trim();
+            return Regex.Replace(value, @"^\[\s*Bản\s+dịch\s+[a-zA-Z-]+\s*\]\s*", string.Empty, RegexOptions.IgnoreCase).Trim();
         }
 
         public async Task<string> GenerateTtsAsync(string text, string languageCode, int zoneId, string webRootPath)

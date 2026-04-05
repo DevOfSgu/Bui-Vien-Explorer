@@ -58,10 +58,10 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     // Cache vị trí tĩnh giữa các lần điều hướng để tránh GPS cold-start
     private static Location? _cachedUserLocation;
     private string _tourName = "Tour details";
-
-    private const double GeofenceTriggerMeters = 45;
+    // ========= Thông số điều chỉnh gps =========
+    private const double GeofenceTriggerMeters = 8;
     private const double GeofenceExitHysteresisFactor = 1.25;
-    private const double MinPracticalGeofenceMeters = 28;
+    private const double MinPracticalGeofenceMeters = 5;
     private const double MaxGpsAccuracyCompensationMeters = 35;
     private const double MaxEntryAccuracyCompensationMeters = 8;
     private const double EntryAccuracyCompensationEligibleMeters = 20;
@@ -69,13 +69,13 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     private const double FastAutoSelectDistanceMeters = 12;
     private const double FastAutoSelectMaxAccuracyMeters = 12;
     private const int CurrentZoneExitConfirmSamples = 2;
-    private const int CandidateEnterConfirmSamples = 1;
+    private const int CandidateEnterConfirmSamples = 2;
     private const double MapRefreshMoveThresholdMeters = 2.5;
     private const double GpsJitterIgnoreMeters = 2.2;
     private const double GpsSmoothingThresholdMeters = 8;
     private const double GpsSmoothingAlpha = 0.75;
     private const double GoodAccuracySkipSmoothingMeters = 6;
-    private const double MaxAcceptableGpsAccuracyMeters = 45;
+    private const double MaxAcceptableGpsAccuracyMeters = 12;
     private const double PoorAccuracyRequireMoveMeters = 18;
     private const double StationaryEnterMoveMeters = 1.2;
     private const double StationaryReleaseMoveMeters = 9;
@@ -84,14 +84,15 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
     private const double StationaryEnterMaxSpeedMetersPerSecond = 0.35;
     private const double StationaryEnterMaxAccuracyMeters = 25;
     private const double RawPoiAssistMaxAccuracyMeters = 30;
-    private const double FallbackAutoSelectMaxAccuracyMeters = 20;
-    private const double RouteSnapMaxDistanceMeters = 40;
-    // Bắt buộc snap tọa độ vào tuyến đường bất chấp GPS báo accuracy tốt thế nào,
-    // vỉ môi trường phố đi bộ Bùi Viện (chữ U) làm GPS bị phản xạ (ảo 1.3m accuracy nhưng vẫn trôi 30m).
-    private const double RouteSnapSkipWhenAccuracyBetterThanMeters = 0.0;
+    private const double FallbackAutoSelectMaxAccuracyMeters = 10;
+    private const double RouteSnapMaxDistanceMeters = 5;
+    // [FIX-1] Ngưỡng accuracy để bỏ qua route snap — khi GPS đã chính xác hơn
+    // ngưỡng này thì snap sẽ inject thêm sai số thay vì giảm sai số.
+    private const double RouteSnapSkipWhenAccuracyBetterThanMeters = RouteSnapMaxDistanceMeters;
     private const double BuiVienLatitude = 10.764017;
     private const double BuiVienLongitude = 106.692527;
     private const double RemoteExploreHintThresholdMeters = 1000;
+    // ========================================================
     private static readonly TimeSpan ForegroundTrackingInterval = TimeSpan.FromSeconds(2);
     private static readonly TimeSpan MaxAcceptedLocationAge = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan StationaryLockDebounce = TimeSpan.FromSeconds(10);
@@ -877,7 +878,7 @@ public partial class TourDetailViewModel : ObservableObject, IQueryAttributable
                 rawLocation,
                 forceMapRefresh,
                 allowAutoSelect: hasFreshFixForAutoSelect,
-                autoSelectLocation: routeSnappedDisplayLocation);
+                autoSelectLocation: displayLocation);
         }
         catch (Exception ex)
         {

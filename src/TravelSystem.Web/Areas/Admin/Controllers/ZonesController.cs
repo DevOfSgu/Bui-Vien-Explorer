@@ -177,6 +177,19 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                     Helpers.FileStorageHelper.DeleteImage(zone.ImageUrl, _env.WebRootPath);
                 }
 
+                // Analytics vẫn cần giữ lại lịch sử nên tách FK trước khi xóa zone.
+                var analyticsRows = await _db.Analytics
+                    .Where(a => a.ZoneId == id)
+                    .ToListAsync();
+
+                if (analyticsRows.Count > 0)
+                {
+                    foreach (var row in analyticsRows)
+                    {
+                        row.ZoneId = null;
+                    }
+                }
+
                 _db.Zones.Remove(zone);
                 await _db.SaveChangesAsync();
             }
