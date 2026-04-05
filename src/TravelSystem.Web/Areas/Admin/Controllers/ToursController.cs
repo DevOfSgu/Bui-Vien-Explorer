@@ -228,6 +228,9 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 .Where(tt => tt.TourId == tourId)
                 .ToDictionaryAsync(tt => tt.Language);
 
+            var sourceNameTrimmed = sourceName.Trim();
+            var sourceDescriptionTrimmed = (sourceDescription ?? string.Empty).Trim();
+
             foreach (var language in supportedLanguages)
             {
                 var translatedName = sourceName;
@@ -237,6 +240,33 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 {
                     translatedName = await TranslateWithFallbackAsync(sourceName, language);
                     translatedDescription = await TranslateWithFallbackAsync(sourceDescription, language);
+
+                    var translatedNameTrimmed = (translatedName ?? string.Empty).Trim();
+                    var translatedDescriptionTrimmed = (translatedDescription ?? string.Empty).Trim();
+
+                    if (existing.TryGetValue(language, out var currentExisting))
+                    {
+                        if (string.Equals(translatedNameTrimmed, sourceNameTrimmed, StringComparison.Ordinal)
+                            && !string.IsNullOrWhiteSpace(currentExisting.Name))
+                        {
+                            translatedName = currentExisting.Name;
+                        }
+
+                        if (string.Equals(translatedDescriptionTrimmed, sourceDescriptionTrimmed, StringComparison.Ordinal)
+                            && !string.IsNullOrWhiteSpace(currentExisting.Description))
+                        {
+                            translatedDescription = currentExisting.Description;
+                        }
+                    }
+                    else
+                    {
+                        var looksLikeFallback = string.Equals(translatedNameTrimmed, sourceNameTrimmed, StringComparison.Ordinal)
+                            && string.Equals(translatedDescriptionTrimmed, sourceDescriptionTrimmed, StringComparison.Ordinal);
+                        if (looksLikeFallback)
+                        {
+                            continue;
+                        }
+                    }
                 }
 
                 if (existing.TryGetValue(language, out var current))

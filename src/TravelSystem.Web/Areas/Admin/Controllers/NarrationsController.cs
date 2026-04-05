@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 using TravelSystem.Web.Data;
 
@@ -14,13 +15,15 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
         private readonly TravelSystem.Web.Services.IAudioTranslationService _audioService;
         private readonly TravelSystem.Web.Services.INotificationService _notificationService;
         private readonly IWebHostEnvironment _env;
+        private readonly ILogger<NarrationsController> _logger;
 
-        public NarrationsController(AppDbContext db, TravelSystem.Web.Services.IAudioTranslationService audioService, TravelSystem.Web.Services.INotificationService notificationService, IWebHostEnvironment env)
+        public NarrationsController(AppDbContext db, TravelSystem.Web.Services.IAudioTranslationService audioService, TravelSystem.Web.Services.INotificationService notificationService, IWebHostEnvironment env, ILogger<NarrationsController> logger)
         {
             _db = db;
             _audioService = audioService;
             _notificationService = notificationService;
             _env = env;
+            _logger = logger;
         }
 
         public async Task<IActionResult> Index(int? zoneId, string? language, int page = 1)
@@ -124,7 +127,8 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             {
                 (Code: "vi", Name: "Tiếng Việt"),
                 (Code: "en", Name: "Tiếng Anh"),
-                (Code: "ja", Name: "Tiếng Nhật")
+                (Code: "ja", Name: "Tiếng Nhật"),
+                (Code: "ko", Name: "Tiếng Hàn")
             };
 
             var items = preferredLanguages
@@ -246,23 +250,58 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
         public async Task<IActionResult> Approve(int id, string? returnUrl = null)
         {
             var narration = await _db.Narrations.FindAsync(id);
+            if (narration != null)
+            {
+                _logger.LogInformation(
+                    "[NARRATION_APPROVE] id={Id} zone={ZoneId} lang={Lang} approvalStatus={Status} textLen={TextLength}",
+                    narration.Id,
+                    narration.ZoneId,
+                    narration.Language,
+                    narration.ApprovalStatus,
+                    narration.Text?.Length ?? 0);
+            }
+
             if (narration != null && narration.ApprovalStatus != "Approved")
             {
+                var sourceText = narration.Text ?? string.Empty;
+                var sourceLanguage = NormalizeLanguage(narration.Language);
+
                 narration.ApprovalStatus = "Approved";
                 narration.UpdatedAt = DateTime.UtcNow;
 
                 // Generate TTS for original language
-                await GenerateAndApplyAudioAsync(narration, narration.Text, narration.Language, narration.ZoneId);
+                await GenerateAndApplyAudioAsync(narration, sourceText, sourceLanguage, narration.ZoneId);
 
-                if (narration.Language.ToLower() == "vi")
+                if (sourceLanguage == "vi")
                 {
-                    // Upsert English translation/audio
-                    var enText = await _audioService.TranslateAsync(narration.Text, "en");
-                    await UpsertTranslatedNarrationAsync(narration.ZoneId, "en", enText);
+                    var targetLanguages = new[] { "en", "ja", "ko" };
+                    foreach (var targetLanguage in targetLanguages)
+                    {
+                        _logger.LogInformation(
+                            "[NARRATION_TRANSLATE] start zone={ZoneId} from=vi to={TargetLang} sourceLen={SourceLength}",
+                            narration.ZoneId,
+                            targetLanguage,
+                            sourceText.Length);
 
-                    // Upsert Japanese translation/audio
-                    var jaText = await _audioService.TranslateAsync(narration.Text, "ja");
-                    await UpsertTranslatedNarrationAsync(narration.ZoneId, "ja", jaText);
+                        var translatedText = await _audioService.TranslateAsync(sourceText, targetLanguage);
+
+                        _logger.LogInformation(
+                            "[NARRATION_TRANSLATE] result zone={ZoneId} to={TargetLang} translatedLen={TranslatedLength} sameAsSource={SameAsSource} preview='{Preview}'",
+                            narration.ZoneId,
+                            targetLanguage,
+                            translatedText?.Length ?? 0,
+                            string.Equals((translatedText ?? string.Empty).Trim(), sourceText.Trim(), StringComparison.Ordinal),
+                            PreviewText(translatedText));
+
+                        await UpsertTranslatedNarrationAsync(narration.ZoneId, targetLanguage, translatedText ?? string.Empty, sourceText);
+                    }
+                }
+                else
+                {
+                    _logger.LogInformation(
+                        "[NARRATION_APPROVE] skip-translate id={Id} reason=source-not-vi lang={Lang}",
+                        narration.Id,
+                        narration.Language);
                 }
 
                 await _db.SaveChangesAsync();
@@ -277,6 +316,11 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             }
             else if (narration != null)
             {
+                _logger.LogInformation(
+                    "[NARRATION_APPROVE] skip id={Id} reason=already-approved zone={ZoneId} lang={Lang}",
+                    narration.Id,
+                    narration.ZoneId,
+                    narration.Language);
                 TempData["Success"] = "Bản ghi đã ở trạng thái duyệt.";
             }
 
@@ -371,7 +415,7 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 Url.Action("Index", "Narrations", new { area = "Vendor", zoneId }));
         }
 
-        private async Task UpsertTranslatedNarrationAsync(int zoneId, string language, string text)
+        private async Task UpsertTranslatedNarrationAsync(int zoneId, string language, string text, string sourceVietnameseText)
         {
             var existing = await _db.Narrations
                 .Where(n => n.ZoneId == zoneId && n.Language == language)
@@ -379,44 +423,112 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
                 .ThenByDescending(n => n.Id)
                 .FirstOrDefaultAsync();
 
+            var incoming = (text ?? string.Empty).Trim();
+            var sourceTrimmed = (sourceVietnameseText ?? string.Empty).Trim();
+
+            _logger.LogInformation(
+                "[NARRATION_UPSERT] zone={ZoneId} lang={Lang} existing={HasExisting} incomingLen={IncomingLength} sourceLen={SourceLength} incomingSameAsSource={SameAsSource}",
+                zoneId,
+                language,
+                existing != null,
+                incoming.Length,
+                sourceTrimmed.Length,
+                string.Equals(incoming, sourceTrimmed, StringComparison.Ordinal));
+
+            if (string.Equals(incoming, sourceTrimmed, StringComparison.Ordinal))
+            {
+                _logger.LogWarning(
+                    "[NARRATION_UPSERT] skip-persist zone={ZoneId} lang={Lang} reason=fallback-same-as-source existing={HasExisting}",
+                    zoneId,
+                    language,
+                    existing != null);
+                return;
+            }
+
+            var finalText = text ?? string.Empty;
+
             if (existing == null)
             {
                 existing = new TravelSystem.Shared.Models.Narration
                 {
                     ZoneId = zoneId,
                     Language = language,
-                    Text = text,
+                    Text = finalText,
                     ApprovalStatus = "Approved",
                     AudioStatus = "pending",
                     UpdatedAt = DateTime.UtcNow
                 };
                 _db.Narrations.Add(existing);
                 await _db.SaveChangesAsync(); // ensure Id before generating file naming
+                _logger.LogInformation(
+                    "[NARRATION_UPSERT] created zone={ZoneId} lang={Lang} narrationId={NarrationId} finalLen={FinalLength}",
+                    zoneId,
+                    language,
+                    existing.Id,
+                    finalText.Length);
             }
             else
             {
-                existing.Text = text;
+                existing.Text = finalText;
                 existing.ApprovalStatus = "Approved";
                 existing.AudioStatus = "pending";
                 existing.UpdatedAt = DateTime.UtcNow;
+                _logger.LogInformation(
+                    "[NARRATION_UPSERT] updated zone={ZoneId} lang={Lang} narrationId={NarrationId} finalLen={FinalLength}",
+                    zoneId,
+                    language,
+                    existing.Id,
+                    finalText.Length);
             }
 
-            await GenerateAndApplyAudioAsync(existing, text, language, zoneId);
+            await GenerateAndApplyAudioAsync(existing, finalText, language, zoneId);
         }
 
         private async Task GenerateAndApplyAudioAsync(TravelSystem.Shared.Models.Narration narration, string text, string language, int zoneId)
         {
-            var fileUrl = await _audioService.GenerateTtsAsync(text, language, zoneId, _env.WebRootPath);
+            var safeText = text ?? string.Empty;
+            var safeLanguage = NormalizeLanguage(language);
+
+            _logger.LogInformation(
+                "[NARRATION_AUDIO] start narrationId={NarrationId} zone={ZoneId} lang={Lang} textLen={TextLength}",
+                narration.Id,
+                zoneId,
+                safeLanguage,
+                safeText.Length);
+
+            var fileUrl = await _audioService.GenerateTtsAsync(safeText, safeLanguage, zoneId, _env.WebRootPath);
 
             if (string.IsNullOrWhiteSpace(fileUrl))
             {
                 narration.AudioStatus = "error";
                 narration.FileUrl = null;
+                _logger.LogWarning(
+                    "[NARRATION_AUDIO] failed narrationId={NarrationId} zone={ZoneId} lang={Lang} reason=empty-file-url",
+                    narration.Id,
+                    zoneId,
+                    safeLanguage);
                 return;
             }
 
             narration.FileUrl = fileUrl;
             narration.AudioStatus = "ready";
+            _logger.LogInformation(
+                "[NARRATION_AUDIO] success narrationId={NarrationId} zone={ZoneId} lang={Lang} fileUrl={FileUrl}",
+                narration.Id,
+                zoneId,
+                safeLanguage,
+                fileUrl);
+        }
+
+        private static string PreviewText(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return string.Empty;
+            }
+
+            var trimmed = text.Trim().Replace('\n', ' ').Replace('\r', ' ');
+            return trimmed.Length <= 90 ? trimmed : trimmed[..90] + "...";
         }
 
         private static string NormalizeLanguage(string? language)

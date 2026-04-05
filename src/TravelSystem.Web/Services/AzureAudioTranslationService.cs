@@ -11,11 +11,11 @@ public class AzureAudioTranslationService : IAudioTranslationService
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<AzureAudioTranslationService> _logger;
-    private readonly string _translatorKey;
-    private readonly string _translatorRegion;
-    private readonly string _translatorEndpoint;
-    private readonly string _speechKey;
-    private readonly string _speechRegion;
+    private readonly string _translatorKey = string.Empty;
+    private readonly string _translatorRegion = string.Empty;
+    private readonly string _translatorEndpoint = string.Empty;
+    private readonly string _speechKey = string.Empty;
+    private readonly string _speechRegion = string.Empty;
 
     public AzureAudioTranslationService(HttpClient httpClient, IConfiguration configuration, ILogger<AzureAudioTranslationService> logger)
     {
@@ -30,20 +30,41 @@ public class AzureAudioTranslationService : IAudioTranslationService
 
         _speechKey = ResolveConfigValue(configuration, "AzureAi:Speech:Key", "AZURE_SPEECH_KEY");
         _speechRegion = ResolveConfigValue(configuration, "AzureAi:Speech:Region", "AZURE_SPEECH_REGION");
+
+        _logger.LogInformation(
+            "[AZURE_CFG] translatorEndpoint={Endpoint} translatorRegion={Region} translatorKeyLen={KeyLen} translatorKeyPrefix={KeyPrefix} speechRegion={SpeechRegion} speechKeyLen={SpeechKeyLen}",
+            _translatorEndpoint,
+            _translatorRegion,
+            _translatorKey?.Length ?? 0,
+            MaskPrefix(_translatorKey),
+            _speechRegion,
+            _speechKey?.Length ?? 0);
+    }
+
+    private static string MaskPrefix(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "empty";
+        }
+
+        var trimmed = value.Trim();
+        return trimmed.Length <= 6 ? trimmed : trimmed.Substring(0, 6) + "***";
     }
 
     private static string ResolveConfigValue(IConfiguration configuration, string primaryKey, string envFallbackKey, string defaultValue = "")
     {
-        var primary = configuration[primaryKey];
-        if (!string.IsNullOrWhiteSpace(primary))
-        {
-            return primary;
-        }
-
+        // Ưu tiên biến môi trường custom để dễ đổi key/endpoint theo môi trường chạy.
         var envValue = Environment.GetEnvironmentVariable(envFallbackKey);
         if (!string.IsNullOrWhiteSpace(envValue))
         {
             return envValue;
+        }
+
+        var primary = configuration[primaryKey];
+        if (!string.IsNullOrWhiteSpace(primary))
+        {
+            return primary;
         }
 
         return defaultValue;
@@ -364,6 +385,7 @@ public class AzureAudioTranslationService : IAudioTranslationService
             "vi" => "vi",
             "en" => "en",
             "ja" => "ja",
+            "ko" => "ko",
             _ => "en"
         };
     }
@@ -374,6 +396,7 @@ public class AzureAudioTranslationService : IAudioTranslationService
         {
             "vi" => "vi-VN",
             "ja" => "ja-JP",
+            "ko" => "ko-KR",
             _ => "en-US"
         };
     }
@@ -384,6 +407,7 @@ public class AzureAudioTranslationService : IAudioTranslationService
         {
             "vi" => "vi-VN-HoaiMyNeural",
             "ja" => "ja-JP-NanamiNeural",
+            "ko" => "ko-KR-SunHiNeural",
             _ => "en-US-JennyNeural"
         };
     }

@@ -269,15 +269,30 @@ namespace TravelSystem.Web.Areas.Admin.Controllers
             var targetLanguages = new[] { "vi", "en", "ja", "ko" };
             foreach (var language in targetLanguages)
             {
-                var translatedText = language == "vi"
-                    ? sourceText
-                    : await TranslateWithFallbackAsync(sourceText, language);
-
                 var existingRecords = await _db.ZoneTranslations
                     .Where(t => t.ZoneId == zoneId && t.Language == language)
                     .OrderByDescending(t => t.UpdatedAt)
                     .ThenByDescending(t => t.Id)
                     .ToListAsync();
+
+                var translatedText = language == "vi"
+                    ? sourceText
+                    : await TranslateWithFallbackAsync(sourceText, language);
+
+                if (language != "vi"
+                    && string.Equals(translatedText.Trim(), sourceText.Trim(), StringComparison.Ordinal)
+                    && existingRecords.Count > 0
+                    && !string.IsNullOrWhiteSpace(existingRecords[0].Description))
+                {
+                    translatedText = existingRecords[0].Description;
+                }
+
+                if (language != "vi"
+                    && existingRecords.Count == 0
+                    && string.Equals(translatedText.Trim(), sourceText.Trim(), StringComparison.Ordinal))
+                {
+                    continue;
+                }
 
                 ZoneTranslation record;
                 if (existingRecords.Count == 0)

@@ -101,12 +101,13 @@ This PRD v2 focuses on stable geofence behavior, moderation reliability, and ana
 ## 8. Current Technical Baseline (As Implemented)
 
 ### 8.1 Mobile Geofence and GPS Parameters
-- Trigger radius fallback: 45m.
-- Practical minimum radius: 28m.
+- Trigger radius fallback: 8m.
+- Fast auto-select distance: 12m.
+- Practical minimum radius: 5m.
 - Exit hysteresis factor: 1.25x plus accuracy compensation.
 - Debounce:
-- Normal auto-select: 1.2s.
-- Switch between stops: 1.8s.
+- Normal auto-select: 0.35s.
+- Switch between stops: 0.7s.
 - Cooldown for switching: 2.5s.
 - Location freshness:
 - Max accepted location age: 5s.
