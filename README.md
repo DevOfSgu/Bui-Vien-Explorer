@@ -43,7 +43,7 @@ Mục tiêu trải nghiệm cốt lõi:
 
 Điểm khác biệt cốt lõi:
 - Xử lý GPS nâng cao: lọc nhiễu, chống nhảy vị trí (Hysteresis), debounce xác nhận vào zone.
-- Hoạt động mượt khi mạng yếu/mất 4G nhờ offline-first + sync worker.
+- Hoạt động mượt mà dựa trên cơ chế Offline-First: Nạp trước dữ liệu Tour và Bản vẽ bản đồ vào SQLite, cho phép hiển thị tuyến đường, POI và thực hiện thuật toán GPS mà không cần kết nối Internet.
 - Anonymous Session: bảo vệ danh tính người dùng, không bắt buộc đăng ký.
 
 ---
@@ -67,7 +67,7 @@ Mục tiêu trải nghiệm cốt lõi:
 
 ### 3.2 Navigation & Map
 
-- US-04: Vị trí user trên map di chuyển mượt, hạn chế giật lag/nhảy sai điểm.
+- US-04: Thấy vị trí thực tế di chuyển trên tuyến đường Tour (Route), đồng thời thấy rõ vùng bán kính (Radius Circle) của các POI để biết lúc nào sẽ 'chạm' vùng kích hoạt Audio.
 - US-05: Auto-focus POI gần nhất ổn định khi đứng giữa 2 điểm sát nhau.
 
 ### 3.3 POI Detail & Saved
@@ -116,12 +116,12 @@ Yêu cầu bắt buộc để tránh nhảy sai điểm ở đô thị hẹp:
   - Ưu tiên OS location event stream.
   - Nếu >10s không có event, kích hoạt polling để tránh đóng băng UI.
 - Noise filtering:
-  - Loại bỏ điểm có Accuracy > 50m.
+  - Bộ lọc nghiêm ngặt: loại bỏ sai số > 12m (bình thường) và > 35m (môi trường cao tầng).
 - Confirmation + Debounce:
-  - User cần ở trong geofence liên tục X giây (ví dụ 3s) mới xác nhận vào zone.
+  - 0.35 giây để bắt điểm dừng đầu tiên và 0.7 giây khi chuyển đổi nhanh giữa các điểm dừng.
 - Hysteresis anti ping-pong:
-  - Enter radius = 15m.
-  - Exit radius = 20m.
+  - Enter radius = 8m.
+  - Exit radius = 10m (hệ số 1.25x).
 
 ### 5.2 Offline-first & Sync
 
